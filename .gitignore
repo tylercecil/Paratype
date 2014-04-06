@@ -1,0 +1,4 @@
+#Latex Files
+*.log
+*.pdf
+*.aux
