@@ -38,12 +38,12 @@
 \begin{multicols}{2}
 
 \section*{Project}
-We propose to implement a type inference system in parallel. We have
+We propose to implement a \textbf{type inference system} in parallel. We have
 developed a small Context Free Grammar for a functional language,
-using a restriction of the System F type system. In this system,
+using a restriction of the \textbf{System F} type system. In this system,
 functions have return types, and a list of typed parameters. The types
 themselves, however, need not be explicitly typed. Consider the
-following two functions in our grammar: 
+following two functions in our grammar:
 \begin{Figure}
   \begin{lstlisting}
     func Int foo(Int, Int){
@@ -55,23 +55,23 @@ following two functions in our grammar:
   \end{lstlisting}
   \captionof{figure}{A basic type inference context.}
 \end{Figure}
-\noindent Function foo has return type Int, and takes two parameters of type
-Int. Function bar, however, has return type a, and input type a. We
-refer to a as a ``type variable'' in the System F family of type
-systems. However, because bar has a context ``Int bar(Int)'' (provided
-by foo), at compile time we can discern the/a  (there may be multiple)
+\noindent Function \texttt{foo} has return type \texttt{Int}, and takes two parameters of type
+\texttt{Int}. Function \texttt{bar}, however, has return type \texttt{a}, and input type \texttt{a}. We
+refer to a as a \textbf{type variable} in the System F family of type
+systems. However, because bar has a context \texttt{Int bar(Int)} (provided
+by \texttt{foo}), at compile time we can discern the/a  (there may be multiple)
 type/s of bar. For larger programs, with the ratio of explicitly typed
 to implicitly typed functions approaching zero (note that there must
 always exist an explicit type), this ``context dependency'' becomes
 extremely large. By building this graph in parallel, we believe we can
-speedup compilation or other type analysis processes. 
+speedup compilation or other type analysis processes.
 
-What we propose is an actor model of type inference. Let every
+What we propose is an \textbf{actor model} of type inference. Let every
 function represent a node, or actor. Actors with explicit contexts
 will be able to resolve types for those which have implicit
 contexts. Each actor will need to find the smallest number of contexts
 to ``compile'' to. What do we mean by this? Consider an addition to our
-previous example: 
+previous example:
 \begin{Figure}
   \begin{lstlisting}
     func Float foo2(Float, Float){
@@ -83,8 +83,8 @@ previous example:
   \end{lstlisting}
   \captionof{figure}{Multiple contexts of \texttt{bar}.}
 \end{Figure}
-\noindent Now bar has three contexts --- an Int context, a Float context, and a
-Char context. Now consider we add the following type lattice. 
+\noindent Now \texttt{bar} has three contexts --- an \texttt{Int} context, a \texttt{Float} context, and a
+\texttt{Char} context. Now consider we add the following type lattice.
 \begin{Figure}
   \begin{center}
 \begin{BVerbatim}
@@ -96,22 +96,22 @@ Char context. Now consider we add the following type lattice.
 \captionof{figure}{A simple numeric type lattice.}
 \end{Figure}
 
-It is the responsibility of the bar actor to fold its contexts into
-Num and Char, and forward these results to other dependent function
+It is the responsibility of the \texttt{bar} actor to fold its contexts into
+\texttt{Num} and \texttt{Char}, and forward these results to other dependent function
 actors. Function actors then need to constantly be adding, folding,
-and sending contexts to other dependent actors. 
+and sending contexts to other dependent actors.
 When all types have been resolved (if indeed possible), each actor
 will export an explicitly typed copy of its definition for every
 active context. The end result will be the same source file, with no
-implicit typing or type variables. 
+implicit typing or type variables.
 
 \section*{Methods}
-Our actor model suggests a distributed approach to the
+Our actor model suggests a \textbf{distributed} approach to the
 problem. However, compilation is a task typically performed on
-comodity hardware, which is typically shared memory. Instead of using
-MPI with C++, we propose using Google Go --- Google's object oriented
-language with parallel primatives. Go ruitines act as threads and data
-can be passed by reference through channels between ruitines. From a
+commodity hardware, which is typically shared memory. Instead of using
+MPI with C++, we propose using \textbf{Google Go} --- Google's object oriented
+language with parallel primitives. Go routines act as threads and data
+can be passed by reference through channels between routines. From a
 code standpoint it is a message passing system, but using shared
 memory. What's more, Go provides a standard BNF parser, \texttt{gopp}
 which we plan to use to parse our input files.
@@ -121,17 +121,17 @@ For our analysis there are a few main factors we see: number of nodes
 contexts), and number of process threads. We can manage number of
 process threads using the \texttt{GOMAXPROCS} environment
 variable. The others can be managed based on our input file. All will
-need to be analyzed to build a good model of our algorithem.
+need to be analyzed to build a good model of our algorithm.
 
 \section*{Goals}
 The project lends itself to a good devision of labor: parsing,
 evaluating contexts, and message passing. Each of these can be
-developed concurently, using good object oriented design. If pressured
-for time, parsing can be omited entierly, and our input can exist
+developed concurrently, using good object oriented design. If pressured
+for time, parsing can be omitted entirely, and our input can exist
 solely as Go Objects, serialized in memory. For reach goals, we have
-discused how Error types (or up-types) can be added to the system for
-greater complexity. More complex type systems could also be analized
-(such as Hindly-Milner or System F$_\omega$), in order to widen our
+discussed how Error types (or up-types) can be added to the system for
+greater complexity. More complex type systems could also be analyzed
+(such as \textbf{Hindley-Milner} or \textbf{System F$_\mathbf{\omega}$}), in order to widen our
 project.
 \end{multicols}
 
