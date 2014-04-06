@@ -79,6 +79,23 @@ active context. The end result will be the same source file, with no
 implicit typing or type variables. 
 
 \section*{Methods}
+Our actor model suggests a distributed approach to the
+problem. However, compilation is a task typically performed on
+comodity hardware, which is typically shared memory. Instead of using
+MPI with C++, we propose using Google Go --- Google's object oriented
+language with parallel primatives. Go ruitines act as threads and data
+can be passed by reference through channels between ruitines. From a
+code standpoint it is a message passing system, but using shared
+memory. What's more, Go provides a standard BNF parser, \texttt{gopp}
+which we plan to use to parse our input files.
+
+For our analysis there are a few main factors we see: number of nodes
+(or functions), average and max connectivity per node (reference
+contexts), and number of process threads. We can manage number of
+process threads using the \texttt{GOMAXPROCS} environment
+variable. The others can be managed based on our input file. All will
+need to be analyzed to build a good model of our algorithem.
+
 \section*{Goals}
 
 \end{document}
