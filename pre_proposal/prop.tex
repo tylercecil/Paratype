@@ -3,7 +3,20 @@
 \usepackage[T1]{fontenc}
 \usepackage[margin=0.75in]{geometry}
 \usepackage{listings}
+\usepackage{multicol}
+\usepackage{caption}
+\usepackage{fancyvrb}
 %\usepackage{microtype}
+
+\newenvironment{Figure}
+  {\par\medskip\noindent\minipage{\linewidth}}
+  {\endminipage\par\medskip}
+
+\lstset {
+    frame=lrtb,
+    captionpos=b,
+    belowskip=0pt
+}
 
 \begin{document}
 
@@ -22,6 +35,8 @@
 \rule{\textwidth}{1pt}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\begin{multicols}{2}
+
 \section*{Project}
 We propose to implement a type inference system in parallel. We have
 developed a small Context Free Grammar for a functional language,
@@ -29,15 +44,18 @@ using a restriction of the System F type system. In this system,
 functions have return types, and a list of typed parameters. The types
 themselves, however, need not be explicitly typed. Consider the
 following two functions in our grammar: 
-\begin{lstlisting}
-  func Int foo(Int, Int){
-    (x,y) = bar(x) + y
-  }
-  func a bar(a) {
-    (x) = x
-  }
-\end{lstlisting}
-Function foo has return type Int, and takes two parameters of type
+\begin{Figure}
+  \begin{lstlisting}
+    func Int foo(Int, Int){
+      (x,y) = bar(x) + y
+    }
+    func a bar(a) {
+      (x) = x
+    }
+  \end{lstlisting}
+  \captionof{figure}{A basic type inference context.}
+\end{Figure}
+\noindent Function foo has return type Int, and takes two parameters of type
 Int. Function bar, however, has return type a, and input type a. We
 refer to a as a ``type variable'' in the System F family of type
 systems. However, because bar has a context ``Int bar(Int)'' (provided
@@ -54,21 +72,30 @@ will be able to resolve types for those which have implicit
 contexts. Each actor will need to find the smallest number of contexts
 to ``compile'' to. What do we mean by this? Consider an addition to our
 previous example: 
-\begin{lstlisting}
-  func Float foo2(Float, Float){
-    (x,y) = bar(x) + y
-  }
-  func Char foo3(Char){
-    (c) = bar(c)
-  }
-\end{lstlisting}
-Now bar has three contexts --- an Int context, a Float context, and a
+\begin{Figure}
+  \begin{lstlisting}
+    func Float foo2(Float, Float){
+      (x,y) = bar(x) + y
+    }
+    func Char foo3(Char){
+      (c) = bar(c)
+    }
+  \end{lstlisting}
+  \captionof{figure}{Multiple contexts of \texttt{bar}.}
+\end{Figure}
+\noindent Now bar has three contexts --- an Int context, a Float context, and a
 Char context. Now consider we add the following type lattice. 
-\begin{verbatim}
+\begin{Figure}
+  \begin{center}
+\begin{BVerbatim}
      Num
     /   \
  Int     Float
-\end{verbatim}
+\end{BVerbatim}
+\end{center}
+\captionof{figure}{A simple numeric type lattice.}
+\end{Figure}
+
 It is the responsibility of the bar actor to fold its contexts into
 Num and Char, and forward these results to other dependent function
 actors. Function actors then need to constantly be adding, folding,
@@ -97,5 +124,15 @@ variable. The others can be managed based on our input file. All will
 need to be analyzed to build a good model of our algorithem.
 
 \section*{Goals}
+The project lends itself to a good devision of labor: parsing,
+evaluating contexts, and message passing. Each of these can be
+developed concurently, using good object oriented design. If pressured
+for time, parsing can be omited entierly, and our input can exist
+solely as Go Objects, serialized in memory. For reach goals, we have
+discused how Error types (or up-types) can be added to the system for
+greater complexity. More complex type systems could also be analized
+(such as Hindly-Milner or System F$_\omega$), in order to widen our
+project.
+\end{multicols}
 
 \end{document}
