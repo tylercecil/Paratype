@@ -42,7 +42,7 @@
     <div id="titlepage" class="step persist" data-x="-1000" data-y="-1500">
         <h1>
             Paratype &mdash; A Parallel
-            Type Inference System
+            Type Completion System
         </h1>
         By Tyler Cecil, Ben Turrubiates, and Chris Koch
     </div>
@@ -204,10 +204,10 @@ func foo(Type var, Typevar var2, ...)
 		-->
         <pre>
             <code class="prettyprint">
-func foo(Int x, Int y) Int 
+func foo(Int x, Int y) Int
 	= bar(y)
 
-func bar(T d) T 
+func bar(T d) T
 	= ...
             </code>
         </pre>
@@ -230,7 +230,7 @@ func bar(Float a, Float b) Int
 		<h3>Explicit Context Provided by Child and Parent</h3>
 		<pre>
 			<code class="prettyprint">
-func foo(T a, Int b) Int 
+func foo(T a, Int b) Int
 	= barbar(a, b)
 
 func barbar(Int a, T b) R
@@ -241,9 +241,9 @@ func barbar(Int a, T b) R
 
     <div id="examp-partial" class="step" data-x="-1000" data-y="14500">
 		<h3>Problems: Deadlock</h3>
-		<pre>
+ 		<pre>
 			<code class="prettyprint">
-func foo(T a, Int b) T 
+func foo(T a, Int b) T
 	= bar(a, b)
 
 func bar(Int a, T b) Int
@@ -254,11 +254,23 @@ func bar(Int a, T b) Int
     </div>
 
     <div id="examp-three-generations" class="step" data-x="-1000" data-y="15500">
+        <h3>Need to Maintain Partial Contexts</h3>
+ 		<pre>
+			<code class="prettyprint">
+func foo(Int x) T
+	= bar(x)
 
+func bar(T b) Char
+	= 'a'
+
+func baz(Float b) T
+    = bar(b)
+			</code>
+		</pre>
     </div>
 
     <div id="examp-incomplete" class="step" data-x="-1000" data-y="16500">
-		<h3> Incomplete Contexts </h3>
+		<h3> Unhalting Contexts </h3>
 		<pre>
 			<code class="prettyprint">
 func foo(T b) Int
@@ -274,7 +286,7 @@ func bar(T a) Int
 	<div id="examp-error" class="step" data-x="-1000" data-y="17500">
 		<h3>Errors</h3>
 
-		<!-- 
+		<!--
 		Context = (parent, (parameter type, ...), return type, error?)
 
 		- foobar requests context from foo
