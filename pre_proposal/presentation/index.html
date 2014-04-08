@@ -52,7 +52,7 @@
     </div>
 
     <div id="haskell-examp" class="step" data-x="-1000" data-y="500">
-        Consider the following <i>Haskell</i> example:
+        Consider the following <em>Haskell</em> example:
         <pre>
             <code class="prettyprint">
 map::(a->b) -> [a] -> [b]
@@ -68,11 +68,11 @@ stringMapper = map (++'a') ['dog', 'cat', 'ben']
     </div>
 
     <div id="systemf" class="step" data-x="-1000" data-y="1500">
-        Type systems such as these are formalized as <b>System F</b> or
-        <b>Polymorphic Lambda Calculus</b>.
+        Type systems such as these are formalized as <strong>System F</strong> or
+        <strong>Polymorphic Lambda Calculus</strong>.
 
-        Essentially, System F is a formalization of <i>parametric
-        polymorphism</i>.
+        Essentially, System F is a formalization of <em>parametric
+        polymorphism</em>.
 
         <!-- This is an example of what it means. We can talk about
              it there. We may want more examples -->
@@ -81,7 +81,8 @@ stringMapper = map (++'a') ['dog', 'cat', 'ben']
     </div>
 
     <div id="doinparallel" class="step" data-x="-1000" data-y="2500">
-        The goal of Paratype is to <b>resolve type restrictions in parallel</b>!
+        The goal of Paratype is to <strong>resolve type restrictions in
+			parallel</strong>!
     </div>
 
     <div id="define-problem" class="step" data-x="-1000" data-y="3500">
@@ -105,16 +106,24 @@ func foo(Type var, Typevar var2, ...)
     </div>
 
     <div id="define-io" class="step" data-x="-1000" data-y="5500">
-        <b>Program Input:</b>
+        <strong>Program Input:</strong>
         <br>    A program which may or may not be valid with parametric types.
 
         <br>
-        <b>Program Output:</b>
+        <strong>Program Output:</strong>
         <br>    The same program, with explicit types
     </div>
 
     <div id="define-terms" class="step" data-x="-1000" data-y="6500">
+		<strong>Context:</strong> <br />
+		The set of explicit types associated with a function or instance of a
+		function (parameters and return type)
 
+		<br />
+		<strong>Partial context:</strong> <br />
+		An incomplete context: not all types are known explicitly.
+
+		<!-- other terms? do you agree? CK -->
     </div>
 
     <div id="methods" class="step" data-x="-1000" data-y="7500">
@@ -151,8 +160,9 @@ func foo(Type var, Typevar var2, ...)
                 Every function represents an actor (node).
             </li>
 			<li>
-				The actors (functions) resolve their context (i.e. resolve to
-				explicit types) by communicating with other actors.
+				The actors (functions) resolve their contexts (i.e. resolve to
+				explicit types) by communicating with other actors: requesting
+				contexts from parent and children.
 			</li>
         </ul>
     </div>
