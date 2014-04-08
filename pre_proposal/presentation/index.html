@@ -249,6 +249,7 @@ func foo(T a, Int b) T
 func bar(Int a, T b) Int
 	= foo(a, b)
 			</code>
+			<p style="margin-top: -60px;"><em>Partial</em> contexts!</p>
 		</pre>
     </div>
 
@@ -257,7 +258,17 @@ func bar(Int a, T b) Int
     </div>
 
     <div id="examp-incomplete" class="step" data-x="-1000" data-y="16500">
+		<h3> Incomplete Contexts </h3>
+		<pre>
+			<code class="prettyprint">
+func foo(T b) Int
+	= bar(b)
 
+func bar(T a) Int
+	= ...
+			</code>
+		</pre>
+		<p style="margin-top: -60px;">Stop condition?</p>
     </div>
 
 	<div id="examp-error" class="step" data-x="-1000" data-y="17500">
