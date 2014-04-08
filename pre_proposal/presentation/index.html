@@ -80,16 +80,16 @@ stringMapper = map (++'a') ['dog', 'cat', 'ben']
 
     </div>
 
-    <div id="doinparallel" class="step" data-x="-1000" data-y="2500">
+    <div id="doinparallel" class="step" data-x="-1000" data-y="1500">
         The goal of Paratype is to <strong>resolve type restrictions in
 			parallel</strong>!
     </div>
 
-    <div id="define-problem" class="step" data-x="-1000" data-y="3500">
+    <div id="define-problem" class="step" data-x="-1000" data-y="2000">
         <h2 style="font-kerning: none; letter-spacing: 1px;"> Formal Problem Definition </h2>
     </div>
 
-    <div id="define-grammar" class="step" data-x="-1000" data-y="4500">
+    <div id="define-grammar" class="step" data-x="0" data-y="2000">
         We have devolped the following grammar (displayed informally):
         <pre>
             <code class="prettyprint">
@@ -105,7 +105,7 @@ func foo(Type var, Typevar var2, ...)
         </pre>
     </div>
 
-    <div id="define-io" class="step" data-x="-1000" data-y="5500">
+    <div id="define-io" class="step" data-x="1000" data-y="2000">
         <strong>Program Input:</strong>
         <br>    A program which may or may not be valid with parametric types.
 
@@ -114,7 +114,7 @@ func foo(Type var, Typevar var2, ...)
         <br>    The same program, with explicit types
     </div>
 
-    <div id="define-terms" class="step" data-x="-1000" data-y="6500">
+    <div id="define-terms" class="step" data-x="2000" data-y="2000">
 		<strong>Context:</strong> <br />
 		The set of explicit types and metainformation associated with an
 		instance of a function (parent, parameter types, return type, and a
@@ -127,7 +127,7 @@ func foo(Type var, Typevar var2, ...)
 		<!-- other terms? do you agree? CK -->
     </div>
 
-    <div id="define-terms2" class="step" data-x="0" data-y="6500">
+    <div id="define-terms2" class="step" data-x="3000" data-y="2000">
         <strong>Type:</strong> <br />
         A set of values, composed of <em>Primitive types</em> (which are
         deffined in our gramer). Types <b>implement</b> typeclasses.
@@ -137,14 +137,14 @@ func foo(Type var, Typevar var2, ...)
         A set of types. Typeclasses <b>inherit</b> other type classes.
     </div>
 
-    <div id="define-term3" class="step" data-x="1000" data-y="6500">
+    <div id="define-term3" class="step" data-x="4000" data-y="2000">
         <br />
         <strong>Parametric Polymophism:</strong> <br />
         A form of static polymorphism which is fundamentally more safe
         than ad-hoc polymorphism. Implimented via typevariables.
     </div>
 
-    <div id="methods" class="step" data-x="-1000" data-y="7500">
+    <div id="methods" class="step" data-x="-1000" data-y="2800">
 		<h3> Methods </h3>
 
 		<ul>
@@ -155,7 +155,7 @@ func foo(Type var, Typevar var2, ...)
 		</ul>
     </div>
 
-    <div id="why-use-go" class="step" data-x="-1000" data-y="8500">
+    <div id="why-use-go" class="step" data-x="0" data-y="2800">
         <h3>
             Why use Google Go?
         </h3>
@@ -171,7 +171,7 @@ func foo(Type var, Typevar var2, ...)
         </ul>
     </div>
 
-    <div id="actor-model" class="step" data-x="-1000" data-y="9500">
+    <div id="actor-model" class="step" data-x="1000" data-y="2800">
         <!--
             Go isn't technically an "Actor Model"
             Should we mention this?
@@ -191,7 +191,7 @@ func foo(Type var, Typevar var2, ...)
         </ul>
     </div>
 
-	<div id="actor-model-2" class="step" data-x="0" data-y="9500">
+	<div id="actor-model-2" class="step" data-x="2000" data-y="2800">
         <h3>
             Modeling Type Inference as an Actor Model
         </h3>
@@ -208,11 +208,11 @@ func foo(Type var, Typevar var2, ...)
         </ul>
     </div>
 
-    <div id="examples" class="step" data-x="-1000" data-y="10500">
+    <div id="examples" class="step" data-x="-1000" data-y="3500">
 		<h3>NOT DATA FLOW!</h3>
     </div>
 
-    <div id="examp-down" class="step" data-x="-1000" data-y="11500">
+    <div id="examp-down" class="step" data-x="0" data-y="3500">
         <h3>
             Explicit Context Provided by Parent
         </h3>
@@ -237,7 +237,7 @@ func bar(T d) T
         </pre>
     </div>
 
-    <div id="examp-up" class="step" data-x="-1000" data-y="12500">
+    <div id="examp-up" class="step" data-x="1000" data-y="3500">
 		<h3>Explicit Context Provided by Child</h3>
 		<pre>
 			<code class="prettyprint">
@@ -250,7 +250,7 @@ func bar(Float a, Float b) Int
 		</pre>
     </div>
 
-    <div id="examp-updown" class="step" data-x="-1000" data-y="13500">
+    <div id="examp-updown" class="step" data-x="2000" data-y="3500">
 		<h3>Explicit Context Provided by Child and Parent</h3>
 		<pre>
 			<code class="prettyprint">
@@ -263,7 +263,7 @@ func barbar(Int a, T b) R
 		</pre>
     </div>
 
-    <div id="examp-partial" class="step" data-x="-1000" data-y="14500">
+    <div id="examp-partial" class="step" data-x="3000" data-y="3500">
 		<h3>Problems: Deadlock</h3>
  		<pre>
 			<code class="prettyprint">
@@ -277,7 +277,7 @@ func bar(Int a, T b) Int
 		</pre>
     </div>
 
-    <div id="examp-three-generations" class="step" data-x="-1000" data-y="15500">
+    <div id="examp-three-generations" class="step" data-x="4000" data-y="3500">
         <h3>Need to Maintain Partial Contexts</h3>
  		<pre>
 			<code class="prettyprint">
@@ -293,7 +293,7 @@ func baz(Float b) T
 		</pre>
     </div>
 
-    <div id="examp-incomplete" class="step" data-x="-1000" data-y="16500">
+    <div id="examp-incomplete" class="step" data-x="5000" data-y="3500">
 		<h3> Unhalting Contexts </h3>
 		<pre>
 			<code class="prettyprint">
@@ -307,7 +307,7 @@ func bar(T a) Int
 		<p style="margin-top: -60px;">Stop condition? Monitor!</p>
     </div>
 
-	<div id="examp-error" class="step" data-x="-1000" data-y="17500">
+	<div id="examp-error" class="step" data-x="6000" data-y="3500">
 		<h3>Errors</h3>
 
 		<!--
@@ -333,10 +333,7 @@ func bar(T a) T throws WeirdError
 		</pre>
 	</div>
 
-    <div id="conclusion" class="step" data-x="-1000" data-y="18500">
-		<h3>Conclusion</h3>
-    </div>
-    <div id="overview" class="step" data-x="-1000" data-y="1500" data-scale="8">
+    <div id="overview" class="step" data-x="1500" data-y="1500" data-scale="8">
     </div>
 </div>
 
