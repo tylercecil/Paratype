@@ -247,3 +247,7 @@ pre code {
     border-radius: 4px;
     padding: 0em 2em 0em;
 }
+
+pre code .prettyprint {
+    padding-bottom: 1em;
+}
