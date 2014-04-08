@@ -117,7 +117,8 @@ func foo(Type var, Typevar var2, ...)
     <div id="define-terms" class="step" data-x="-1000" data-y="6500">
 		<strong>Context:</strong> <br />
 		The set of explicit types and metainformation associated with an
-		instance of a function (parent, parameters and return type)
+		instance of a function (parent, parameter types, return type, and a
+		list of actors who care about the context)
 
 		<br />
 		<strong>Partial context:</strong> <br />
@@ -154,7 +155,6 @@ func foo(Type var, Typevar var2, ...)
         <h3>
             Modeling Type Inference as an Actor Model
         </h3>
-		<!-- This is too long. Needs to be two slides. CK -->
         <ul>
             <li>
                 Every function represents an actor (node).
@@ -240,7 +240,7 @@ func barbar(Int a, T b) R
     </div>
 
     <div id="examp-partial" class="step" data-x="-1000" data-y="14500">
-		<h3>Problems: Deadlock (and how to solve it!)</h3>
+		<h3>Problems: Deadlock</h3>
 		<pre>
 			<code class="prettyprint">
 func foo(T a, Int b) T 
