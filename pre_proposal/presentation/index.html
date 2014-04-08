@@ -260,7 +260,33 @@ func bar(Int a, T b) Int
 
     </div>
 
-    <div id="conclusion" class="step" data-x="-1000" data-y="17500">
+	<div id="examp-error" class="step" data-x="-1000" data-y="17500">
+		<h3>Errors</h3>
+
+		<!-- 
+		Context = (parent, (parameter type, ...), return type, error?)
+
+		- foobar requests context from foo
+		- foo has a resolved context of (foobar, (Int), Int, none)
+		- sends that to foobar when foobar asks, also to bar since it's a child
+		- bar tries to resolve context, throws error, and thus changes foo's
+			context, changes foobar's context.
+		-->
+		<pre>
+			<code class="prettyprint">
+func foobar(T b) T
+	= foo(b)
+
+func foo(Int b) Int
+	= bar(b)
+
+func bar(T a) T throws WeirdError
+	= ...
+			</code>
+		</pre>
+	</div>
+
+    <div id="conclusion" class="step" data-x="-1000" data-y="18500">
 
     </div>
 </div>
