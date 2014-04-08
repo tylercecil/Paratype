@@ -52,9 +52,9 @@
     </div>
 
     <div id="haskell-examp" class="step" data-x="-1000" data-y="500">
-        Consider the following <i>Haskell</i> example:
+        Consider the following <em>Haskell</em> example:
         <pre>
-<code class="prettyprint">
+            <code class="prettyprint">
 map::(a->b) -> [a] -> [b]
 ...
 
@@ -63,16 +63,16 @@ intMapper = map (+1)[1,2,..]
 
 stringMapper::[string]
 stringMapper = map (++'a') ['dog', 'cat', 'ben']
-</code>
-</pre>
+            </code>
+        </pre>
     </div>
 
     <div id="systemf" class="step" data-x="-1000" data-y="1500">
-        Type systems such as these are formalize as <b>System F</b> or
-        <b>Polymorphic Lambda Calculus</b>.
+        Type systems such as these are formalized as <strong>System F</strong> or
+        <strong>Polymorphic Lambda Calculus</strong>.
 
-        Essentially, System F is a formalization of <i>Parametric
-        Polymorphism</i>.
+        Essentially, System F is a formalization of <em>parametric
+        polymorphism</em>.
 
         <!-- This is an example of what it means. We can talk about
              it there. We may want more examples -->
@@ -81,47 +81,50 @@ stringMapper = map (++'a') ['dog', 'cat', 'ben']
     </div>
 
     <div id="doinparallel" class="step" data-x="-1000" data-y="2500">
-        The goal of Paratype is to <b>Resolve Type Restrictions in Parallel</b>!
+        The goal of Paratype is to <strong>resolve type restrictions in
+			parallel</strong>!
     </div>
 
     <div id="define-problem" class="step" data-x="-1000" data-y="3500">
-        <h2> Formal Problem Deffinition </h2>
+        <h2 style="font-kerning: none; letter-spacing: 1px;"> Formal Problem Definition </h2>
     </div>
 
     <div id="define-grammar" class="step" data-x="-1000" data-y="4500">
-        We have devolped the following Grammar (displayed informally):
+        We have devolped the following grammar (displayed informally):
         <pre>
-<code class="prettyprint">
+            <code class="prettyprint">
 typeclass T inherits T1, T2, ...
 
 type A implements T
-    = Primative | (Primative, Primative, ...)
+    = Primitive | (Primitive, Primitive, ...)
 
 func foo(Type var, Typevar var2, ...)
     Type throws Error1, Error2, Error3
     = bar(baz(var), var2)
-
-</code>
-</pre>
+            </code>
+        </pre>
     </div>
 
     <div id="define-io" class="step" data-x="-1000" data-y="5500">
-        <b>Program Input:</b>
-        <br>    A program (may or may not be valid) with <i>parametric</i> types.
+        <strong>Program Input:</strong>
+        <br>    A program which may or may not be valid with parametric types.
 
         <br>
-        <b>Program Output:</b>
-        <br>    The same program, with <i>explicit</i> types
+        <strong>Program Output:</strong>
+        <br>    The same program, with explicit types
     </div>
 
     <div id="define-terms" class="step" data-x="-1000" data-y="6500">
-        Teams we will use:
-        <ul>
-            <li>Type &mdash; </li>
-            <li>Typeclass &mdash; </li>
-            <li>Type Variable &mdash; </li>
-            <li>
-        </ul>
+		<strong>Context:</strong> <br />
+		The set of explicit types and metainformation associated with an
+		instance of a function (parent, parameter types, return type, and a
+		list of actors who care about the context)
+
+		<br />
+		<strong>Partial context:</strong> <br />
+		An incomplete context: not all types are known explicitly.
+
+		<!-- other terms? do you agree? CK -->
     </div>
 
     <div id="methods" class="step" data-x="-1000" data-y="7500">
@@ -156,6 +159,19 @@ func foo(Type var, Typevar var2, ...)
             <li>
                 Every function represents an actor (node).
             </li>
+			<li>
+				The actors (functions) resolve their contexts (i.e. resolve to
+				explicit types) by communicating with other actors: requesting
+				contexts from parent and children.
+			</li>
+        </ul>
+    </div>
+
+	<div id="actor-model-2" class="step" data-x="0" data-y="9500">
+        <h3>
+            Modeling Type Inference as an Actor Model
+        </h3>
+        <ul>
             <li>
                 Actors with explicit contexts can resolve types for those
                 with implicit contexts. This also applies to partial
@@ -169,7 +185,7 @@ func foo(Type var, Typevar var2, ...)
     </div>
 
     <div id="examples" class="step" data-x="-1000" data-y="10500">
-        NOT DATAFLOW!
+		<h3>NOT DATA FLOW!</h3>
     </div>
 
     <div id="examp-down" class="step" data-x="-1000" data-y="11500">
@@ -180,28 +196,61 @@ func foo(Type var, Typevar var2, ...)
             I hate pre verbatim environments. If you can figure out how to avoid
             leaving it unindented then you should fix it.
         -->
+
+		<!--
+			I am capitalizing Types and using lower-case for variable names.
+			Less confusion.
+			-Chris
+		-->
         <pre>
-            <code>
-func Int foo(Int x, Int y) {
-    = bar(y)
-}
-func a bar(a d) {
-    ...
-}
+            <code class="prettyprint">
+func foo(Int x, Int y) Int 
+	= bar(y)
+
+func bar(T d) T 
+	= ...
             </code>
         </pre>
     </div>
 
     <div id="examp-up" class="step" data-x="-1000" data-y="12500">
+		<h3>Explicit Context Provided by Child</h3>
+		<pre>
+			<code class="prettyprint">
+func foo(T a, S b) R
+	= bar(a, b)
 
+func bar(Float a, Float b) Int
+	= ...
+			</code>
+		</pre>
     </div>
 
     <div id="examp-updown" class="step" data-x="-1000" data-y="13500">
+		<h3>Explicit Context Provided by Child and Parent</h3>
+		<pre>
+			<code class="prettyprint">
+func foo(T a, Int b) Int 
+	= barbar(a, b)
 
+func barbar(Int a, T b) R
+	= ...
+			</code>
+		</pre>
     </div>
 
     <div id="examp-partial" class="step" data-x="-1000" data-y="14500">
+		<h3>Problems: Deadlock</h3>
+		<pre>
+			<code class="prettyprint">
+func foo(T a, Int b) T 
+	= bar(a, b)
 
+func bar(Int a, T b) Int
+	= foo(a, b)
+			</code>
+			<p style="margin-top: -60px;"><em>Partial</em> contexts!</p>
+		</pre>
     </div>
 
     <div id="examp-three-generations" class="step" data-x="-1000" data-y="15500">
@@ -209,10 +258,46 @@ func a bar(a d) {
     </div>
 
     <div id="examp-incomplete" class="step" data-x="-1000" data-y="16500">
+		<h3> Incomplete Contexts </h3>
+		<pre>
+			<code class="prettyprint">
+func foo(T b) Int
+	= bar(b)
 
+func bar(T a) Int
+	= ...
+			</code>
+		</pre>
+		<p style="margin-top: -60px;">Stop condition?</p>
     </div>
 
-    <div id="conclusion" class="step" data-x="-1000" data-y="17500">
+	<div id="examp-error" class="step" data-x="-1000" data-y="17500">
+		<h3>Errors</h3>
+
+		<!-- 
+		Context = (parent, (parameter type, ...), return type, error?)
+
+		- foobar requests context from foo
+		- foo has a resolved context of (foobar, (Int), Int, none)
+		- sends that to foobar when foobar asks, also to bar since it's a child
+		- bar tries to resolve context, throws error, and thus changes foo's
+			context, changes foobar's context.
+		-->
+		<pre>
+			<code class="prettyprint">
+func foobar(T b) T
+	= foo(b)
+
+func foo(Int b) Int
+	= bar(b)
+
+func bar(T a) T throws WeirdError
+	= ...
+			</code>
+		</pre>
+	</div>
+
+    <div id="conclusion" class="step" data-x="-1000" data-y="18500">
 
     </div>
 </div>
