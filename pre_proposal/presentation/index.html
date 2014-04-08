@@ -2,6 +2,7 @@
 
 <html lang="en">
 <head>
+    <link href='http://fonts.googleapis.com/css?family=Anonymous+Pro' rel='stylesheet' type='text/css'>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=1024" />
     <title>Paratype</title>
@@ -103,6 +104,23 @@
             Go isn't technically an "Actor Model"
             Should we mention this?
         -->
+        <h3>
+            Modeling Type Inference as an Actor Model
+        </h3>
+        <ul>
+            <li>
+                Every function represents an actor (node).
+            </li>
+            <li>
+                Actors with explicit contexts can resolve types for those
+                with implicit contexts. This also applies to partial
+                contexts.
+            </li>
+            <li>
+                Each actor will need to "compile" the contexts to the most
+                generalized type. This includes composite types and typeclasses.
+            </li>
+        </ul>
     </div>
 
     <div id="examples" class="step" data-x="-1000" data-y="10500">
@@ -110,7 +128,22 @@
     </div>
 
     <div id="examp-down" class="step" data-x="-1000" data-y="11500">
-
+        <h3>
+            Explicit Context Provided by Parent
+        </h3>
+        <!--
+            I hate pre verbatim environments. If you can
+        -->
+        <pre>
+            <code>
+func Int foo(Int x, Int y) {
+    = bar(y)
+}
+func a bar(a d) {
+    ...
+}
+            </code>
+        </pre>
     </div>
 
     <div id="examp-up" class="step" data-x="-1000" data-y="12500">

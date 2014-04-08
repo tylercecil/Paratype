@@ -233,3 +233,17 @@ embed {
 
 .impress-enabled          { pointer-events: none }
 .impress-enabled #impress { pointer-events: auto }
+
+/******************************************
+    CODE BLOCKS
+******************************************/
+pre code {
+    display: block;
+    background: rgba(0, 0, 0, 0.5);
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    font-family: 'Anonymous Pro';
+    font-size: 0.6em;
+    border-radius: 6px;
+    padding: 0em 2em 0em;
+}
