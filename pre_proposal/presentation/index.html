@@ -68,7 +68,7 @@ stringMapper = map (++'a') ['dog', 'cat', 'ben']
     </div>
 
     <div id="systemf" class="step" data-x="-1000" data-y="1500">
-        Type systems such as these are formalize as <b>System F</b> or
+        Type systems such as these are formalized as <b>System F</b> or
         <b>Polymorphic Lambda Calculus</b>.
 
         Essentially, System F is a formalization of <i>Parametric
@@ -81,11 +81,11 @@ stringMapper = map (++'a') ['dog', 'cat', 'ben']
     </div>
 
     <div id="doinparallel" class="step" data-x="-1000" data-y="2500">
-        The goal of Paratype is to <b>Resolve Type Restrictions in Parallel</b>!
+        The goal of Paratype is to <b>resolve type restrictions in parallel</b>!
     </div>
 
     <div id="define-problem" class="step" data-x="-1000" data-y="3500">
-        <h2> Formal Problem Deffinition </h2>
+        <h2> Formal Problem Definition </h2>
     </div>
 
     <div id="define-grammar" class="step" data-x="-1000" data-y="4500">
@@ -95,7 +95,7 @@ stringMapper = map (++'a') ['dog', 'cat', 'ben']
 typeclass T inherits T1, T2, ...
 
 type A implements T
-    = Primative | (Primative, Primative, ...)
+    = Primitive | (Primitive, Primitive, ...)
 
 func foo(Type var, Typevar var2, ...)
     Type throws Error1, Error2, Error3
@@ -183,12 +183,11 @@ func foo(Type var, Typevar var2, ...)
 		-->
         <pre>
             <code class="prettyprint">
-func foo(Int x, Int y) Int {
+func foo(Int x, Int y) Int 
     = bar(y)
-}
-func bar(T d) T {
-    ...
-}
+
+func bar(T d) T 
+    = ...
             </code>
         </pre>
     </div>
@@ -197,12 +196,11 @@ func bar(T d) T {
 		<h3>Explicit Context Provided by Child</h3>
 		<pre>
 			<code class="prettyprint">
-func foo(T a, S b) R {
+func foo(T a, S b) R
 	= bar(a, b)
-}
-func bar(Float a, Float b) Int {
-	...
-}
+
+func bar(Float a, Float b) Int
+	= ...
 			</code>
 		</pre>
     </div>
@@ -211,12 +209,11 @@ func bar(Float a, Float b) Int {
 		<h3>Explicit Context Provided by Child and Parent</h3>
 		<pre>
 			<code class="prettyprint">
-func foo(T a, Int b) Int {
+func foo(T a, Int b) Int 
 	= barbar(a, b)
-}
-func barbar(Int a, T b) {
+
+func barbar(Int a, T b) 
 	= ...
-}
 			</code>
 		</pre>
     </div>
@@ -225,12 +222,11 @@ func barbar(Int a, T b) {
 		<h3>Problems: Deadlock (and how to solve it!)</h3>
 		<pre>
 			<code class="prettyprint">
-func foo(T a, Int b) T {
+func foo(T a, Int b) T 
 	= bar(a, b)
-}
-func bar(Int a, T b) Int {
+
+func bar(Int a, T b) Int
 	= foo(a, b)
-}
 			</code>
 		</pre>
     </div>
