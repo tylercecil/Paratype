@@ -146,6 +146,7 @@ func foo(Type var, Typevar var2, ...)
         <h3>
             Modeling Type Inference as an Actor Model
         </h3>
+		<!-- This is too long. Needs to be two slides. CK -->
         <ul>
             <li>
                 Every function represents an actor (node).
@@ -174,12 +175,18 @@ func foo(Type var, Typevar var2, ...)
             I hate pre verbatim environments. If you can figure out how to avoid
             leaving it unindented then you should fix it.
         -->
+
+		<!-- 
+			I am capitalizing Types and using lower-case for variable names.
+			Less confusion.
+			-Chris
+		-->
         <pre>
-            <code>
-func Int foo(Int x, Int y) {
+            <code class="prettyprint">
+func foo(Int x, Int y) Int {
     = bar(y)
 }
-func a bar(a d) {
+func bar(T d) T {
     ...
 }
             </code>
@@ -187,15 +194,45 @@ func a bar(a d) {
     </div>
 
     <div id="examp-up" class="step" data-x="-1000" data-y="12500">
-
+		<h3>Explicit Context Provided by Child</h3>
+		<pre>
+			<code class="prettyprint">
+func foo(T a, S b) R {
+	= bar(a, b)
+}
+func bar(Float a, Float b) Int {
+	...
+}
+			</code>
+		</pre>
     </div>
 
     <div id="examp-updown" class="step" data-x="-1000" data-y="13500">
-
+		<h3>Explicit Context Provided by Child and Parent</h3>
+		<pre>
+			<code class="prettyprint">
+func foo(T a, Int b) Int {
+	= barbar(a, b)
+}
+func barbar(Int a, T b) {
+	= ...
+}
+			</code>
+		</pre>
     </div>
 
     <div id="examp-partial" class="step" data-x="-1000" data-y="14500">
-
+		<h3>Problems: Deadlock (and how to solve it!)</h3>
+		<pre>
+			<code class="prettyprint">
+func foo(T a, Int b) T {
+	= bar(a, b)
+}
+func bar(Int a, T b) Int {
+	= foo(a, b)
+}
+			</code>
+		</pre>
     </div>
 
     <div id="examp-three-generations" class="step" data-x="-1000" data-y="15500">
