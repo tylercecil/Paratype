@@ -182,7 +182,7 @@ func foo(Type var, Typevar var2, ...)
 			-Chris
 		-->
         <pre>
-            <code>
+            <code class="prettyprint">
 func foo(Int x, Int y) Int {
     = bar(y)
 }
@@ -196,7 +196,7 @@ func bar(T d) T {
     <div id="examp-up" class="step" data-x="-1000" data-y="12500">
 		<h3>Explicit Context Provided by Child</h3>
 		<pre>
-			<code>
+			<code class="prettyprint">
 func foo(T a, S b) R {
 	= bar(a, b)
 }
@@ -210,7 +210,7 @@ func bar(Float a, Float b) Int {
     <div id="examp-updown" class="step" data-x="-1000" data-y="13500">
 		<h3>Explicit Context Provided by Child and Parent</h3>
 		<pre>
-			<code>
+			<code class="prettyprint">
 func foo(T a, Int b) Int {
 	= barbar(a, b)
 }
@@ -224,7 +224,7 @@ func barbar(Int a, T b) {
     <div id="examp-partial" class="step" data-x="-1000" data-y="14500">
 		<h3>Problems: Deadlock (and how to solve it!)</h3>
 		<pre>
-			<code>
+			<code class="prettyprint">
 func foo(T a, Int b) T {
 	= bar(a, b)
 }
