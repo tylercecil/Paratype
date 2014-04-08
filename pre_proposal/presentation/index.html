@@ -71,8 +71,8 @@ stringMapper = map (++'a') ['dog', 'cat', 'ben']
         Type systems such as these are formalized as <b>System F</b> or
         <b>Polymorphic Lambda Calculus</b>.
 
-        Essentially, System F is a formalization of <i>Parametric
-        Polymorphism</i>.
+        Essentially, System F is a formalization of <i>parametric
+        polymorphism</i>.
 
         <!-- This is an example of what it means. We can talk about
              it there. We may want more examples -->
@@ -89,7 +89,7 @@ stringMapper = map (++'a') ['dog', 'cat', 'ben']
     </div>
 
     <div id="define-grammar" class="step" data-x="-1000" data-y="4500">
-        We have devolped the following Grammar (displayed informally):
+        We have devolped the following grammar (displayed informally):
         <pre>
             <code class="prettyprint">
 typeclass T inherits T1, T2, ...
@@ -106,7 +106,7 @@ func foo(Type var, Typevar var2, ...)
 
     <div id="define-io" class="step" data-x="-1000" data-y="5500">
         <b>Program Input:</b>
-        <br>    A program (may or may not be valid) with parametric types.
+        <br>    A program which may or may not be valid with parametric types.
 
         <br>
         <b>Program Output:</b>
@@ -163,7 +163,7 @@ func foo(Type var, Typevar var2, ...)
     </div>
 
     <div id="examples" class="step" data-x="-1000" data-y="10500">
-        NOT DATAFLOW!
+		<h3>NOT DATA FLOW!</h3>
     </div>
 
     <div id="examp-down" class="step" data-x="-1000" data-y="11500">
@@ -183,10 +183,10 @@ func foo(Type var, Typevar var2, ...)
         <pre>
             <code class="prettyprint">
 func foo(Int x, Int y) Int 
-    = bar(y)
+	= bar(y)
 
 func bar(T d) T 
-    = ...
+	= ...
             </code>
         </pre>
     </div>
