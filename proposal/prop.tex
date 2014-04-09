@@ -84,16 +84,33 @@ inference, code analysis}
 \section{Introduction}
 
 % problem and why important
+% compilers: e.g. just-in-time comp
 
 \section{Problem Definition}
 
 % grammar, input/output, type completion, lambda calculus (System F)
 
+Formally, our problem will be to take an input file of a specified grammar and
+generate an output of either failure due to indecidability or the same file
+with explicit types instead of type variables. In the process of doing this, we
+will also be performing typechecking. 
+
+We will define a few terms to use throughout the proposal:
+
+\begin{description}
+	\item[Type] A set of values. Types may implement type classes.
+	\item[Type class] A set of types. Typeclasses may inherit other type classes.
+	\item[Context] The set of explicit types and metainformation associated
+		with a function call: caller, parameter types, return type,
+		and a list of functions who care about the context.
+	\item[Partial context] A context where not all types are known explicitly.
+\end{description}
+
 \begin{lstlisting}[caption=Grammar displayed informally,style=paratype]
 typeclass T inherits T1, T2, ...
 
 type A implements T
-    = Primitive | (Primitive, Primitive, ...)
+    = Type | (Type, Type, ...)
 
 func foo(Type var, Typevar var2, ...)
     Type throws Error1, Error2, Error3
