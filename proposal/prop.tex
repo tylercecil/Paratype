@@ -1,0 +1,90 @@
+% THIS IS SIGPROC-SP.TEX - VERSION 3.1
+% WORKS WITH V3.2SP OF ACM_PROC_ARTICLE-SP.CLS
+% APRIL 2009
+%
+% It is an example file showing how to use the 'acm_proc_article-sp.cls' V3.2SP
+% LaTeX2e document class file for Conference Proceedings submissions.
+% ----------------------------------------------------------------------------------------------------------------
+% This .tex file (and associated .cls V3.2SP) *DOES NOT* produce:
+%       1) The Permission Statement
+%       2) The Conference (location) Info information
+%       3) The Copyright Line with ACM data
+%       4) Page numbering
+% ---------------------------------------------------------------------------------------------------------------
+
+\documentclass{acm_proc_article-sp}
+
+\begin{document}
+
+\title{Paratype}
+\subtitle{A Parallel Type Completion System}
+
+% You need the command \numberofauthors to handle the 'placement
+% and alignment' of the authors beneath the title.
+\numberofauthors{3} 
+\author{
+\alignauthor
+Tyler Cecil\\
+       \affaddr{New Mexico Tech}\\
+       \affaddr{801 Leroy Place}\\
+       \affaddr{Socorro, NM 87801 USA}\\
+       \email{tcecil@nmt.edu}
+\alignauthor
+Ben Turrubiates\\
+       \affaddr{New Mexico Tech}\\
+       \affaddr{801 Leroy Place}\\
+       \affaddr{Socorro, NM 87801 USA}\\
+       \email{bturrubi@nmt.edu}
+\alignauthor
+Christopher Koch\\
+       \affaddr{New Mexico Tech}\\
+       \affaddr{801 Leroy Place}\\
+       \affaddr{Socorro, NM 87801 USA}\\
+       \email{ckoch@cs.nmt.edu}
+}
+\date{\today}
+
+\maketitle
+\begin{abstract}
+\end{abstract}
+
+% A category with the (minimum) three required fields
+\category{H.4}{Information Systems Applications}{Miscellaneous}
+%A category including the fourth, optional field follows...
+\category{D.2.8}{Software Engineering}{Metrics}[complexity measures, performance measures]
+
+\terms{Theory}
+
+%\keywords{type theory, language theory, type completion, type checking, type
+%inference, code analysis} % NOT required for Proceedings
+
+\section{Introduction}
+
+% problem and why important
+
+\section{Problem Definition}
+
+% grammar, input/output, type completion, lambda calculus (System F)
+
+\section{Parallelization}
+
+% actor model, functions as nodes, DAG
+
+\section{Methods}
+
+% Google Go and why
+
+\section{Analysis and Model}
+
+% variables: number of functions, function calls, contexts, partial contexts,
+% indecidability, number of physical cores available, number of types and
+% typeclasses, etc
+
+\section{Team and Timeline}
+
+\section{Conclusion}
+
+% why appropriate project?
+
+%\balancecolumns
+\end{document}
