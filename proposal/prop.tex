@@ -14,8 +14,24 @@
 
 \documentclass{acm_proc_article-sp}
 \usepackage{listings,color,xcolor}
-\usepackage{syntax} %Used for BNF - T.I.C.
+\usepackage{pgf,tikz,pgfgantt}
+
+\usepackage{subcaption} 
+\usepackage{graphicx}
+\usepackage{float,dblfloatfix,fixltx2e} 
+\usepackage[format=plain,font=small,labelfont=bf]{caption}
+\usepackage[utf8]{inputenc}
+\usepackage{sytnax} %Used for BNF - T.I.C.
+
 \definecolor{dkgreen}{rgb}{0,0.6,0}
+
+\usepackage{MnSymbol}
+\lstset{
+	prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rhookswarrow}},
+	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rcurvearrowse\space}},
+	breaklines=true,
+	breakatwhitespace=true
+}
 
 \lstdefinestyle{paratype}{
 	breaklines=true,
@@ -36,6 +52,37 @@
 	captionpos=b,
 	xleftmargin=1.8em,
 	xrightmargin=0.5em
+}
+
+\newganttchartelement{chris}{
+	chris/.style={
+		color=black,
+		fill=red,
+		shape=ganttbar,
+		inner sep=0pt,
+		draw
+	},
+	chris height=0.5
+}
+\newganttchartelement{tyler}{
+	tyler/.style={
+		color=black,
+		fill=green,
+		shape=ganttbar,
+		inner sep=0pt,
+		draw
+	},
+	tyler height=.5
+}
+\newganttchartelement{ben}{
+	ben/.style={
+		color=black,
+		fill=blue,
+		shape=ganttbar,
+		inner sep=0pt,
+		draw
+	},
+	ben height=.5
 }
 
 \begin{document}
@@ -72,33 +119,53 @@ Christopher Koch\\
 \begin{abstract}
 \end{abstract}
 
-% A category with the (minimum) three required fields
-\category{H.4}{Information Systems Applications}{Miscellaneous}
-%A category including the fourth, optional field follows...
-\category{D.2.8}{Software Engineering}{Metrics}[complexity measures, performance measures]
+\category{F.3.3}{Studies of Program Constructs}{Type structure}
+\category{D.3.3}{Programming Languages}{Language Constructs and Features}
+\category{D.3.4}{Programming Languages}{Processors}
 
-\terms{Theory}
+% some out of 16 general terms!
+\terms{Design, Languages, Performance}
 
-%\keywords{type theory, language theory, type completion, type checking, type
-%inference, code analysis} % NOT required for Proceedings
+\keywords{type theory, language theory, type completion, type checking, type
+inference, code analysis}
 
 \section{Introduction}
 
 % problem and why important
+% compilers: e.g. just-in-time comp
 
 \section{Problem Definition}
 
 % grammar, input/output, type completion, lambda calculus (System F)
 
+Formally, our problem will be to take an input file of a specified grammar and
+generate an output of either failure due to indecidability or the same file
+with explicit types instead of type variables. In the process of doing this, we
+will also be performing typechecking. The goal is to find an explicit type for
+each function call without type conflicts.
+
+We define a few terms to use throughout the proposal:
+\begin{description}
+	\item[Type] A set of values. Types may implement type classes.
+	\item[Type class] A set of types. Typeclasses may inherit other type classes.
+	\item[Context] The set of explicit types and metainformation associated
+		with a function call: caller, parameter types, return type,
+		and a list of functions who care about the context.
+	\item[Partial context] A context where not all types are known explicitly.
+	\item[Resolution] Resolving a context means giving it explicit types.
+	\item[Parent (function)] Caller of a function.
+	\item[Child (function)] A function that is called by its parent function.
+\end{description}
+
 \begin{lstlisting}[caption=Grammar displayed informally,style=paratype]
 typeclass T inherits T1, T2, ...
 
 type A implements T
-    = Primitive | (Primitive, Primitive, ...)
+    = Type | (Type, Type, ...)
 
 func foo(Type var, Typevar var2, ...)
     Type throws Error1, Error2, Error3
-    = bar(baz(var), var2)
+    = bar(baz(var), var2) | Type
 \end{lstlisting}
 
 \begin{grammar}
@@ -145,11 +212,36 @@ func foo(Type var, Typevar var2, ...)
 
 \section{Parallelization}
 
+For parallelization, we propose to use an actor model: each processing unit
+acts as one function. For each function call, a node must resolve its contexts
+(its explicit types) through communicating with other nodes: its parents and
+children. Also, through composition of function calls an inner function of that
+composition may receive contexts through wrapping functions of that
+composition.
+
+An actor with explicit context may resolve other actors' partial contexts,
+while sometimes two actors with partial contexts can resolve each others'
+contexts.
+
 % actor model, functions as nodes, DAG
 
 \section{Methods}
 
 % Google Go and why
+
+Due to the actor model, the problem lends itself nicely to a distributed memory
+approach; however, it is usually commodity hardware that is used for
+compilation. Therefore, we propose to use Google Go due to its concept of
+\texttt{goroutines}. A \texttt{goroutine} acts like a process or a thread (like
+a processing unit). It is possible to pass references through shared memory,
+called \texttt{channels}, with \texttt{goroutines}: like message passing in
+shared memory. 
+
+We may even take advantage of the fact that not messages but references are
+passed through \texttt{channels}. This way, a specific context will update
+everywhere that it is referenced and we must only notify other actors that
+something changed instead of sending the context again.
+
 
 \section{Analysis and Model}
 
@@ -157,7 +249,46 @@ func foo(Type var, Typevar var2, ...)
 % indecidability, number of physical cores available, number of types and
 % typeclasses, etc
 
+\begin{figure*}
+	% spans two columns
+\centering
+\begin{ganttchart}[
+    vgrid,
+	time slot format/start date=2014-04-14,
+	time slot format=isodate,
+	bar height=.5,
+	y unit chart=0.6cm,
+    %today=9,
+    %bar/.append style={fill=green},
+	%bar tyler/.append style={fill=green},
+	%bar ben/.append style={fill=blue},
+	%bar chris/.append style={fill=red}
+]{2014-04-14}{2014-05-02}
+\gantttitlecalendar{month=name, day, week} \\
+\ganttbar{Proposal Due}{2014-04-14}{2014-04-14}\\
+\ganttchris{A Chris task}{2014-04-14}{2014-04-15}\\
+\ganttben{A Ben task}{2014-04-14}{2014-04-15}\\
+\gantttyler{A Tyler task}{2014-04-14}{2014-04-15}\\
+\ganttbar{A group task}{2014-04-14}{2014-04-15}
+\end{ganttchart}
+\vspace{3mm} % fix weird caption placement
+\caption{Timeline: tasks for Tyler (green), Ben (blue), Chris (red), and the
+group (white)}
+\label{fig:schedule}
+\end{figure*}
+
 \section{Team and Timeline}
+
+Our group consists of three team members: Tyler, Ben, and Chris.
+Figure~\ref{fig:schedule} depicts a Gantt chart that shows all team member's
+tasks. 
+
+We have developed a list of goals ordered by priority:
+\begin{description}
+	\item[First order goals]
+	\item[Second order goals]
+	\item[Third order goals]
+\end{description}
 
 \section{Conclusion}
 

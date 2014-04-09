@@ -1,9 +1,36 @@
 #Mac stuff
 *.DS_Store
 
+
+
 #Latex Files
 *.log
 *.pdf
 *.aux
 *.fdb_latexmk
 *.synctex.gz
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.lol
+
+*.bbl
+*.bcf
+*.blg
+*-blx.aux
+*-blx.bib
+*.run.xml
+
+# vim https://github.com/github/gitignore/blob/master/Global/vim.gitignore
+
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
+
