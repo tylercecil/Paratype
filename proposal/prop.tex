@@ -14,7 +14,23 @@
 
 \documentclass{acm_proc_article-sp}
 \usepackage{listings,color,xcolor}
+\usepackage{pgf,tikz,pgfgantt}
+
+\usepackage{subcaption} 
+\usepackage{graphicx}
+\usepackage{float,dblfloatfix,fixltx2e} 
+\usepackage[format=plain,font=small,labelfont=bf]{caption}
+\usepackage[utf8]{inputenc}
+
 \definecolor{dkgreen}{rgb}{0,0.6,0}
+
+\usepackage{MnSymbol}
+\lstset{
+	prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rhookswarrow}},
+	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rcurvearrowse\space}},
+	breaklines=true,
+	breakatwhitespace=true
+}
 
 \lstdefinestyle{paratype}{
 	breaklines=true,
@@ -35,6 +51,37 @@
 	captionpos=b,
 	xleftmargin=1.8em,
 	xrightmargin=0.5em
+}
+
+\newganttchartelement{chris}{
+	chris/.style={
+		color=black,
+		fill=red,
+		shape=ganttbar,
+		inner sep=0pt,
+		draw
+	},
+	chris height=0.5
+}
+\newganttchartelement{tyler}{
+	tyler/.style={
+		color=black,
+		fill=green,
+		shape=ganttbar,
+		inner sep=0pt,
+		draw
+	},
+	tyler height=.5
+}
+\newganttchartelement{ben}{
+	ben/.style={
+		color=black,
+		fill=blue,
+		shape=ganttbar,
+		inner sep=0pt,
+		draw
+	},
+	ben height=.5
 }
 
 \begin{document}
@@ -159,6 +206,35 @@ something changed instead of sending the context again.
 % typeclasses, etc
 
 \section{Team and Timeline}
+
+\begin{figure*}[!ht]
+	% spans two columns
+\centering
+\begin{ganttchart}[
+    vgrid,
+	time slot format/start date=2014-04-14,
+	time slot format=isodate,
+	bar height=.5,
+	y unit chart=0.6cm,
+    %today=9,
+    %bar/.append style={fill=green},
+	%bar tyler/.append style={fill=green},
+	%bar ben/.append style={fill=blue},
+	%bar chris/.append style={fill=red}
+]{2014-04-14}{2014-05-02}
+\gantttitlecalendar{month=name, day, week} \\
+\ganttbar{Proposal Due}{2014-04-14}{2014-04-14}\\
+\ganttchris{A Chris task}{2014-04-14}{2014-04-15}\\
+\ganttben{A Ben task}{2014-04-14}{2014-04-15}\\
+\gantttyler{A Tyler task}{2014-04-14}{2014-04-15}\\
+\ganttbar{A group task}{2014-04-14}{2014-04-15}
+\end{ganttchart}
+\vspace{3mm} % fix weird caption placement
+\caption{Timeline: tasks for Tyler (green), Ben (blue), Chris (red), and the
+group (white)}
+\label{fig:schedule}
+\end{figure*}
+
 
 \section{Conclusion}
 
