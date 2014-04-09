@@ -93,10 +93,10 @@ inference, code analysis}
 Formally, our problem will be to take an input file of a specified grammar and
 generate an output of either failure due to indecidability or the same file
 with explicit types instead of type variables. In the process of doing this, we
-will also be performing typechecking. 
+will also be performing typechecking. The goal is to find an explicit type for
+each function call without type conflicts.
 
-We will define a few terms to use throughout the proposal:
-
+We define a few terms to use throughout the proposal:
 \begin{description}
 	\item[Type] A set of values. Types may implement type classes.
 	\item[Type class] A set of types. Typeclasses may inherit other type classes.
@@ -104,6 +104,9 @@ We will define a few terms to use throughout the proposal:
 		with a function call: caller, parameter types, return type,
 		and a list of functions who care about the context.
 	\item[Partial context] A context where not all types are known explicitly.
+	\item[Resolution] Resolving a context means giving it explicit types.
+	\item[Parent (function)] Caller of a function.
+	\item[Child (function)] A function that is called by its parent function.
 \end{description}
 
 \begin{lstlisting}[caption=Grammar displayed informally,style=paratype]
@@ -114,16 +117,40 @@ type A implements T
 
 func foo(Type var, Typevar var2, ...)
     Type throws Error1, Error2, Error3
-    = bar(baz(var), var2)
+    = bar(baz(var), var2) | Type
 \end{lstlisting}
 
 \section{Parallelization}
+
+For parallelization, we propose to use an actor model: each processing unit
+acts as one function. For each function call, a node must resolve its contexts
+(its explicit types) through communicating with other nodes: its parents and
+children. Also, through composition of function calls an inner function of that
+composition may receive contexts through wrapping functions of that
+composition.
+
+An actor with explicit context may resolve other actors' partial contexts,
+while sometimes two actors with partial contexts can resolve each others'
+contexts.
 
 % actor model, functions as nodes, DAG
 
 \section{Methods}
 
 % Google Go and why
+
+Due to the actor model, the problem lends itself nicely to a distributed memory
+approach; however, it is usually commodity hardware that is used for
+compilation. Therefore, we propose to use Google Go due to its concept of
+\texttt{goroutines}. A \texttt{goroutine} acts like a process or a thread (like
+a processing unit). It is possible to pass references through shared memory,
+called \texttt{channels}, with \texttt{goroutines}: like message passing in
+shared memory. 
+
+We may even take advantage of the fact that not messages but references are
+passed through \texttt{channels}. This way, a specific context will update
+everywhere that it is referenced and we must only notify other actors that
+something changed instead of sending the context again.
 
 \section{Analysis and Model}
 
