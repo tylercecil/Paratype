@@ -13,6 +13,29 @@
 % ---------------------------------------------------------------------------------------------------------------
 
 \documentclass{acm_proc_article-sp}
+\usepackage{listings,color,xcolor}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+
+\lstdefinestyle{paratype}{
+	breaklines=true,
+	numbers=left,
+	basicstyle=\small\ttfamily,
+	keywords={func,inherits,implements,throws,type,typeclass},
+	keywordstyle=\bfseries\color{dkgreen}, 
+	commentstyle=\itshape\color{purple},
+	identifierstyle=\color{black}, 
+	stringstyle=\color{blue}, 
+	numberstyle=\scriptsize, 
+	frame=single,
+	frameround=tttt,
+	tabsize=4,
+	showstringspaces=false,
+	aboveskip=1.8em, 
+	belowskip=0em,
+	captionpos=b,
+	xleftmargin=1.8em,
+	xrightmargin=0.5em
+}
 
 \begin{document}
 
@@ -65,6 +88,17 @@ Christopher Koch\\
 \section{Problem Definition}
 
 % grammar, input/output, type completion, lambda calculus (System F)
+
+\begin{lstlisting}[caption=Grammar displayed informally,style=paratype]
+typeclass T inherits T1, T2, ...
+
+type A implements T
+    = Primitive | (Primitive, Primitive, ...)
+
+func foo(Type var, Typevar var2, ...)
+    Type throws Error1, Error2, Error3
+    = bar(baz(var), var2)
+\end{lstlisting}
 
 \section{Parallelization}
 
