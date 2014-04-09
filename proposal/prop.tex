@@ -21,6 +21,7 @@
 \usepackage{float,dblfloatfix,fixltx2e} 
 \usepackage[format=plain,font=small,labelfont=bf]{caption}
 \usepackage[utf8]{inputenc}
+\usepackage{syntax}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 
@@ -166,6 +167,48 @@ func foo(Type var, Typevar var2, ...)
     Type throws Error1, Error2, Error3
     = bar(baz(var), var2) | Type
 \end{lstlisting}
+
+\begin{grammar}
+ 
+<lower-letter> ::= `...';
+
+<upper-letter> ::= `...';
+
+<type-name> ::= <lower-letter>, \{<upper-letter> | <lower-letter>\};
+
+<error-name> ::= <lower-letter>, \{<upper-letter> | <lower-letter>\};
+
+<typclass-name> ::= <upper-letter>, \{<upper-letter> | <lower-letter>\};
+
+<type-var> ::= <upper-letter>, \{<upper-letter>\};
+
+<var> ::= <lower-letter>, \{<lower-letter>\}
+
+<func-name> ::= <lower-letter>, \{<upper-letter> | <lower-letter>\};
+
+<func-arg> ::= (<type-var> | <type-name>), ` ', <var>
+
+<func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
+
+<func-constraint> ::= <type-var>, ` to ', <typeclass-name>, \{` ',
+<typeclass-name>\};
+
+<func-constraints> ::= `constrain ', <func-constraint>, \{<func-constraint>\};
+
+<func-errors> ::= ` throws ', <error-name>, \{`, ', <error-name>\};
+
+<typeclass-inherit> ::= ` inherits ', <typeclass-name>, \{`, ', <typeclass-name>\};
+
+<type-implement> ::= ` implements ', <typeclass-name>, \{`,', <typeclass-name>\};
+
+<type-decl> ::= `type ', <type-name>,[type-implement];
+
+<typeclass-decl> ::= `typeclass ', <typeclass-name>, [typeclass-inherit];
+
+
+<func-decl> ::= `func ', <func-name>, [<func-constraints>], <func-args>, [<func-errors>];
+
+\end{grammar}
 
 \section{Parallelization}
 
