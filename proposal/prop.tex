@@ -177,18 +177,71 @@ func foo(Type var, Typevar var2, ...)
 
 \section{Parallelization}
 
-For parallelization, we propose to use an actor model: each processing unit
-acts as one function. For each function call, a node must resolve its contexts
-(its explicit types) through communicating with other nodes: its parents and
-children. Also, through composition of function calls an inner function of that
-composition may receive contexts through wrapping functions of that
-composition.
+Paratype will act as an \emph{Actor model} of computation for our type
+system: \emph{every function will be an actor}. We feel that not only will
+such a model be efficient for type resolution, but also acts as a
+natural solution to the problem. The type resolution process is
+essentially a conversation between functions: a function asks others for
+information about their type in order to reselve its own type. We take
+advantage of this natural communication, and process the problem in
+parallel.
 
-An actor with explicit context may resolve other actors' partial contexts,
-while sometimes two actors with partial contexts can resolve each others'
-contexts.
+Unfortunatly the communication is not linear (as shown by our
+preivious examples). This makes our task quite a bit more challanging
+(especially if we want to keep comunication overhead down)! Each node
+needs to communicated to its parents and children, send partial
+contexts, and update error types. Actors also need to know when their
+process should finish, compile, or error out. This complexity,
+however, is not all for not.
 
-% actor model, functions as nodes, DAG
+\subsection{Expected Speedup}
+
+Where does speedup come from, other than the parallel computation of
+contexts? Consider a chain of function calls, in which the last
+function in the chain has a type constraint. In the serial case, types
+would need to propigate all the way down to check for a type error. In
+the parallel case, however, contexts move both up and down,
+concurently; meeting half-way, we can check for type errors. This
+is only one factor (that only matters in invalid code). However, the
+chains themselves can now be evaluated in parallel. If we are even
+more clever, we can use shared memory for our contexts, allowing
+changes that occur at one end of a call graph to instantly propigate
+to all other nodes, without unnecessary message overhead. When
+considering the factors provide speedup for our application, it
+becomes apparent that our speedup is a function of many atributes ---
+graph width, number of functions, invalid versus valid code, ect\ldots
+These need to be considered when building our model.
+
+In some ways, speedup will be hard to measure --- we don't have a serial
+implementation for our toy language. Due to time constraints, we
+have omitted implicit typing from our grammar (not that our system
+could not handle it), preventing us from simply resolving haskell
+types, and compareing our results to \texttt{gch} and
+\texttt{hugs}. This acts as a future goal for us. At present, however,
+we will be able to varry the number of processing nodes being
+utilized, via \texttt{GOMAXPROCS}.
+
+\subsection{Expected Problems}
+
+Moving contexts around is no trivial task. A huge amount of
+bookkeeping will be required to prevent deadlock, hanging, unnecessary
+contexts, and host of other possible problems. Marking down where a
+context came from is not even triviall --- through composition of
+function calls an inner function of that composition may receive
+contexts through wrapping functions of that composition. While none of
+these problems are insurmountable, they require our code to be
+constructed carefully.
+
+%TODO: USE AN ACTUALL LABEL
+Our examples in Section 2 show a number of problems that must be
+resolved in our method. Perhaps the most daunting is knowing when
+execution should complete. More subtilly, however, are problems that
+come from having no ``main'' function. In a traditional compiler
+setting, we have a function to begin propegation from. We, however,
+evaluation all contexts in parallel. With this lack of starting point,
+some communications become ambiguous --- do we communicate down or up
+the call tree, do we wait to be signaled, ect\ldots These are all
+problems that will need to be resolved by Paratype.
 
 \section{Methods}
 
