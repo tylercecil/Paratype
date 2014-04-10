@@ -198,6 +198,38 @@ func barbar(Int a, T b) R
     = R
 \end{lstlisting}
 
+\begin{lstlisting}[caption=Need to Maintain Partial Contexts,style=paratype]
+func foo(Int x) T
+    = bar(x)
+
+func bar(T b) char
+    = 'a'
+
+func baz(Float b) T
+    = bar(b)
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Unhalting Contexts,style=paratype]
+func foo(T b) Int
+    = bar(b)
+
+func bar(T a) Int
+    = ...
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Errors,style=paratype]
+func foobar(T b) T
+    = foo(b)
+
+func foo(Int b) Int
+    = bar(b)
+
+func bar(T a) T throws WierdError
+    = ...
+\end{lstlisting}
+
+% ADD EXAMPLE OF NESTED FUNCTIONS
+
 \section{Parallelization}
 
 For parallelization, we propose to use an actor model: each processing unit
