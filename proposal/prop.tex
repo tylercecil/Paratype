@@ -43,7 +43,7 @@
 	aboveskip=1.8em,
 	belowskip=0em,
 	captionpos=b,
-	xleftmargin=0em,
+	xleftmargin=0.4em,
 	xrightmargin=0em,
 	keywordstyle=\bfseries\color{dkgreen},
 	commentstyle=\itshape\color{purple},
@@ -52,8 +52,8 @@
 	basicstyle=\small\ttfamily
 }
 
-\lstdefinestyle{paratype}{
-	keywords={func,inherits,implements,throws,type,typeclass},
+\lstdefinelanguage{Paratype}{
+	morekeywords={func,inherits,implements,throws,type,typeclass,contrain,to},
 }
 
 \newganttchartelement{chris}{
@@ -145,7 +145,7 @@ Christopher Koch\\
 \terms{Design, Languages, Performance}
 
 \keywords{type theory, language theory, type completion, type checking, type
-inference, code analysis}
+inference, code analysis, parallel}
 
 \section{Introduction}
 
@@ -156,7 +156,7 @@ Compile one time, run many times: that means compilers don't need to
 be fast, right? Lucky
 
 \section{Problem Definition}
-
+\label{sec:problem}
 % grammar, input/output, type completion, lambda calculus (System F)
 
 Formally, our problem will be to take an input file of a specified grammar and
@@ -177,9 +177,17 @@ We define a few terms to use throughout the proposal:
 	\item[Resolution] Resolving a context means giving it explicit types.
 	\item[Parent (function)] Caller of a function.
 	\item[Child (function)] A function that is called by its parent function.
+	\item[Type variable] A variable that ranges over types.
+	\item[Parametric polymorphism] A way to allow a language to express the
+		handling of functions and types homogeneously independent of their type
+		through the use of generic functions. Also known as generic
+		programming.
+	\item[Bounded parametric polymorphism] A method of providing extra
+		information about a generic data type. In Haskell, this is achieved by
+		creating a type class which types may implement.
 \end{description}
 
-\begin{lstlisting}[caption=Grammar displayed informally,style=paratype]
+\begin{lstlisting}[caption=Grammar displayed informally,language=Paratype]
 typeclass num inherits tc1, tc2, ...
 
 type int implements num
@@ -190,7 +198,7 @@ func foo(otype var, Typevar var2, ...)
     = bar(baz(var), var2) | otype
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by parents,style=paratype]
+\begin{lstlisting}[caption=Explicit context provided by parents,language=Paratype]
 func foo(int x, int y) int
     = bar(y)
 
@@ -198,7 +206,7 @@ func bar(T d) T
     = T
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by child,style=paratype]
+\begin{lstlisting}[caption=Explicit context provided by child,language=Paratype]
 func foo(T a, S b) R
     = bar(a, b)
 
@@ -206,7 +214,7 @@ func bar(float a, float b) int
     = int
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by child and parent,style=paratype]
+\begin{lstlisting}[caption=Explicit context provided by child and parent,language=Paratype]
 func foo(T a, int b) int
     = barbar(a, b)
 
@@ -214,7 +222,7 @@ func barbar(int a, T b) R
     = R
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Need to maintain partial contexts,style=paratype]
+\begin{lstlisting}[caption=Need to maintain partial contexts,language=Paratype]
 func foo(int x) T
     = bar(x)
 
@@ -225,7 +233,7 @@ func baz(float b) T
     = bar(b)
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Unhalting context resolution,style=paratype]
+\begin{lstlisting}[caption=Unhalting context resolution,language=Paratype]
 func foo(T b) int
     = bar(b)
 
@@ -233,7 +241,7 @@ func bar(T a) int
     = int
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Errors,style=paratype]
+\begin{lstlisting}[caption=Errors,language=Paratype]
 func foobar(T b) T
     = foo(b)
 
@@ -248,9 +256,9 @@ func bar(T a) T throws weirdError
 
 \section{Parallelization}
 
-Paratype will act as an \emph{Actor model} of computation for our type
+Paratype will act as an \emph{actor model} of computation for our type
 system: \emph{every function will be an actor}. We feel that not only will
-such a model be efficient for type resolution, but also acts as a
+such a model be efficient for type resolution, but it also acts as a
 natural solution to the problem. The type resolution process is
 essentially a conversation between functions: a function asks others for
 information about their type in order to resolve its own type. We take
@@ -280,7 +288,7 @@ changes that occur at one end of a call graph to instantly propagate
 to all other nodes without unnecessary message overhead. When
 considering the factors that provide speedup for our application, it
 becomes apparent that our speedup is a function of many attributes:
-graph width, number of functions, invalid versus valid code, etc.
+call graph width, number of functions, invalid versus valid code, etc.
 These need to be considered when building our model.
 
 In some ways, speedup will be hard to measure: we do not have a serial
@@ -304,7 +312,7 @@ these problems are insurmountable, they require our code to be
 constructed carefully.
 
 %TODO: USE AN ACTUALL LABEL
-Our examples in Section 2 show a number of problems that must be
+Our examples in Section~\ref{sec:problem} show a number of problems that must be
 resolved in our method. Perhaps the most daunting is knowing when
 execution should complete. More subtle, however, are problems that
 come from having no ``main'' function. In a traditional compiler
@@ -322,29 +330,64 @@ Due to the actor model, the problem lends itself nicely to a distributed memory
 approach; however, it is usually commodity hardware that is used for
 compilation. Therefore, we propose to use Google Go due to its concept of
 \texttt{goroutines}. A \texttt{goroutine} is a lightweight thread that is
-managed by Go during runtime. 
+managed by Go during runtime.
 
-\begin{lstlisting}[caption=Small \texttt{goroutine} example,language=Go]
-func node(name string) {
+\begin{lstlisting}[caption=Small \texttt{goroutine} example with
+\texttt{channels},language=Go,label=lst:goroutine]
+func node(name string, c chan string) {
 	fmt.Println("I'm node ", name)
+	/* send message to c 
+	 * (blocks until receiver is ready)
+	 */
+	c <- strings.Join(name, " has a message for you.")
 }
 
 func main() {
-	go node("abc")
+	// unbuffered channel
+	c := make(chan string)
+	go node("abc", c)
+	// receive message from c (blocks)
+	a := <-c
+	fmt.Println(a)
 }
 \end{lstlisting}
 
-It is possible to pass references through shared
-memory, called \texttt{channels}, with \texttt{goroutines}: like message
-passing in shared memory.
+It is possible to pass references through shared memory, called
+\texttt{channels}, with \texttt{goroutines}: like message passing in shared
+memory. This can be seen in Listing~\ref{lst:goroutine}. Of course, unlike in
+the example, the channel may also be buffered and would thus only block sends
+when the buffer is full and receives when the buffer is empty. This is one of
+the reasons that we chose Google Go: it allows us to use message passing
+without the overhead of actually sending the message.
 
-We may even take advantage of the fact that not messages but references are
-passed through \texttt{channels}. This way, a specific context will update
-everywhere that it is referenced and we must only notify other actors that
-something changed instead of sending the context again. 
-
+The \texttt{goroutines} fit the actor model of type resolution nicely since
+the threads are lightweight and communication is easy to arrange. We may even
+take advantage of the fact that not messages but references are passed through
+\texttt{channels}. This way, a specific context will update everywhere that it
+is referenced and we must only notify other actors that something changed
+instead of sending the context again. This reduces communication overhead while
+still functioning as a message passing system.
 
 \section{Analysis and Model}
+
+We will show the correctness of our program by having an input generator that
+generates both a source file and a compiled file. We can then compare the
+generated compiled file to the file that our program generates. 
+
+Our program can be modeled with many variables: number of functions, number of
+function calls, number of contexts, number of total partial contexts in
+existence during runtime, the number of physical cores available, the number of
+types and typeclasses, call graph width, and undecidability among many other
+things. 
+
+The model needs to make a distinction between runtime for valid and invalid
+code: when a type completion becomes undecidable, the program will likely
+behave much differently than when it is resolvable. It is also likely that some
+parameters will unexpectedly influence the model: while the number of functions
+determines the number of threads, it is the number of function calls that
+determines how many communications will happen. Yet, if we limit the number of
+processing nodes via \texttt{GOMAXPROCS}, the number of functions will take
+greater influence on running time.
 
 % variables: number of functions, function calls, contexts, partial contexts,
 % undecidability, number of physical cores available, number of types and
