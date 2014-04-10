@@ -132,7 +132,7 @@ Christopher Koch\\
 \terms{Design, Languages, Performance}
 
 \keywords{type theory, language theory, type completion, type checking, type
-inference, code analysis}
+inference, code analysis, parallel}
 
 \section{Introduction}
 
@@ -140,7 +140,7 @@ inference, code analysis}
 % compilers: e.g. just-in-time comp
 
 \section{Problem Definition}
-
+\label{sec:problem}
 % grammar, input/output, type completion, lambda calculus (System F)
 
 Formally, our problem will be to take an input file of a specified grammar and
@@ -288,7 +288,7 @@ these problems are insurmountable, they require our code to be
 constructed carefully.
 
 %TODO: USE AN ACTUALL LABEL
-Our examples in Section 2 show a number of problems that must be
+Our examples in Section~\ref{sec:problem} show a number of problems that must be
 resolved in our method. Perhaps the most daunting is knowing when
 execution should complete. More subtle, however, are problems that
 come from having no ``main'' function. In a traditional compiler
