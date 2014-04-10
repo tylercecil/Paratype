@@ -161,8 +161,14 @@ We define a few terms to use throughout the proposal:
 	\item[Resolution] Resolving a context means giving it explicit types.
 	\item[Parent (function)] Caller of a function.
 	\item[Child (function)] A function that is called by its parent function.
-    \item[Parametric Polymorphism] A way to allow a language to express the handling of functions and types homogeneously independent of their type through the use of generic functions. Also known as generic programming.
-    \item[Bounded Parametric Polymorphism] A method of providing extra information about a generic data type. In Haskell this is achieved by creating a type class which types implement.
+	\item[Type variable] A variable that ranges over types.
+	\item[Parametric polymorphism] A way to allow a language to express the
+		handling of functions and types homogeneously independent of their type
+		through the use of generic functions. Also known as generic
+		programming.
+	\item[Bounded parametric polymorphism] A method of providing extra
+		information about a generic data type. In Haskell, this is achieved by
+		creating a type class which types may implement.
 \end{description}
 
 \begin{lstlisting}[caption=Grammar displayed informally,language=Paratype]
@@ -266,7 +272,7 @@ changes that occur at one end of a call graph to instantly propagate
 to all other nodes without unnecessary message overhead. When
 considering the factors that provide speedup for our application, it
 becomes apparent that our speedup is a function of many attributes:
-graph width, number of functions, invalid versus valid code, etc.
+call graph width, number of functions, invalid versus valid code, etc.
 These need to be considered when building our model.
 
 In some ways, speedup will be hard to measure: we do not have a serial
@@ -347,6 +353,25 @@ instead of sending the context again. This reduces communication overhead while
 still functioning as a message passing system.
 
 \section{Analysis and Model}
+
+We will show the correctness of our program by having an input generator that
+generates both a source file and a compiled file. We can then compare the
+generated compiled file to the file that our program generates. 
+
+Our program can be modeled with many variables: number of functions, number of
+function calls, number of contexts, number of total partial contexts in
+existence during runtime, the number of physical cores available, the number of
+types and typeclasses, call graph width, and undecidability among many other
+things. 
+
+The model needs to make a distinction between runtime for valid and invalid
+code: when a type completion becomes undecidable, the program will likely
+behave much differently than when it is resolvable. It is also likely that some
+parameters will unexpectedly influence the model: while the number of functions
+determines the number of threads, it is the number of function calls that
+determines how many communications will happen. Yet, if we limit the number of
+processing nodes via \texttt{GOMAXPROCS}, the number of functions will take
+greater influence on running time.
 
 % variables: number of functions, function calls, contexts, partial contexts,
 % undecidability, number of physical cores available, number of types and
