@@ -150,8 +150,38 @@ inference, code analysis, parallel}
 % problem and why important
 % compilers: e.g. just-in-time comp
 
-Compile one time, run many times: that means compilers don't need to
-be fast, right? Lucky
+``Compile one time, run many times: that means compilers don't need to
+be fast, right?'' Lucky no software engineers think this way. In fact,
+compilation speed is a concern of many budding langauges. Asside from
+lexing (typically the slowest part of compilation)\cite{bright:blog},
+modern languages spend an embarising amount of time resolving
+types\cite{junaidu:phd}. This is principally due to the adoption of
+the \emph{System F} formilization in modern strongly typed
+languages. What's more, many languages have type inference or even
+type bounds, further complicating the processes. Unfortunatly, 
+type evaluation serves as the foundation for automated theorem
+provers, and other logic analysis systems. Even within the compilation
+domain, interpreted languages and JIT languages need type resolution
+much faster than is currently being provided; type evaluation needs to
+be expidited.
+
+To this end, we propose the development of Paratype: an actor model of
+type evaluation. As will be aparent shortly, most type evaluation
+procedures can be described as a conversation between functions; each
+function communicates information about its type to ``neighboring''
+functions. As the chatter subsides, we are left with all functions
+knowing their types (or a function knowing this cannot compile). Most
+systems involve walking through the tree of this conversation. We
+propose to let this natural model of communication play itself
+out. Using a shared memory message passing system, Paratype will allow
+functions to be actors and let the conversation happen.
+
+Initially we are only going to use a toy grammar, defined in this
+proposal. Our grammer will include down-types (normal variables), and
+up-types (error types) in order to cover most use casses in modern
+type systesm. Perhaps one day Paratype can be integrated into a
+project like the Haskell compiler \texttt{ghc}.
+
 
 \section{Problem Definition}
 \label{sec:problem}
@@ -178,14 +208,14 @@ We define a few terms to use throughout the proposal:
 	\item[Type variable] A variable that ranges over types.
 	\item[Parametric polymorphism] A way to allow a language to express the
 		handling of functions and types homogeneously independent of their type
-		through the use of generic functions. Also known as generic
+		through the use of generic functions, also known as generic
 		programming.
 	\item[Bounded parametric polymorphism] A method of providing extra
 		information about a generic data type. In Haskell, this is achieved by
 		creating a type class which types may implement.
 \end{description}
 
-Listing \ref{lst:informalg} shows an informal example of our grammar. It is a
+Listing~\ref{lst:informalg} shows an informal example of our grammar. It is a
 grammar for a simple functional language that provides bounded parametric
 polymorphism through type classes. This allows expressing functions in terms of
 generic types while still maintaining the same behavior. This use of type
@@ -319,7 +349,7 @@ advantage of this natural communication and process the problem in
 parallel.
 
 Unfortunately, the communication is not linear as shown by our
-previous examples. This makes our task quite a bit more challenging;
+previous examples. This makes our task quite a bit more challenging,
 especially if we want to keep communication overhead low! Each node
 needs to communicate to its parents and children, send partial
 contexts, and update error types. Actors also need to know when their
@@ -367,7 +397,7 @@ constructed carefully.
 %TODO: USE AN ACTUALL LABEL
 Our examples in Section~\ref{sec:problem} show a number of problems that must be
 resolved in our method. Perhaps the most daunting is knowing when
-execution should complete. More subtle, however, are problems that
+execution is complete. More subtle, however, are problems that
 come from having no ``main'' function. In a traditional compiler
 setting, we have a function to begin propagation from. We, however,
 evaluate all contexts in parallel. With this lack of a starting point,
@@ -408,8 +438,8 @@ func main() {
 It is possible to pass references through shared memory, called
 \texttt{channels}, with \texttt{goroutines}: like message passing in shared
 memory. This can be seen in Listing~\ref{lst:goroutine}. Of course, unlike in
-the example, the channel may also be buffered and would thus only block sends
-when the buffer is full and receives when the buffer is empty. This is one of
+the example, the channel may also be buffered and would thus only block sending
+when the buffer is full and receiving when the buffer is empty. This is one of
 the reasons that we chose Google Go: it allows us to use message passing
 without the overhead of actually sending the message.
 
@@ -424,8 +454,9 @@ still functioning as a message passing system.
 \section{Analysis and Model}
 
 We will show the correctness of our program by having an input generator that
-generates both a source file and a compiled file. We can then compare the
-generated compiled file to the file that our program generates.
+generates both a source file and a compiled file with explicit types. We can
+then compare the generated compiled file to the file that our program
+generates. 
 
 Our program can be modeled with many variables: number of functions, number of
 function calls, number of contexts, number of total partial contexts in
@@ -460,11 +491,11 @@ greater influence on running time.
 	%bar tyler/.append style={fill=green},
 	%bar ben/.append style={fill=blue},
 	%bar chris/.append style={fill=red}
-]{2014-04-14}{2014-05-02}
-\gantttitlecalendar{month=name, day, week} \\
-\ganttbar{Proposal due}{2014-04-14}{2014-04-14}\\
-\ganttbar{Design objects and communications}{2014-04-15}{2014-04-18}\\
-\ganttchris{Error types}{2014-04-14}{2014-04-15}\\
+]{2014-04-09}{2014-05-02}
+\gantttitlecalendar{month=name, day, week=15} \\
+\ganttbar{Proposal due}{2014-04-09}{2014-04-09}\\
+\ganttbar{Design objects and communications}{2014-04-09}{2014-04-14}\\
+\ganttchris{Error types}{2014-04-09}{2014-04-15}\\
 \ganttben{}{2014-04-14}{2014-04-15}\\
 \gantttyler{A Tyler task}{2014-04-14}{2014-04-15}\\
 \ganttbar{A group task}{2014-04-14}{2014-04-15}
@@ -478,7 +509,7 @@ group (white)}
 \section{Team and Timeline}
 
 Our group consists of three team members: Tyler, Ben, and Chris.
-Figure~\ref{fig:schedule} depicts a Gantt chart that shows all team member's
+Figure~\ref{fig:schedule} depicts a Gantt chart that shows all team members'
 tasks.
 
 We have developed a list of goals ordered by priority:
