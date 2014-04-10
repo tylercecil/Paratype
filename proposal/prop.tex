@@ -231,11 +231,12 @@ func foo(otype var, Typevar var2, ...)
     = bar(baz(var), var2) | otype
 \end{lstlisting}
 
-An example of a partial context is shown in listing \ref{lst:cbyparent}. The
-function \texttt{bar} is declared as accepting and returning a \texttt{T} type.
-This introduces a partial context due to \texttt{T} being a type variable. The
-parameter type for \texttt{bar} is provided by its parent function
-\texttt{foo}. This also completes the return type of \texttt{bar}.
+An example of a partial context is shown in Listing~\ref{lst:cbyparent}. The
+function \lstinline!bar! is declared as accepting and returns a \lstinline!T!
+type.  This introduces a partial context due to \lstinline!T! being a type
+variable. The parameter type for \lstinline!bar! is provided by its parent
+function \lstinline!foo!. This also completes the return type of
+\lstinline!bar!.
 
 \begin{lstlisting}[caption=Explicit context provided by parents,language=Paratype,label=lst:cbyparent]
 func foo(int x, int y) int
@@ -246,12 +247,12 @@ func bar(T d) T
 \end{lstlisting}
 
 Types for partial contexts can be provided by both the parent and the child.
-Consider the example shown in listing \ref{lst:cbychild}. Function \texttt{foo}
-is defined as returning an \texttt{R} type. The function definition contains
-the result of calling the \texttt{bar} function as the return value. The
-\texttt{bar} function is defined as having an \texttt{int} return type. Since
-\texttt{foo} returns the value of calling \texttt{bar} it also has a return
-type of \texttt{int}.
+Consider the example shown in Listing~\ref{lst:cbychild}. Function
+\lstinline!foo!  is defined as returning an \lstinline!R! type. The function
+definition contains the result of calling \lstinline!bar! as the return value.
+\lstinline!bar! is defined as having an \lstinline!int! return type. Since
+\lstinline!foo! returns the value of calling \lstinline!bar! it also has a
+return type of \lstinline!int!.
 
 \begin{lstlisting}[caption=Explicit context provided by child,language=Paratype,label=lst:cbychild]
 func foo(T a, S b) R
@@ -263,14 +264,15 @@ func bar(float a, float b) int
 
 In the previous examples all partial contexts have been resolved by either the
 parent or the child. There are situations where they can mutually provide
-contexts for each other. One example of this is shown in Listing
-\ref{lst:cbyboth}. In this example function \texttt{foo} is providing the type
-of the second parameter for function \texttt{barbar}. Function \texttt{barbar}
-also provides the type of the first parameter for function \texttt{foo}. Notice
-that function \texttt{barbar} is defined as returning a type variable
-\texttt{R}. Since \texttt{foo} returns an int type and its return value is a
-call to \texttt{barbar}, this resolves the return type for \texttt{barbar}. The
-evaluation of these partial contexts is a non-trivial task.
+contexts for each other. One example of this is shown in
+Listing~\ref{lst:cbyboth}. In this example \lstinline!foo! is providing
+the type of the second parameter for function \lstinline!barbar!.
+\lstinline!barbar!  also provides the type of the first parameter for function
+\lstinline!foo!. Notice that function \lstinline!barbar! is defined as
+returning a type variable \lstinline!R!. Since \lstinline!foo! returns an
+\lstinline!int! type and its return value is a call to \lstinline!barbar!; this
+resolves the return type for \lstinline!barbar!. The evaluation of these
+partial contexts is a non-trivial task.
 
 \begin{lstlisting}[caption=Explicit context provided by child and parent,language=Paratype,label=lst:cbyboth]
 func foo(T a, int b) int
@@ -282,14 +284,14 @@ func barbar(int a, T b) R
 
 Another problem that type variables introduce is the need to maintain partial
 contexts. Multiple fully evaluated contexts may exist in the end and may not be
-the result of type errors. An example of this is shown in Listing
-\ref{lst:partial}. The \texttt{bar} function accepts a type variable \texttt{b}
-as an input parameter. The function \texttt{foo} provides a context for
-\texttt{bar} in which \texttt{b} is of type \texttt{int}. At this point
-\texttt{bar} now has a fully evaluated context, but \texttt{baz} can also
-complete the partial context with \texttt{b} resolving to type \texttt{float}.
-In this situation these are both valid and should not be considered a type
-error.
+the result of type errors. An example of this is shown in
+Listing~\ref{lst:partial}. The \lstinline!bar! function accepts a type variable
+\lstinline!b! as an input parameter. The function \lstinline!foo! provides a
+context for \lstinline!bar! in which \lstinline!b! is of type \lstinline!int!.
+At this point \lstinline!bar! now has a fully evaluated context, but
+\lstinline!baz! can also complete the partial context with \lstinline!b!
+resolving to type \lstinline!float!.  In this situation these are both valid
+and should not be considered a type error.
 
 \begin{lstlisting}[caption=Need to maintain partial contexts,language=Paratype,label=lst:partial]
 func foo(int x) T
@@ -304,11 +306,12 @@ func baz(float b) T
 
 Although contexts can be provided by both the parent and the child, there are
 situations where there is not enough information to resolve a context. Consider
-listing \ref{lst:unhalting}: \texttt{bar} accepts a type variable as a
-parameter. The context provided by its calling function \texttt{foo} resolves
-the parameter as being the local variable \texttt{b}. This is problematic due
-to \texttt{b} also being a type variable. In this example there is not enough
-information to resolve a full context for \texttt{bar}.
+Listing~\ref{lst:unhalting}: \lstinline!bar! accepts a type variable as a
+parameter. The context provided by its calling function \lstinline!foo!
+resolves the parameter as being the local variable \lstinline!b!. This is
+problematic due to \lstinline!b! also being a type variable. In this example
+there is not enough information to resolve a full context for either
+\lstinline!bar! or \lstinline!foo!.
 
 \begin{lstlisting}[caption=Unhalting context resolution,language=Paratype,label=lst:unhalting]
 func foo(T b) int
@@ -319,9 +322,9 @@ func bar(T a) int
 \end{lstlisting}
 
 Introducing errors into the grammar adds more complexity since they need to
-propagate up call stack. In the example shown in listing \ref{lst:errors}, all
-parent functions of \texttt{bar} need to have \texttt{weirdError} in their
-fully resolved contexts.
+propagate up the call stack. In the example shown in Listing~\ref{lst:errors},
+all parent functions of \lstinline!bar! need to have \lstinline!weirdError! in
+their fully resolved contexts.
 
 \begin{lstlisting}[caption=Errors,language=Paratype,label=lst:errors]
 func foobar(T b) T
