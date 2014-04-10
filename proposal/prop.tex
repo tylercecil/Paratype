@@ -544,7 +544,13 @@ We have developed a list of goals ordered by priority:
     <typeclass-decl> ::= `typeclass ',
     \\<typeclass-name>, [<typeclass-inherit>];
 
-    <func-decl> ::= `func ', <func-name>, [<func-constraints>], <func-args>, [<func-errors>];
+    <expr> ::= <type-name>
+    \alt <type-var>
+    \alt <func-name>, `(', [\{<expr>, `,'\}, <expr>], `)'
+
+    <func-sig> ::= `func ', <func-name>, [<func-constraints>], <func-args>, [<func-errors>];
+
+    <func-dec> ::= <func-sig>, `\textbackslash n =', <expr> 
 
     \end{grammar}
 
