@@ -150,8 +150,38 @@ inference, code analysis, parallel}
 % problem and why important
 % compilers: e.g. just-in-time comp
 
-Compile one time, run many times: that means compilers don't need to
-be fast, right? Lucky
+``Compile one time, run many times: that means compilers don't need to
+be fast, right?'' Lucky no software engineers think this way. In fact,
+compilation speed is a concern of many budding langauges. Asside from
+lexing (typically the slowest part of compilation)\cite{bright:blog},
+modern languages spend an embarising amount of time resolving
+types\cite{junaidu:phd}. This is principally due to the adoption of
+the \emph{System F} formilization in modern strongly typed
+languages. What's more, many languages have type inference or even
+type bounds, further complicating the processes. Unfortunatly, 
+type evaluation serves as the foundation for automated theorem
+provers, and other logic analysis systems. Even within the compilation
+domain, interpreted languages and JIT languages need type resolution
+much faster than is currently being provided; type evaluation needs to
+be expidited.
+
+To this end, we propose the development of Paratype: an actor model of
+type evaluation. As will be aparent shortly, most type evaluation
+procedures can be described as a conversation between functions; each
+function communicates information about its type to ``neighboring''
+functions. As the chatter subsides, we are left with all functions
+knowing their types (or a function knowing this cannot compile). Most
+systems involve walking through the tree of this conversation. We
+propose to let this natural model of communication play itself
+out. Using a shared memory message passing system, Paratype will allow
+functions to be actors and let the conversation happen.
+
+Initially we are only going to use a toy grammar, defined in this
+proposal. Our grammer will include down-types (normal variables), and
+up-types (error types) in order to cover most use casses in modern
+type systesm. Perhaps one day Paratype can be integrated into a
+project like the Haskell compiler \texttt{ghc}.
+
 
 \section{Problem Definition}
 \label{sec:problem}
