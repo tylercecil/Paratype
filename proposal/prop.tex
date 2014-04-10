@@ -165,18 +165,18 @@ We define a few terms to use throughout the proposal:
 \end{description}
 
 \begin{lstlisting}[caption=Grammar displayed informally,style=paratype]
-typeclass T inherits T1, T2, ...
+typeclass num inherits tc1, tc2, ...
 
-type A implements T
-    = Type | (Type, Type, ...)
+type int implements tc
+    = type | (type, type, ...)
 
-func foo(Type var, Typevar var2, ...)
-    Type throws Error1, Error2, Error3
-    = bar(baz(var), var2) | Type
+func foo(type var, Typevar var2, ...)
+    type throws error1, error2, error3
+    = bar(baz(var), var2) | type
 \end{lstlisting}
 
 \begin{lstlisting}[caption=Explicit Context Provided by Parents,style=paratype]
-func foo(Int x, Int y) Int
+func foo(int x, int y) int
     = bar(y)
 
 func bar(T d) T
@@ -187,46 +187,46 @@ func bar(T d) T
 func foo(T a, S b) R
     = bar(a, b)
 
-func bar(Float a, Float b) Int
+func bar(float a, float b) int
     = Int
 \end{lstlisting}
 
 \begin{lstlisting}[caption=Explicit Context Provided by Child and Parent,style=paratype]
-func foo(T a, Int b) Int
+func foo(T a, int b) int
     = barbar(a, b)
 
-func barbar(Int a, T b) R
+func barbar(int a, T b) R
     = R
 \end{lstlisting}
 
 \begin{lstlisting}[caption=Need to Maintain Partial Contexts,style=paratype]
-func foo(Int x) T
+func foo(int x) T
     = bar(x)
 
 func bar(T b) char
-    = 'a'
+    = char
 
-func baz(Float b) T
+func baz(float b) T
     = bar(b)
 \end{lstlisting}
 
 \begin{lstlisting}[caption=Unhalting Contexts,style=paratype]
-func foo(T b) Int
+func foo(T b) int
     = bar(b)
 
-func bar(T a) Int
-    = ...
+func bar(T a) int
+    = int
 \end{lstlisting}
 
 \begin{lstlisting}[caption=Errors,style=paratype]
 func foobar(T b) T
     = foo(b)
 
-func foo(Int b) Int
+func foo(int b) int
     = bar(b)
 
-func bar(T a) T throws WierdError
-    = ...
+func bar(T a) T throws weirdError
+    = T
 \end{lstlisting}
 
 % ADD EXAMPLE OF NESTED FUNCTIONS
