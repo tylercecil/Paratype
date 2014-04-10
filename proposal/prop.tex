@@ -208,14 +208,20 @@ We define a few terms to use throughout the proposal:
 	\item[Type variable] A variable that ranges over types.
 	\item[Parametric polymorphism] A way to allow a language to express the
 		handling of functions and types homogeneously independent of their type
-		through the use of generic functions. Also known as generic
+		through the use of generic functions, also known as generic
 		programming.
 	\item[Bounded parametric polymorphism] A method of providing extra
 		information about a generic data type. In Haskell, this is achieved by
 		creating a type class which types may implement.
 \end{description}
 
-\begin{lstlisting}[caption=Grammar displayed informally,language=Paratype]
+Listing~\ref{lst:informalg} shows an informal example of our grammar. It is a
+grammar for a simple functional language that provides bounded parametric
+polymorphism through type classes. This allows expressing functions in terms of
+generic types while still maintaining the same behavior. This use of type
+variables introduces the need for partial contexts.
+
+\begin{lstlisting}[caption=Grammar displayed informally,language=Paratype,label=lst:informalg]
 typeclass num inherits tc1, tc2, ...
 
 type int implements num
@@ -226,7 +232,7 @@ func foo(otype var, Typevar var2, ...)
     = bar(baz(var), var2) | otype
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by parents,language=Paratype]
+\begin{lstlisting}[caption=Explicit context provided by parents,language=Paratype,label=lst:cbyparent]
 func foo(int x, int y) int
     = bar(y)
 
@@ -234,7 +240,7 @@ func bar(T d) T
     = T
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by child,language=Paratype]
+\begin{lstlisting}[caption=Explicit context provided by child,language=Paratype,label=lst:cbychild]
 func foo(T a, S b) R
     = bar(a, b)
 
@@ -242,7 +248,7 @@ func bar(float a, float b) int
     = int
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by child and parent,language=Paratype]
+\begin{lstlisting}[caption=Explicit context provided by child and parent,language=Paratype,label=lst:cbyboth]
 func foo(T a, int b) int
     = barbar(a, b)
 
@@ -250,7 +256,7 @@ func barbar(int a, T b) R
     = R
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Need to maintain partial contexts,language=Paratype]
+\begin{lstlisting}[caption=Need to maintain partial contexts,language=Paratype,label=lst:partial]
 func foo(int x) T
     = bar(x)
 
@@ -261,7 +267,7 @@ func baz(float b) T
     = bar(b)
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Unhalting context resolution,language=Paratype]
+\begin{lstlisting}[caption=Unhalting context resolution,language=Paratype,label=lst:unhalting]
 func foo(T b) int
     = bar(b)
 
@@ -269,7 +275,7 @@ func bar(T a) int
     = int
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Errors,language=Paratype]
+\begin{lstlisting}[caption=Errors,language=Paratype,label=lst:errors]
 func foobar(T b) T
     = foo(b)
 
@@ -364,7 +370,7 @@ managed by Go during runtime.
 \texttt{channels},language=Go,label=lst:goroutine]
 func node(name string, c chan string) {
 	fmt.Println("I'm node ", name)
-	/* send message to c 
+	/* send message to c
 	 * (blocks until receiver is ready)
 	 */
 	c <- strings.Join(name, " has a message for you.")
@@ -399,8 +405,9 @@ still functioning as a message passing system.
 \section{Analysis and Model}
 
 We will show the correctness of our program by having an input generator that
-generates both a source file and a compiled file. We can then compare the
-generated compiled file to the file that our program generates. 
+generates both a source file and a compiled file with explicit types. We can
+then compare the generated compiled file to the file that our program
+generates. 
 
 Our program can be modeled with many variables: number of functions, number of
 function calls, number of contexts, number of total partial contexts in
@@ -435,11 +442,11 @@ greater influence on running time.
 	%bar tyler/.append style={fill=green},
 	%bar ben/.append style={fill=blue},
 	%bar chris/.append style={fill=red}
-]{2014-04-14}{2014-05-02}
-\gantttitlecalendar{month=name, day, week} \\
-\ganttbar{Proposal due}{2014-04-14}{2014-04-14}\\
-\ganttbar{Design objects and communications}{2014-04-15}{2014-04-18}\\
-\ganttchris{Error types}{2014-04-14}{2014-04-15}\\
+]{2014-04-09}{2014-05-02}
+\gantttitlecalendar{month=name, day, week=15} \\
+\ganttbar{Proposal due}{2014-04-09}{2014-04-09}\\
+\ganttbar{Design objects and communications}{2014-04-09}{2014-04-14}\\
+\ganttchris{Error types}{2014-04-09}{2014-04-15}\\
 \ganttben{}{2014-04-14}{2014-04-15}\\
 \gantttyler{A Tyler task}{2014-04-14}{2014-04-15}\\
 \ganttbar{A group task}{2014-04-14}{2014-04-15}
@@ -453,7 +460,7 @@ group (white)}
 \section{Team and Timeline}
 
 Our group consists of three team members: Tyler, Ben, and Chris.
-Figure~\ref{fig:schedule} depicts a Gantt chart that shows all team member's
+Figure~\ref{fig:schedule} depicts a Gantt chart that shows all team members'
 tasks.
 
 We have developed a list of goals ordered by priority:
