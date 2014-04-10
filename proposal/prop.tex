@@ -52,8 +52,8 @@
 	basicstyle=\small\ttfamily
 }
 
-\lstdefinestyle{paratype}{
-	keywords={func,inherits,implements,throws,type,typeclass},
+\lstdefinelanguage{Paratype}{
+	morekeywords={func,inherits,implements,throws,type,typeclass,contrain,to},
 }
 
 \newganttchartelement{chris}{
@@ -163,7 +163,7 @@ We define a few terms to use throughout the proposal:
 	\item[Child (function)] A function that is called by its parent function.
 \end{description}
 
-\begin{lstlisting}[caption=Grammar displayed informally,style=paratype]
+\begin{lstlisting}[caption=Grammar displayed informally,language=Paratype]
 typeclass num inherits tc1, tc2, ...
 
 type int implements num
@@ -174,7 +174,7 @@ func foo(otype var, Typevar var2, ...)
     = bar(baz(var), var2) | otype
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by parents,style=paratype]
+\begin{lstlisting}[caption=Explicit context provided by parents,language=Paratype]
 func foo(int x, int y) int
     = bar(y)
 
@@ -182,7 +182,7 @@ func bar(T d) T
     = T
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by child,style=paratype]
+\begin{lstlisting}[caption=Explicit context provided by child,language=Paratype]
 func foo(T a, S b) R
     = bar(a, b)
 
@@ -190,7 +190,7 @@ func bar(float a, float b) int
     = int
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by child and parent,style=paratype]
+\begin{lstlisting}[caption=Explicit context provided by child and parent,language=Paratype]
 func foo(T a, int b) int
     = barbar(a, b)
 
@@ -198,7 +198,7 @@ func barbar(int a, T b) R
     = R
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Need to maintain partial contexts,style=paratype]
+\begin{lstlisting}[caption=Need to maintain partial contexts,language=Paratype]
 func foo(int x) T
     = bar(x)
 
@@ -209,7 +209,7 @@ func baz(float b) T
     = bar(b)
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Unhalting context resolution,style=paratype]
+\begin{lstlisting}[caption=Unhalting context resolution,language=Paratype]
 func foo(T b) int
     = bar(b)
 
@@ -217,7 +217,7 @@ func bar(T a) int
     = int
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Errors,style=paratype]
+\begin{lstlisting}[caption=Errors,language=Paratype]
 func foobar(T b) T
     = foo(b)
 
