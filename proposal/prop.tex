@@ -23,7 +23,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage{syntax, etoolbox}
 \usepackage[toc, page]{appendix}
-\usepackage{glossaries}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \AtBeginEnvironment{grammar}{\small}
@@ -148,7 +147,7 @@ Formally, our problem will be to take an input file of a specified grammar and
 generate an output of either failure due to indecidability or the same file
 with explicit types instead of type variables. In the process of doing this, we
 will also be performing typechecking. The goal is to find an explicit type for
-each function call without type conflicts. Please see Figure~\ref{fig:grammar}
+each function call without type conflicts. Please see Appendix~\ref{app:Grammar}
 for our EBNF grammar.
 
 We define a few terms to use throughout the proposal:
@@ -173,6 +172,30 @@ type A implements T
 func foo(Type var, Typevar var2, ...)
     Type throws Error1, Error2, Error3
     = bar(baz(var), var2) | Type
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Explicit Context Provided by Parents,style=paratype]
+func foo(Int x, Int y) Int
+    = bar(y)
+
+func bar(T d) T
+    = T
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Explicit Context Provided by Child,style=paratype]
+func foo(T a, S b) R
+    = bar(a, b)
+
+func bar(Float a, Float b) Int
+    = Int
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Explicit Context Provided by Child and Parent,style=paratype]
+func foo(T a, Int b) Int
+    = barbar(a, b)
+
+func barbar(Int a, T b) R
+    = R
 \end{lstlisting}
 
 \section{Parallelization}
@@ -258,7 +281,8 @@ We have developed a list of goals ordered by priority:
 \section{Conclusion}
 
 \begin{appendices}
-    \section{Formal Grammar Definition}
+    \section{EBNF Grammar Definition}
+        \label{app:Grammar}
 %        \begin{figure*}
             \begin{grammar}
 
@@ -269,17 +293,17 @@ We have developed a list of goals ordered by priority:
             <type-name> ::= <lower-letter>, \{<upper-letter> |
             \\ <lower-letter>\};
 
-            <error-name> ::= <lower-letter>, \{<upper-letter> 
+            <error-name> ::= <lower-letter>, \{<upper-letter>
             \\ | <lower-letter>\};
 
-            <typeclass-name> ::= <upper-letter>, \{<upper-letter> 
+            <typeclass-name> ::= <upper-letter>, \{<upper-letter>
             \\ | <lower-letter>\};
 
             <type-var> ::= <upper-letter>, \{<upper-letter>\};
 
             <var> ::= <lower-letter>, \{<lower-letter>\}
 
-            <func-name> ::= <lower-letter>, \{<upper-letter> 
+            <func-name> ::= <lower-letter>, \{<upper-letter>
             \\ | <lower-letter>\};
 
             <func-arg> ::= (<type-var> | <type-name>), ` ', <var>
@@ -289,21 +313,21 @@ We have developed a list of goals ordered by priority:
             <func-constraint> ::= <type-var>, ` to ', <typeclass-name>,
             \\ \{` ', <typeclass-name>\};
 
-            <func-constraints> ::= `constrain ', <func-constraint>, 
+            <func-constraints> ::= `constrain ', <func-constraint>,
             \\ \{<func-constraint>\};
 
-            <func-errors> ::= ` throws ', <error-name>, 
+            <func-errors> ::= ` throws ', <error-name>,
             \\ \{`, ', <error-name>\};
 
-            <typeclass-inherit> ::= ` inherits ', <typeclass-name>, 
+            <typeclass-inherit> ::= ` inherits ', <typeclass-name>,
             \\ \{`, ', <typeclass-name>\};
 
-            <type-implement> ::= ` implements ', <typeclass-name>, 
+            <type-implement> ::= ` implements ', <typeclass-name>,
              \\\{`,', <typeclass-name>\};
 
             <type-decl> ::= `type ', <type-name>, [<type-implement>];
 
-            <typeclass-decl> ::= `typeclass ', 
+            <typeclass-decl> ::= `typeclass ',
             \\<typeclass-name>, [<typeclass-inherit>];
 
             <func-decl> ::= `func ', <func-name>, [<func-constraints>], <func-args>, [<func-errors>];
