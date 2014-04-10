@@ -185,7 +185,9 @@ We define a few terms to use throughout the proposal:
 		creating a type class which types may implement.
 \end{description}
 
-\begin{lstlisting}[caption=Grammar displayed informally,language=Paratype]
+Listing \ref{lst:informalg} shows an informal example of our grammar. It is a grammar for a simple functional language that provides bounded parametric polymorphism through type classes. This allows expressing functions in terms of generic types while still maintaining the same behavior. This use of type variables introduces the need for partial contexts.
+
+\begin{lstlisting}[caption=Grammar displayed informally,language=Paratype,label=lst:informalg]
 typeclass num inherits tc1, tc2, ...
 
 type int implements num
@@ -196,7 +198,7 @@ func foo(otype var, Typevar var2, ...)
     = bar(baz(var), var2) | otype
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by parents,language=Paratype]
+\begin{lstlisting}[caption=Explicit context provided by parents,language=Paratype,label=lst:cbyparent]
 func foo(int x, int y) int
     = bar(y)
 
@@ -204,7 +206,7 @@ func bar(T d) T
     = T
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by child,language=Paratype]
+\begin{lstlisting}[caption=Explicit context provided by child,language=Paratype,label=lst:cbychild]
 func foo(T a, S b) R
     = bar(a, b)
 
@@ -212,7 +214,7 @@ func bar(float a, float b) int
     = int
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit context provided by child and parent,language=Paratype]
+\begin{lstlisting}[caption=Explicit context provided by child and parent,language=Paratype,label=lst:cbyboth]
 func foo(T a, int b) int
     = barbar(a, b)
 
@@ -220,7 +222,7 @@ func barbar(int a, T b) R
     = R
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Need to maintain partial contexts,language=Paratype]
+\begin{lstlisting}[caption=Need to maintain partial contexts,language=Paratype,label=lst:partial]
 func foo(int x) T
     = bar(x)
 
@@ -231,7 +233,7 @@ func baz(float b) T
     = bar(b)
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Unhalting context resolution,language=Paratype]
+\begin{lstlisting}[caption=Unhalting context resolution,language=Paratype,label=lst:unhalting]
 func foo(T b) int
     = bar(b)
 
@@ -239,7 +241,7 @@ func bar(T a) int
     = int
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Errors,language=Paratype]
+\begin{lstlisting}[caption=Errors,language=Paratype,label=lst:errors]
 func foobar(T b) T
     = foo(b)
 
@@ -334,7 +336,7 @@ managed by Go during runtime.
 \texttt{channels},language=Go,label=lst:goroutine]
 func node(name string, c chan string) {
 	fmt.Println("I'm node ", name)
-	/* send message to c 
+	/* send message to c
 	 * (blocks until receiver is ready)
 	 */
 	c <- strings.Join(name, " has a message for you.")
