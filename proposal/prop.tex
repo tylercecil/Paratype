@@ -16,12 +16,14 @@
 \usepackage{listings,color,xcolor}
 \usepackage{pgf,tikz,pgfgantt}
 
-\usepackage{subcaption} 
+\usepackage{subcaption}
 \usepackage{graphicx}
-\usepackage{float,dblfloatfix,fixltx2e} 
+\usepackage{float,dblfloatfix,fixltx2e}
 \usepackage[format=plain,font=small,labelfont=bf]{caption}
 \usepackage[utf8]{inputenc}
 \usepackage{syntax}
+\usepackage[toc, page]{appendix}
+\usepackage{glossaries}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 
@@ -38,16 +40,16 @@
 	numbers=left,
 	basicstyle=\small\ttfamily,
 	keywords={func,inherits,implements,throws,type,typeclass},
-	keywordstyle=\bfseries\color{dkgreen}, 
+	keywordstyle=\bfseries\color{dkgreen},
 	commentstyle=\itshape\color{purple},
-	identifierstyle=\color{black}, 
-	stringstyle=\color{blue}, 
-	numberstyle=\scriptsize, 
+	identifierstyle=\color{black},
+	stringstyle=\color{blue},
+	numberstyle=\scriptsize,
 	frame=single,
 	frameround=tttt,
 	tabsize=4,
 	showstringspaces=false,
-	aboveskip=1.8em, 
+	aboveskip=1.8em,
 	belowskip=0em,
 	captionpos=b,
 	xleftmargin=1.8em,
@@ -92,7 +94,7 @@
 
 % You need the command \numberofauthors to handle the 'placement
 % and alignment' of the authors beneath the title.
-\numberofauthors{3} 
+\numberofauthors{3}
 \author{
 \alignauthor
 Tyler Cecil\\
@@ -169,54 +171,6 @@ func foo(Type var, Typevar var2, ...)
     = bar(baz(var), var2) | Type
 \end{lstlisting}
 
-\begin{figure*}
-\begin{grammar}
- 
-<lower-letter> ::= `...';
-
-<upper-letter> ::= `...';
-
-<type-name> ::= <lower-letter>, \{<upper-letter> | <lower-letter>\};
-
-<error-name> ::= <lower-letter>, \{<upper-letter> | <lower-letter>\};
-
-<typeclass-name> ::= <upper-letter>, \{<upper-letter> | <lower-letter>\};
-
-<type-var> ::= <upper-letter>, \{<upper-letter>\};
-
-<var> ::= <lower-letter>, \{<lower-letter>\}
-
-<func-name> ::= <lower-letter>, \{<upper-letter> | <lower-letter>\};
-
-<func-arg> ::= (<type-var> | <type-name>), ` ', <var>
-
-<func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
-
-<func-constraint> ::= <type-var>, ` to ', <typeclass-name>, 
-	\{` ', <typeclass-name>\};
-
-<func-constraints> ::= `constrain ', <func-constraint>, 
-	\{<func-constraint>\};
-
-<func-errors> ::= ` throws ', <error-name>, \{`, ', <error-name>\};
-
-<typeclass-inherit> ::= ` inherits ', <typeclass-name>, \{`, ', <typeclass-name>\};
-
-<type-implement> ::= ` implements ', <typeclass-name>, \{`,', <typeclass-name>\};
-
-<type-decl> ::= `type ', <type-name>, [type-implement];
-
-<typeclass-decl> ::= `typeclass ', <typeclass-name>, 
-	[typeclass-inherit];
-
-<func-decl> ::= `func ', <func-name>, 
-	[<func-constraints>], <func-args>, [<func-errors>];
-
-\end{grammar}
-\caption{Extended BNF Grammar}
-\label{fig:grammar}
-\end{figure*}
-
 \section{Parallelization}
 
 For parallelization, we propose to use an actor model: each processing unit
@@ -242,7 +196,7 @@ compilation. Therefore, we propose to use Google Go due to its concept of
 \texttt{goroutines}. A \texttt{goroutine} acts like a process or a thread (like
 a processing unit). It is possible to pass references through shared memory,
 called \texttt{channels}, with \texttt{goroutines}: like message passing in
-shared memory. 
+shared memory.
 
 We may even take advantage of the fact that not messages but references are
 passed through \texttt{channels}. This way, a specific context will update
@@ -288,7 +242,7 @@ group (white)}
 
 Our group consists of three team members: Tyler, Ben, and Chris.
 Figure~\ref{fig:schedule} depicts a Gantt chart that shows all team member's
-tasks. 
+tasks.
 
 We have developed a list of goals ordered by priority:
 \begin{description}
@@ -299,7 +253,58 @@ We have developed a list of goals ordered by priority:
 
 \section{Conclusion}
 
+\begin{appendices}
+    \section{Formal Grammar Definition}
+        \begin{figure*}
+            \begin{grammar}
+
+            <lower-letter> ::= `...';
+
+            <upper-letter> ::= `...';
+
+            <type-name> ::= <lower-letter>, \{<upper-letter> | <lower-letter>\};
+
+            <error-name> ::= <lower-letter>, \{<upper-letter> | <lower-letter>\};
+
+            <typeclass-name> ::= <upper-letter>, \{<upper-letter> | <lower-letter>\};
+
+            <type-var> ::= <upper-letter>, \{<upper-letter>\};
+
+            <var> ::= <lower-letter>, \{<lower-letter>\}
+
+            <func-name> ::= <lower-letter>, \{<upper-letter> | <lower-letter>\};
+
+            <func-arg> ::= (<type-var> | <type-name>), ` ', <var>
+
+            <func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
+
+            <func-constraint> ::= <type-var>, ` to ', <typeclass-name>,
+                \{` ', <typeclass-name>\};
+
+            <func-constraints> ::= `constrain ', <func-constraint>,
+                \{<func-constraint>\};
+
+            <func-errors> ::= ` throws ', <error-name>, \{`, ', <error-name>\};
+
+            <typeclass-inherit> ::= ` inherits ', <typeclass-name>, \{`, ', <typeclass-name>\};
+
+            <type-implement> ::= ` implements ', <typeclass-name>, \{`,', <typeclass-name>\};
+
+            <type-decl> ::= `type ', <type-name>, [type-implement];
+
+            <typeclass-decl> ::= `typeclass ', <typeclass-name>,
+                [typeclass-inherit];
+
+            <func-decl> ::= `func ', <func-name>,
+                [<func-constraints>], <func-args>, [<func-errors>];
+
+            \end{grammar}
+            \caption{Extended BNF Grammar}
+            \label{fig:grammar}
+        \end{figure*}
+\end{appendices}
+
 % why appropriate project?
 
-%\balancecolumns
+\balancecolumns
 \end{document}
