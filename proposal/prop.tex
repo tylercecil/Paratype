@@ -122,6 +122,19 @@ Christopher Koch\\
 
 \maketitle
 \begin{abstract}
+  
+  In the following proposal we introduce \emph{Paratype}, an actor
+  model of type completion and inference. Type analysis of modern
+  languages such as Haskell, Agda, and Coq can be an intense stage in
+  compilation. Via use of an actor model, we hope to cut down
+  compilation time, as well as open up dores for new models of type
+  evaluation. Working on a grammar with bounded parametric polymorphism,
+  Paratype will comunicated types across a large call graph, resolving type
+  errors, appending errors, and evaluating types, all in parallel. To
+  minimize message overhead, we propose to use a shared memory message
+  passing system. It is believed our actor aproach can significantly
+  speed up the compilation process, as well as other applications we
+  introduce.
 \end{abstract}
 
 \category{F.3.3}{Studies of Program Constructs}{Type structure}
@@ -138,6 +151,9 @@ inference, code analysis}
 
 % problem and why important
 % compilers: e.g. just-in-time comp
+
+Compile one time, run many times: that means compilers don't need to
+be fast, right? Lucky
 
 \section{Problem Definition}
 
