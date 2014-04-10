@@ -178,14 +178,18 @@ We define a few terms to use throughout the proposal:
 	\item[Type variable] A variable that ranges over types.
 	\item[Parametric polymorphism] A way to allow a language to express the
 		handling of functions and types homogeneously independent of their type
-		through the use of generic functions. Also known as generic
+		through the use of generic functions, also known as generic
 		programming.
 	\item[Bounded parametric polymorphism] A method of providing extra
 		information about a generic data type. In Haskell, this is achieved by
 		creating a type class which types may implement.
 \end{description}
 
-Listing \ref{lst:informalg} shows an informal example of our grammar. It is a grammar for a simple functional language that provides bounded parametric polymorphism through type classes. This allows expressing functions in terms of generic types while still maintaining the same behavior. This use of type variables introduces the need for partial contexts.
+Listing~\ref{lst:informalg} shows an informal example of our grammar. It is a
+grammar for a simple functional language that provides bounded parametric
+polymorphism through type classes. This allows expressing functions in terms of
+generic types while still maintaining the same behavior. This use of type
+variables introduces the need for partial contexts.
 
 \begin{lstlisting}[caption=Grammar displayed informally,language=Paratype,label=lst:informalg]
 typeclass num inherits tc1, tc2, ...
