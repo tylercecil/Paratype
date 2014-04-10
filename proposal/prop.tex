@@ -43,7 +43,7 @@
 	aboveskip=1.8em,
 	belowskip=0em,
 	captionpos=b,
-	xleftmargin=0em,
+	xleftmargin=0.4em,
 	xrightmargin=0em,
 	keywordstyle=\bfseries\color{dkgreen},
 	commentstyle=\itshape\color{purple},
@@ -308,25 +308,41 @@ compilation. Therefore, we propose to use Google Go due to its concept of
 \texttt{goroutines}. A \texttt{goroutine} is a lightweight thread that is
 managed by Go during runtime. 
 
-\begin{lstlisting}[caption=Small \texttt{goroutine} example,language=Go]
-func node(name string) {
+\begin{lstlisting}[caption=Small \texttt{goroutine} example with
+\texttt{channels},language=Go,label=lst:goroutine]
+func node(name string, c chan string) {
 	fmt.Println("I'm node ", name)
+	/* send message to c 
+	 * (blocks until receiver is ready)
+	 */
+	c <- name, " has a message for you."
 }
 
 func main() {
-	go node("abc")
+	// unbuffered channel
+	c := make(chan string)
+	go node("abc", c)
+	// receive message from c (blocks)
+	a := <-c
+	fmt.Println(a)
 }
 \end{lstlisting}
 
-It is possible to pass references through shared
-memory, called \texttt{channels}, with \texttt{goroutines}: like message
-passing in shared memory.
+It is possible to pass references through shared memory, called
+\texttt{channels}, with \texttt{goroutines}: like message passing in shared
+memory. This can be seen in Listing~\ref{lst:goroutine}. Of course, unlike in
+the example, the channel may also be buffered and would thus only block sends
+when the buffer is full and receives when the buffer is empty. This is one of
+the reasons that we chose Google Go: it allows us to use message passing
+without the overhead of actually sending the message.
 
-We may even take advantage of the fact that not messages but references are
-passed through \texttt{channels}. This way, a specific context will update
-everywhere that it is referenced and we must only notify other actors that
-something changed instead of sending the context again. 
-
+The \texttt{goroutines} fit the actor model of type resolution nicely since
+the threads are lightweight and communication is easy to arrange. We may even
+take advantage of the fact that not messages but references are passed through
+\texttt{channels}. This way, a specific context will update everywhere that it
+is referenced and we must only notify other actors that something changed
+instead of sending the context again. This reduces communication overhead while
+still functioning as a message passing system.
 
 \section{Analysis and Model}
 
