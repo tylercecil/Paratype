@@ -490,8 +490,31 @@ tasks.
 We have developed a list of goals ordered by priority:
 \begin{description}
 	\item[First order goals]
+          \hfill
+          \begin{itemize}
+            \item Construct working Function Actors 
+            \item Function Actors can communicate Contexts to eachother
+            \item Invalid Type detection
+            \item Error Types communicated
+            \item Program deterministically halts
+          \end{itemize}
+
 	\item[Second order goals]
+          \hfill
+          \begin{itemize}
+            \item Resolve partial contexts
+            \item Parse Input files
+            \item Check Output files
+            \item Remove unnessesary communication
+          \end{itemize}
+
 	\item[Third order goals]
+          \hfill
+          \begin{itemize}
+            \item Type Inferrence
+            \item Haskell Compliance
+            \item GHC integration
+          \end{itemize}
 \end{description}
 
 \section{Conclusion}
@@ -521,7 +544,10 @@ We have developed a list of goals ordered by priority:
     <func-name> ::= <lower-letter>, \{<upper-letter>
     \\ | <lower-letter>\};
 
-    <func-arg> ::= (<type-var> | <type-name>), ` ', <var>
+    <type-place> ::= <type-var>
+    \alt <type-name>
+
+    <func-arg> ::= <type-place>, ` ', <var>
 
     <func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
 
@@ -545,7 +571,14 @@ We have developed a list of goals ordered by priority:
     <typeclass-decl> ::= `typeclass ',
     \\<typeclass-name>, [<typeclass-inherit>];
 
-    <func-decl> ::= `func ', <func-name>, [<func-constraints>], <func-args>, [<func-errors>];
+    <expr> ::= <type-name>
+    \alt <type-var>
+    \alt <func-name>, `(', [\{<expr>, `,'\}, <expr>], `)'
+
+    <func-sig> ::= `func ', <func-name>, [<func-constraints>], 
+    <func-args>, <type-place>, [<func-errors>];
+
+    <func-dec> ::= <func-sig>, `\textbackslash n =', <expr> 
 
     \end{grammar}
 
