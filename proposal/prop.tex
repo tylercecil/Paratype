@@ -123,7 +123,7 @@ Christopher Koch\\
 \maketitle
 \begin{abstract}
   In the following proposal we introduce \emph{Paratype}, an actor model of
-  type completion and inference. Type analysis of modern languages such as
+  type completion. Type analysis of modern languages such as
   Haskell, Agda, and Coq can be an intense stage in compilation. With the use
   of an actor model, we hope to cut down compilation time as well as open up
   doors for new models of type evaluation. Working on a grammar with bounded
@@ -150,37 +150,36 @@ inference, code analysis, parallel}
 % problem and why important
 % compilers: e.g. just-in-time comp
 
-``Compile one time, run many times: that means compilers don't need to
-be fast, right?'' Lucky no software engineers think this way. In fact,
-compilation speed is a concern of many budding langauges. Asside from
-lexing (typically the slowest part of compilation)\cite{bright:blog},
-modern languages spend an embarising amount of time resolving
-types\cite{junaidu:phd}. This is principally due to the adoption of
-the \emph{System F} formilization in modern strongly typed
-languages. What's more, many languages have type inference or even
-type bounds, further complicating the processes. Unfortunatly, 
-type evaluation serves as the foundation for automated theorem
-provers, and other logic analysis systems. Even within the compilation
-domain, interpreted languages and JIT languages need type resolution
-much faster than is currently being provided; type evaluation needs to
-be expidited.
+``Compile one time, run many times: that means compilers do not need to be
+fast, right?'' Luckily, no software engineer thinks this way. In fact,
+compilation speed is a concern of many budding languages. Aside from lexing
+(typically the slowest part of compilation)~\cite{bright:blog}, modern
+languages spend an embarrassing amount of time resolving
+types~\cite{junaidu:phd}. Principally, this is due to the adoption of the
+\emph{System F} formalization in modern strongly typed languages. Moreover,
+many languages have type inference or even type bounds, further complicating
+the process. Unfortunately, type evaluation serves as the foundation for
+automated theorem provers and other logic analysis systems. Even within the
+compilation domain, interpreted languages and JIT languages need type
+resolution much faster than is currently being provided. Type evaluation needs
+to be expedited.
 
-To this end, we propose the development of Paratype: an actor model of
-type evaluation. As will be aparent shortly, most type evaluation
-procedures can be described as a conversation between functions; each
-function communicates information about its type to ``neighboring''
-functions. As the chatter subsides, we are left with all functions
-knowing their types (or a function knowing this cannot compile). Most
-systems involve walking through the tree of this conversation. We
-propose to let this natural model of communication play itself
-out. Using a shared memory message passing system, Paratype will allow
-functions to be actors and let the conversation happen.
+To this end, we propose the development of \emph{Paratype}: an actor model of
+type evaluation. As will be apparent shortly, most type evaluation procedures
+can be described as a conversation between functions. Each function
+communicates information about its type to ``neighboring'' functions. As the
+chatter subsides, we are left with all functions knowing their types or a
+function knowing that it cannot compile. Most systems involve walking through
+the tree of this conversation. We propose to let this natural model of
+communication play itself out. Using a shared memory message passing system,
+\emph{Paratype} will allow functions to be actors and let the conversation
+happen.
 
-Initially we are only going to use a toy grammar, defined in this
-proposal. Our grammer will include down-types (normal variables), and
-up-types (error types) in order to cover most use casses in modern
-type systesm. Perhaps one day Paratype can be integrated into a
-project like the Haskell compiler \texttt{ghc}.
+Initially we are only going to use a toy grammar that is defined in this
+proposal. Our grammer will include down types (normal variables), and up types
+(error types) in order to cover most use cases in modern type systems. Perhaps
+one day \emph{Paratype} can be integrated into a project such as the Haskell
+compiler \texttt{ghc}.
 
 
 \section{Problem Definition}
@@ -232,6 +231,13 @@ func foo(otype var, Typevar var2, ...)
     = bar(baz(var), var2) | otype
 \end{lstlisting}
 
+An example of a partial context is shown in Listing~\ref{lst:cbyparent}. The
+function \lstinline!bar! is declared as accepting and returns a \lstinline!T!
+type.  This introduces a partial context due to \lstinline!T! being a type
+variable. The parameter type for \lstinline!bar! is provided by its parent
+function \lstinline!foo!. This also completes the return type of
+\lstinline!bar!.
+
 \begin{lstlisting}[caption=Explicit context provided by parents,language=Paratype,label=lst:cbyparent]
 func foo(int x, int y) int
     = bar(y)
@@ -239,6 +245,14 @@ func foo(int x, int y) int
 func bar(T d) T
     = T
 \end{lstlisting}
+
+Types for partial contexts can be provided by both the parent and the child.
+Consider the example shown in Listing~\ref{lst:cbychild}. Function
+\lstinline!foo!  is defined as returning an \lstinline!R! type. The function
+definition contains the result of calling \lstinline!bar! as the return value.
+\lstinline!bar! is defined as having an \lstinline!int! return type. Since
+\lstinline!foo! returns the value of calling \lstinline!bar! it also has a
+return type of \lstinline!int!.
 
 \begin{lstlisting}[caption=Explicit context provided by child,language=Paratype,label=lst:cbychild]
 func foo(T a, S b) R
@@ -248,6 +262,18 @@ func bar(float a, float b) int
     = int
 \end{lstlisting}
 
+In the previous examples all partial contexts have been resolved by either the
+parent or the child. There are situations where they can mutually provide
+contexts for each other. One example of this is shown in
+Listing~\ref{lst:cbyboth}. In this example \lstinline!foo! is providing
+the type of the second parameter for function \lstinline!barbar!.
+\lstinline!barbar!  also provides the type of the first parameter for function
+\lstinline!foo!. Notice that function \lstinline!barbar! is defined as
+returning a type variable \lstinline!R!. Since \lstinline!foo! returns an
+\lstinline!int! type and its return value is a call to \lstinline!barbar!; this
+resolves the return type for \lstinline!barbar!. The evaluation of these
+partial contexts is a non-trivial task.
+
 \begin{lstlisting}[caption=Explicit context provided by child and parent,language=Paratype,label=lst:cbyboth]
 func foo(T a, int b) int
     = barbar(a, b)
@@ -255,6 +281,17 @@ func foo(T a, int b) int
 func barbar(int a, T b) R
     = R
 \end{lstlisting}
+
+Another problem that type variables introduce is the need to maintain partial
+contexts. Multiple fully evaluated contexts may exist in the end and may not be
+the result of type errors. An example of this is shown in
+Listing~\ref{lst:partial}. The \lstinline!bar! function accepts a type variable
+\lstinline!b! as an input parameter. The function \lstinline!foo! provides a
+context for \lstinline!bar! in which \lstinline!b! is of type \lstinline!int!.
+At this point \lstinline!bar! now has a fully evaluated context, but
+\lstinline!baz! can also complete the partial context with \lstinline!b!
+resolving to type \lstinline!float!.  In this situation these are both valid
+and should not be considered a type error.
 
 \begin{lstlisting}[caption=Need to maintain partial contexts,language=Paratype,label=lst:partial]
 func foo(int x) T
@@ -267,6 +304,15 @@ func baz(float b) T
     = bar(b)
 \end{lstlisting}
 
+Although contexts can be provided by both the parent and the child, there are
+situations where there is not enough information to resolve a context. Consider
+Listing~\ref{lst:unhalting}: \lstinline!bar! accepts a type variable as a
+parameter. The context provided by its calling function \lstinline!foo!
+resolves the parameter as being the local variable \lstinline!b!. This is
+problematic due to \lstinline!b! also being a type variable. In this example
+there is not enough information to resolve a full context for either
+\lstinline!bar! or \lstinline!foo!.
+
 \begin{lstlisting}[caption=Unhalting context resolution,language=Paratype,label=lst:unhalting]
 func foo(T b) int
     = bar(b)
@@ -274,6 +320,11 @@ func foo(T b) int
 func bar(T a) int
     = int
 \end{lstlisting}
+
+Introducing errors into the grammar adds more complexity since they need to
+propagate up the call stack. In the example shown in Listing~\ref{lst:errors},
+all parent functions of \lstinline!bar! need to have \lstinline!weirdError! in
+their fully resolved contexts.
 
 \begin{lstlisting}[caption=Errors,language=Paratype,label=lst:errors]
 func foobar(T b) T
@@ -300,7 +351,7 @@ advantage of this natural communication and process the problem in
 parallel.
 
 Unfortunately, the communication is not linear as shown by our
-previous examples. This makes our task quite a bit more challenging;
+previous examples. This makes our task quite a bit more challenging,
 especially if we want to keep communication overhead low! Each node
 needs to communicate to its parents and children, send partial
 contexts, and update error types. Actors also need to know when their
@@ -348,13 +399,13 @@ constructed carefully.
 %TODO: USE AN ACTUALL LABEL
 Our examples in Section~\ref{sec:problem} show a number of problems that must be
 resolved in our method. Perhaps the most daunting is knowing when
-execution should complete. More subtle, however, are problems that
+execution is complete. More subtle, however, are problems that
 come from having no ``main'' function. In a traditional compiler
 setting, we have a function to begin propagation from. We, however,
 evaluate all contexts in parallel. With this lack of a starting point,
 some communications become ambiguous: do we communicate down or up
 the call tree? Do we wait to be signaled? There are many more questions. These
-are all problems that will need to be resolved by Paratype.
+are all problems that will need to be resolved by \emph{Paratype}.
 
 \section{Methods}
 
@@ -389,8 +440,8 @@ func main() {
 It is possible to pass references through shared memory, called
 \texttt{channels}, with \texttt{goroutines}: like message passing in shared
 memory. This can be seen in Listing~\ref{lst:goroutine}. Of course, unlike in
-the example, the channel may also be buffered and would thus only block sends
-when the buffer is full and receives when the buffer is empty. This is one of
+the example, the channel may also be buffered and would thus only block sending
+when the buffer is full and receiving when the buffer is empty. This is one of
 the reasons that we chose Google Go: it allows us to use message passing
 without the overhead of actually sending the message.
 
@@ -413,7 +464,7 @@ Our program can be modeled with many variables: number of functions, number of
 function calls, number of contexts, number of total partial contexts in
 existence during runtime, the number of physical cores available, the number of
 types and typeclasses, call graph width, and undecidability among many other
-things. 
+things.
 
 The model needs to make a distinction between runtime for valid and invalid
 code: when a type completion becomes undecidable, the program will likely
