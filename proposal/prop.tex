@@ -142,7 +142,8 @@ Formally, our problem will be to take an input file of a specified grammar and
 generate an output of either failure due to indecidability or the same file
 with explicit types instead of type variables. In the process of doing this, we
 will also be performing typechecking. The goal is to find an explicit type for
-each function call without type conflicts.
+each function call without type conflicts. Please see Figure~\ref{fig:grammar}
+for our EBNF grammar.
 
 We define a few terms to use throughout the proposal:
 \begin{description}
@@ -168,6 +169,7 @@ func foo(Type var, Typevar var2, ...)
     = bar(baz(var), var2) | Type
 \end{lstlisting}
 
+\begin{figure*}
 \begin{grammar}
  
 <lower-letter> ::= `...';
@@ -178,7 +180,7 @@ func foo(Type var, Typevar var2, ...)
 
 <error-name> ::= <lower-letter>, \{<upper-letter> | <lower-letter>\};
 
-<typclass-name> ::= <upper-letter>, \{<upper-letter> | <lower-letter>\};
+<typeclass-name> ::= <upper-letter>, \{<upper-letter> | <lower-letter>\};
 
 <type-var> ::= <upper-letter>, \{<upper-letter>\};
 
@@ -190,10 +192,11 @@ func foo(Type var, Typevar var2, ...)
 
 <func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
 
-<func-constraint> ::= <type-var>, ` to ', <typeclass-name>, \{` ',
-<typeclass-name>\};
+<func-constraint> ::= <type-var>, ` to ', <typeclass-name>, 
+	\{` ', <typeclass-name>\};
 
-<func-constraints> ::= `constrain ', <func-constraint>, \{<func-constraint>\};
+<func-constraints> ::= `constrain ', <func-constraint>, 
+	\{<func-constraint>\};
 
 <func-errors> ::= ` throws ', <error-name>, \{`, ', <error-name>\};
 
@@ -201,14 +204,18 @@ func foo(Type var, Typevar var2, ...)
 
 <type-implement> ::= ` implements ', <typeclass-name>, \{`,', <typeclass-name>\};
 
-<type-decl> ::= `type ', <type-name>,[type-implement];
+<type-decl> ::= `type ', <type-name>, [type-implement];
 
-<typeclass-decl> ::= `typeclass ', <typeclass-name>, [typeclass-inherit];
+<typeclass-decl> ::= `typeclass ', <typeclass-name>, 
+	[typeclass-inherit];
 
-
-<func-decl> ::= `func ', <func-name>, [<func-constraints>], <func-args>, [<func-errors>];
+<func-decl> ::= `func ', <func-name>, 
+	[<func-constraints>], <func-args>, [<func-errors>];
 
 \end{grammar}
+\caption{Extended BNF Grammar}
+\label{fig:grammar}
+\end{figure*}
 
 \section{Parallelization}
 
