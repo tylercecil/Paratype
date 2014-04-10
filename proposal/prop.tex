@@ -153,9 +153,9 @@ inference, code analysis, parallel}
 ``Compile one time, run many times: that means compilers do not need to be
 fast, right?'' Luckily, no software engineer thinks this way. In fact,
 compilation speed is a concern of many budding languages. Aside from lexing
-(typically the slowest part of compilation)~\cite{bright:blog}, modern
+(typically the slowest part of compilation), modern
 languages spend an embarrassing amount of time resolving
-types~\cite{junaidu:phd}. Principally, this is due to the adoption of the
+types. Principally, this is due to the adoption of the
 \emph{System F} formalization in modern strongly typed languages. Moreover,
 many languages have type inference or even type bounds, further complicating
 the process. Unfortunately, type evaluation serves as the foundation for
@@ -226,11 +226,10 @@ variables introduces the need for partial contexts.
 typeclass num inherits tc1, tc2, ...
 
 type int implements num
-    = othertype | (otype, otype, ...)
 
 func foo(otype var, Typevar var2, ...)
     otype throws error1, error2, error3
-    = bar(baz(var), var2) | otype
+    = bar(baz(var), var2)
 \end{lstlisting}
 
 An example of a partial context is shown in Listing~\ref{lst:cbyparent}. The
