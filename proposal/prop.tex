@@ -15,6 +15,7 @@
 \documentclass{acm_proc_article-sp}
 \usepackage{listings,color,xcolor}
 \usepackage{pgf,tikz,pgfgantt}
+\usepackage{lmodern} % font problem fix
 
 \usepackage{subcaption}
 \usepackage{graphicx}
@@ -23,7 +24,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage{syntax, etoolbox}
 \usepackage[toc, page]{appendix}
-\usepackage{glossaries}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \AtBeginEnvironment{grammar}{\small}
@@ -145,16 +145,16 @@ inference, code analysis}
 % grammar, input/output, type completion, lambda calculus (System F)
 
 Formally, our problem will be to take an input file of a specified grammar and
-generate an output of either failure due to indecidability or the same file
+generate an output of either failure due to undecidability or the same file
 with explicit types instead of type variables. In the process of doing this, we
-will also be performing typechecking. The goal is to find an explicit type for
-each function call without type conflicts. Please see Figure~\ref{fig:grammar}
+will also be performing type checking. The goal is to find an explicit type for
+each function call without type conflicts. Please see Appendix~\ref{app:Grammar}
 for our EBNF grammar.
 
 We define a few terms to use throughout the proposal:
 \begin{description}
 	\item[Type] A set of values. Types may implement type classes.
-	\item[Type class] A set of types. Typeclasses may inherit other type classes.
+	\item[Type class] A set of types. Type classes may inherit other type classes.
 	\item[Context] The set of explicit types and metainformation associated
 		with a function call: caller, parameter types, return type,
 		and a list of functions who care about the context.
@@ -165,15 +165,71 @@ We define a few terms to use throughout the proposal:
 \end{description}
 
 \begin{lstlisting}[caption=Grammar displayed informally,style=paratype]
-typeclass T inherits T1, T2, ...
+typeclass num inherits tc1, tc2, ...
 
-type A implements T
-    = Type | (Type, Type, ...)
+type int implements num
+    = othertype | (otype, otype, ...)
 
-func foo(Type var, Typevar var2, ...)
-    Type throws Error1, Error2, Error3
-    = bar(baz(var), var2) | Type
+func foo(otype var, Typevar var2, ...)
+    otype throws error1, error2, error3
+    = bar(baz(var), var2) | otype
 \end{lstlisting}
+
+\begin{lstlisting}[caption=Explicit context provided by parents,style=paratype]
+func foo(int x, int y) int
+    = bar(y)
+
+func bar(T d) T
+    = T
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Explicit context provided by child,style=paratype]
+func foo(T a, S b) R
+    = bar(a, b)
+
+func bar(float a, float b) int
+    = int
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Explicit context provided by child and parent,style=paratype]
+func foo(T a, int b) int
+    = barbar(a, b)
+
+func barbar(int a, T b) R
+    = R
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Need to maintain partial contexts,style=paratype]
+func foo(int x) T
+    = bar(x)
+
+func bar(T b) char
+    = char
+
+func baz(float b) T
+    = bar(b)
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Unhalting context resolution,style=paratype]
+func foo(T b) int
+    = bar(b)
+
+func bar(T a) int
+    = int
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Errors,style=paratype]
+func foobar(T b) T
+    = foo(b)
+
+func foo(int b) int
+    = bar(b)
+
+func bar(T a) T throws weirdError
+    = T
+\end{lstlisting}
+
+% ADD EXAMPLE OF NESTED FUNCTIONS
 
 \section{Parallelization}
 
@@ -283,9 +339,10 @@ something changed instead of sending the context again.
 	%bar chris/.append style={fill=red}
 ]{2014-04-14}{2014-05-02}
 \gantttitlecalendar{month=name, day, week} \\
-\ganttbar{Proposal Due}{2014-04-14}{2014-04-14}\\
-\ganttchris{A Chris task}{2014-04-14}{2014-04-15}\\
-\ganttben{A Ben task}{2014-04-14}{2014-04-15}\\
+\ganttbar{Proposal due}{2014-04-14}{2014-04-14}\\
+\ganttbar{Design objects and communications}{2014-04-15}{2014-04-18}\\
+\ganttchris{Error types}{2014-04-14}{2014-04-15}\\
+\ganttben{}{2014-04-14}{2014-04-15}\\
 \gantttyler{A Tyler task}{2014-04-14}{2014-04-15}\\
 \ganttbar{A group task}{2014-04-14}{2014-04-15}
 \end{ganttchart}
@@ -310,62 +367,59 @@ We have developed a list of goals ordered by priority:
 
 \section{Conclusion}
 
-\begin{appendices}
-    \section{Formal Grammar Definition}
-%        \begin{figure*}
-            \begin{grammar}
+\appendix
+\section{EBNF Grammar Definition}
+    \label{app:Grammar}
+    \begin{grammar}
 
-            <lower-letter> ::= `...';
+    <lower-letter> ::= `...';
 
-            <upper-letter> ::= `...';
+    <upper-letter> ::= `...';
 
-            <type-name> ::= <lower-letter>, \{<upper-letter> |
-            \\ <lower-letter>\};
+    <type-name> ::= <lower-letter>, \{<upper-letter> |
+    \\ <lower-letter>\};
 
-            <error-name> ::= <lower-letter>, \{<upper-letter> 
-            \\ | <lower-letter>\};
+    <error-name> ::= <lower-letter>, \{<upper-letter>
+    \\ | <lower-letter>\};
 
-            <typeclass-name> ::= <upper-letter>, \{<upper-letter> 
-            \\ | <lower-letter>\};
+    <typeclass-name> ::= <upper-letter>, \{<upper-letter>
+    \\ | <lower-letter>\};
 
-            <type-var> ::= <upper-letter>, \{<upper-letter>\};
+    <type-var> ::= <upper-letter>, \{<upper-letter>\};
 
-            <var> ::= <lower-letter>, \{<lower-letter>\}
+    <var> ::= <lower-letter>, \{<lower-letter>\}
 
-            <func-name> ::= <lower-letter>, \{<upper-letter> 
-            \\ | <lower-letter>\};
+    <func-name> ::= <lower-letter>, \{<upper-letter>
+    \\ | <lower-letter>\};
 
-            <func-arg> ::= (<type-var> | <type-name>), ` ', <var>
+    <func-arg> ::= (<type-var> | <type-name>), ` ', <var>
 
-            <func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
+    <func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
 
-            <func-constraint> ::= <type-var>, ` to ', <typeclass-name>,
-            \\ \{` ', <typeclass-name>\};
+    <func-constraint> ::= <type-var>, ` to ', <typeclass-name>,
+    \\ \{` ', <typeclass-name>\};
 
-            <func-constraints> ::= `constrain ', <func-constraint>, 
-            \\ \{<func-constraint>\};
+    <func-constraints> ::= `constrain ', <func-constraint>,
+    \\ \{<func-constraint>\};
 
-            <func-errors> ::= ` throws ', <error-name>, 
-            \\ \{`, ', <error-name>\};
+    <func-errors> ::= ` throws ', <error-name>,
+    \\ \{`, ', <error-name>\};
 
-            <typeclass-inherit> ::= ` inherits ', <typeclass-name>, 
-            \\ \{`, ', <typeclass-name>\};
+    <typeclass-inherit> ::= ` inherits ', <typeclass-name>,
+    \\ \{`, ', <typeclass-name>\};
 
-            <type-implement> ::= ` implements ', <typeclass-name>, 
-             \\\{`,', <typeclass-name>\};
+    <type-implement> ::= ` implements ', <typeclass-name>,
+     \\\{`,', <typeclass-name>\};
 
-            <type-decl> ::= `type ', <type-name>, [<type-implement>];
+    <type-decl> ::= `type ', <type-name>, [<type-implement>];
 
-            <typeclass-decl> ::= `typeclass ', 
-            \\<typeclass-name>, [<typeclass-inherit>];
+    <typeclass-decl> ::= `typeclass ',
+    \\<typeclass-name>, [<typeclass-inherit>];
 
-            <func-decl> ::= `func ', <func-name>, [<func-constraints>], <func-args>, [<func-errors>];
+    <func-decl> ::= `func ', <func-name>, [<func-constraints>], <func-args>, [<func-errors>];
 
-            \end{grammar}
-%            \caption{Extended BNF Grammar}
-%            \label{fig:grammar}
-%        \end{figure*}
-\end{appendices}
+    \end{grammar}
+
 
 % why appropriate project?
 
