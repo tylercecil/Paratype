@@ -207,10 +207,10 @@ func foo(Type var, Typevar var2, ...)
 
 <type-implement> ::= ` implements ', <typeclass-name>, \{`,', <typeclass-name>\};
 
-<type-decl> ::= `type ', <type-name>, [type-implement];
+<type-decl> ::= `type ', <type-name>, [<type-implement>];
 
 <typeclass-decl> ::= `typeclass ', <typeclass-name>, 
-	[typeclass-inherit];
+	[<typeclass-inherit>];
 
 <func-decl> ::= `func ', <func-name>, 
 	[<func-constraints>], <func-args>, [<func-errors>];
