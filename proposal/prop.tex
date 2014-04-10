@@ -145,16 +145,16 @@ inference, code analysis}
 % grammar, input/output, type completion, lambda calculus (System F)
 
 Formally, our problem will be to take an input file of a specified grammar and
-generate an output of either failure due to indecidability or the same file
+generate an output of either failure due to undecidability or the same file
 with explicit types instead of type variables. In the process of doing this, we
-will also be performing typechecking. The goal is to find an explicit type for
+will also be performing type checking. The goal is to find an explicit type for
 each function call without type conflicts. Please see Appendix~\ref{app:Grammar}
 for our EBNF grammar.
 
 We define a few terms to use throughout the proposal:
 \begin{description}
 	\item[Type] A set of values. Types may implement type classes.
-	\item[Type class] A set of types. Typeclasses may inherit other type classes.
+	\item[Type class] A set of types. Type classes may inherit other type classes.
 	\item[Context] The set of explicit types and metainformation associated
 		with a function call: caller, parameter types, return type,
 		and a list of functions who care about the context.
