@@ -123,7 +123,7 @@ Christopher Koch\\
 \maketitle
 \begin{abstract}
   In the following proposal we introduce \emph{Paratype}, an actor model of
-  type completion and inference. Type analysis of modern languages such as
+  type completion. Type analysis of modern languages such as
   Haskell, Agda, and Coq can be an intense stage in compilation. With the use
   of an actor model, we hope to cut down compilation time as well as open up
   doors for new models of type evaluation. Working on a grammar with bounded
@@ -198,6 +198,8 @@ func foo(otype var, Typevar var2, ...)
     = bar(baz(var), var2) | otype
 \end{lstlisting}
 
+An example of a partial context is shown in listing \ref{lst:cbyparent}. The function \texttt{bar} is declared as accepting and returning a \texttt{T} type. This introduces a partial context due to \texttt{T} being a type variable. The parameter type for \texttt{bar} is provided by its parent function \texttt{foo}. This also completes the return type of \texttt{bar}.
+
 \begin{lstlisting}[caption=Explicit context provided by parents,language=Paratype,label=lst:cbyparent]
 func foo(int x, int y) int
     = bar(y)
@@ -205,6 +207,8 @@ func foo(int x, int y) int
 func bar(T d) T
     = T
 \end{lstlisting}
+
+Types for partial contexts can be provided by both the parent and the child. Consider the example shown in listing \ref{lst:cbychild}. Function \texttt{foo} is defined as returning an \texttt{R} type. The function definition contains the result of calling the \texttt{bar} function as the return value. The \texttt{bar} function is defined as having an \texttt{int} return type. Since \texttt{foo} returns the value of calling \texttt{bar} it also has a return type of \texttt{int}.
 
 \begin{lstlisting}[caption=Explicit context provided by child,language=Paratype,label=lst:cbychild]
 func foo(T a, S b) R
@@ -214,6 +218,8 @@ func bar(float a, float b) int
     = int
 \end{lstlisting}
 
+In the previous examples all partial contexts have been resolved by either the parent or the child. There are situations where they can mutually provide contexts for each other. One example of this is shown in Listing \ref{lst:cbyboth}. In this example function \texttt{foo} is providing the type of the second parameter for function \texttt{barbar}. Function \texttt{barbar} also provides the type of the first parameter for function \texttt{foo}. Notice that function \texttt{barbar} is defined as returning a type variable \texttt{R}. Since \texttt{foo} returns an int type and its return value is a call to \texttt{barbar}, this resolves the return type for \texttt{barbar}. The evaluation of these partial contexts is a non-trivial task.
+
 \begin{lstlisting}[caption=Explicit context provided by child and parent,language=Paratype,label=lst:cbyboth]
 func foo(T a, int b) int
     = barbar(a, b)
@@ -221,6 +227,8 @@ func foo(T a, int b) int
 func barbar(int a, T b) R
     = R
 \end{lstlisting}
+
+Another problem that type variables introduce is the need to maintain partial contexts. Multiple fully evaluated contexts may exist in the end and may not be the result of type errors. An example of this is shown in Listing \ref{lst:partial}. The \texttt{bar} function accepts a type variable \texttt{b} as an input parameter. The function \texttt{foo} provides a context for \texttt{bar} in which \texttt{b} is of type \texttt{int}. At this point \texttt{bar} now has a fully evaluated context, but \texttt{baz} can also complete the partial context with \texttt{b} resolving to type \texttt{float}. In this situation these are both valid and should not be considered a type error.
 
 \begin{lstlisting}[caption=Need to maintain partial contexts,language=Paratype,label=lst:partial]
 func foo(int x) T
@@ -233,6 +241,8 @@ func baz(float b) T
     = bar(b)
 \end{lstlisting}
 
+Although contexts can be provided by both the parent and the child, there are situations where there is not enough information to resolve a context. Consider listing \ref{lst:unhalting}: \texttt{bar} accepts a type variable as a parameter. The context provided by its calling function \texttt{foo} resolves the parameter as being the local variable \texttt{b}. This is problematic due to \texttt{b} also being a type variable. In this example there is not enough information to resolve a full context for \texttt{bar}.
+
 \begin{lstlisting}[caption=Unhalting context resolution,language=Paratype,label=lst:unhalting]
 func foo(T b) int
     = bar(b)
@@ -240,6 +250,8 @@ func foo(T b) int
 func bar(T a) int
     = int
 \end{lstlisting}
+
+Introducing errors into the grammar adds more complexity since they need to propagate up call stack. In the example shown in listing \ref{lst:errors}, all parent functions of \texttt{bar} need to have \texttt{weirdError} in their fully resolved contexts.
 
 \begin{lstlisting}[caption=Errors,language=Paratype,label=lst:errors]
 func foobar(T b) T
@@ -372,13 +384,13 @@ still functioning as a message passing system.
 
 We will show the correctness of our program by having an input generator that
 generates both a source file and a compiled file. We can then compare the
-generated compiled file to the file that our program generates. 
+generated compiled file to the file that our program generates.
 
 Our program can be modeled with many variables: number of functions, number of
 function calls, number of contexts, number of total partial contexts in
 existence during runtime, the number of physical cores available, the number of
 types and typeclasses, call graph width, and undecidability among many other
-things. 
+things.
 
 The model needs to make a distinction between runtime for valid and invalid
 code: when a type completion becomes undecidable, the program will likely
