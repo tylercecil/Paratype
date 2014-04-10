@@ -23,7 +23,7 @@
 \usepackage[format=plain,font=small,labelfont=bf]{caption}
 \usepackage[utf8]{inputenc}
 \usepackage{syntax, etoolbox}
-\usepackage[toc, page]{appendix}
+\usepackage{lstlang0}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \AtBeginEnvironment{grammar}{\small}
@@ -33,19 +33,9 @@
 	prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rhookswarrow}},
 	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rcurvearrowse\space}},
 	breaklines=true,
-	breakatwhitespace=true
-}
-
-\lstdefinestyle{paratype}{
-	breaklines=true,
 	numbers=left,
-	basicstyle=\small\ttfamily,
-	keywords={func,inherits,implements,throws,type,typeclass},
-	keywordstyle=\bfseries\color{dkgreen},
-	commentstyle=\itshape\color{purple},
-	identifierstyle=\color{black},
-	stringstyle=\color{blue},
 	numberstyle=\scriptsize,
+	breakatwhitespace=true,
 	frame=single,
 	frameround=tttt,
 	tabsize=4,
@@ -54,7 +44,16 @@
 	belowskip=0em,
 	captionpos=b,
 	xleftmargin=1.8em,
-	xrightmargin=0.5em
+	xrightmargin=0.5em,
+	keywordstyle=\bfseries\color{dkgreen},
+	commentstyle=\itshape\color{purple},
+	identifierstyle=\color{black},
+	stringstyle=\color{blue},
+	basicstyle=\small\ttfamily
+}
+
+\lstdefinestyle{paratype}{
+	keywords={func,inherits,implements,throws,type,typeclass},
 }
 
 \newganttchartelement{chris}{
@@ -253,15 +252,27 @@ contexts.
 Due to the actor model, the problem lends itself nicely to a distributed memory
 approach; however, it is usually commodity hardware that is used for
 compilation. Therefore, we propose to use Google Go due to its concept of
-\texttt{goroutines}. A \texttt{goroutine} acts like a process or a thread (like
-a processing unit). It is possible to pass references through shared memory,
-called \texttt{channels}, with \texttt{goroutines}: like message passing in
-shared memory.
+\texttt{goroutines}. A \texttt{goroutine} is a lightweight thread that is
+managed by Go during runtime. 
+
+\begin{lstlisting}[caption=Small \texttt{goroutine} example,language=Go]
+func node(name string) {
+	fmt.Println("I'm node ", name)
+}
+
+func main() {
+	go node("abc")
+}
+\end{lstlisting}
+
+It is possible to pass references through shared
+memory, called \texttt{channels}, with \texttt{goroutines}: like message
+passing in shared memory.
 
 We may even take advantage of the fact that not messages but references are
 passed through \texttt{channels}. This way, a specific context will update
 everywhere that it is referenced and we must only notify other actors that
-something changed instead of sending the context again.
+something changed instead of sending the context again. 
 
 
 \section{Analysis and Model}
