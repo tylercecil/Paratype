@@ -520,7 +520,10 @@ We have developed a list of goals ordered by priority:
     <func-name> ::= <lower-letter>, \{<upper-letter>
     \\ | <lower-letter>\};
 
-    <func-arg> ::= (<type-var> | <type-name>), ` ', <var>
+    <type-place> ::= <type-var>
+    \alt <type-name>
+
+    <func-arg> ::= <type-place>, ` ', <var>
 
     <func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
 
@@ -548,7 +551,8 @@ We have developed a list of goals ordered by priority:
     \alt <type-var>
     \alt <func-name>, `(', [\{<expr>, `,'\}, <expr>], `)'
 
-    <func-sig> ::= `func ', <func-name>, [<func-constraints>], <func-args>, [<func-errors>];
+    <func-sig> ::= `func ', <func-name>, [<func-constraints>], 
+    <func-args>, <type-place>, [<func-errors>];
 
     <func-dec> ::= <func-sig>, `\textbackslash n =', <expr> 
 
