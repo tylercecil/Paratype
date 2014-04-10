@@ -479,39 +479,12 @@ greater influence on running time.
 % undecidability, number of physical cores available, number of types and
 % type classes, etc
 
-\begin{figure*}
-	% spans two columns
-\centering
-\begin{ganttchart}[
-    vgrid,
-	time slot format/start date=2014-04-14,
-	time slot format=isodate,
-	bar height=.5,
-	y unit chart=0.6cm,
-    %today=9,
-    %bar/.append style={fill=green},
-	%bar tyler/.append style={fill=green},
-	%bar ben/.append style={fill=blue},
-	%bar chris/.append style={fill=red}
-]{2014-04-09}{2014-05-02}
-\gantttitlecalendar{month=name, day, week=15} \\
-\ganttbar{Proposal due}{2014-04-09}{2014-04-09}\\
-\ganttbar{Design objects and communications}{2014-04-09}{2014-04-14}\\
-\ganttchris{Error types}{2014-04-09}{2014-04-15}\\
-\ganttben{}{2014-04-14}{2014-04-15}\\
-\gantttyler{A Tyler task}{2014-04-14}{2014-04-15}\\
-\ganttbar{A group task}{2014-04-14}{2014-04-15}
-\end{ganttchart}
-\vspace{3mm} % fix weird caption placement
-\caption{Timeline: tasks for Tyler (green), Ben (blue), Chris (red), and the
-group (white)}
-\label{fig:schedule}
-\end{figure*}
 
 \section{Team and Timeline}
 
 Our group consists of three team members: Tyler, Ben, and Chris.
-Figure~\ref{fig:schedule} depicts a Gantt chart that shows all team members'
+Figure~\ref{fig:schedule} on page~\pageref{fig:schedule} in
+Appendix~\ref{sec:schedule}. depicts a Gantt chart that shows all team members'
 tasks.
 
 We have developed a list of goals ordered by priority:
@@ -519,10 +492,10 @@ We have developed a list of goals ordered by priority:
 	\item[First order goals]
           \hfill
           \begin{itemize}
-            \item Construct working Function Actors 
-            \item Function Actors can communicate Contexts to eachother
-            \item Invalid Type detection
-            \item Error Types communicated
+            \item Construct working function actors 
+            \item Function actors can communicate contexts to each other
+            \item Invalid type detection
+            \item Error types communicated
             \item Program deterministically halts
           \end{itemize}
 
@@ -530,16 +503,16 @@ We have developed a list of goals ordered by priority:
           \hfill
           \begin{itemize}
             \item Resolve partial contexts
-            \item Parse Input files
-            \item Check Output files
+            \item Parse input files
+            \item Check output files
             \item Remove unnessesary communication
           \end{itemize}
 
 	\item[Third order goals]
           \hfill
           \begin{itemize}
-            \item Type Inferrence
-            \item Haskell Compliance
+            \item Type inference
+            \item Haskell compliance
             \item GHC integration
           \end{itemize}
 \end{description}
@@ -624,6 +597,50 @@ tools, modern ideas, and big dreams.
 
     \end{grammar}
 
+	\section{Timeline}
+	\label{sec:schedule}
+	See Figure~\ref{fig:schedule}.
+
+\begin{figure*}
+	% spans two columns
+\begin{ganttchart}[
+    vgrid,
+	time slot format/start date=2014-04-14,
+	time slot format=isodate,
+	bar height=.5,
+	y unit chart=0.6cm,
+    %today=9,
+    %bar/.append style={fill=green},
+	%bar tyler/.append style={fill=green},
+	%bar ben/.append style={fill=blue},
+	%bar chris/.append style={fill=red}
+]{2014-04-09}{2014-05-02}
+\gantttitlecalendar{month=name, day, week=15} \\
+\ganttbar{Proposal}{2014-04-09}{2014-04-09}\\
+\ganttbar{Design objects and communications}{2014-04-09}{2014-04-14}\\
+\ganttbar{Implement actors, contexts, type DAGs}{2014-04-10}{2014-04-14}\\
+\ganttbar{Input/output generator/checker}{2014-04-13}{2014-04-24}\\
+\ganttbar{Implement parsing}{2014-04-13}{2014-04-16}\\
+
+\ganttmilestone{Simple resolution test}{2014-04-14}{2014-04-14}\\
+\ganttmilestone{Deterministic halting}{2014-04-20}{2014-04-20}\\
+\ganttbar{Partial contexts}{2014-04-17}{2014-04-23}\\
+\ganttmilestone{Partial context resolution test}{2014-04-23}{2014-04-23}\\
+\ganttbar{Error types}{2014-04-19}{2014-04-25}\\
+\ganttmilestone{Error types test}{2014-04-25}{2014-04-25}\\
+\ganttbar{Monitor}{2014-04-19}{2014-04-25}\\
+
+\ganttbar{Report and Presentation}{2014-04-27}{2014-05-02}
+%\ganttchris{Error types}{2014-04-09}{2014-04-15}\\
+%\ganttben{}{2014-04-14}{2014-04-15}\\
+%\gantttyler{A Tyler task}{2014-04-14}{2014-04-15}\\
+%\ganttbar{A group task}{2014-04-14}{2014-04-15}
+\end{ganttchart}
+\vspace{3mm} % fix weird caption placement
+\caption{Timeline: tasks for Tyler (green), Ben (blue), Chris (red), and the
+group (white)}
+\label{fig:schedule}
+\end{figure*}
 
 % why appropriate project?
 
