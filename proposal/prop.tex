@@ -318,7 +318,7 @@ constructed carefully.
 %TODO: USE AN ACTUALL LABEL
 Our examples in Section~\ref{sec:problem} show a number of problems that must be
 resolved in our method. Perhaps the most daunting is knowing when
-execution should complete. More subtle, however, are problems that
+execution is complete. More subtle, however, are problems that
 come from having no ``main'' function. In a traditional compiler
 setting, we have a function to begin propagation from. We, however,
 evaluate all contexts in parallel. With this lack of a starting point,
@@ -359,8 +359,8 @@ func main() {
 It is possible to pass references through shared memory, called
 \texttt{channels}, with \texttt{goroutines}: like message passing in shared
 memory. This can be seen in Listing~\ref{lst:goroutine}. Of course, unlike in
-the example, the channel may also be buffered and would thus only block sends
-when the buffer is full and receives when the buffer is empty. This is one of
+the example, the channel may also be buffered and would thus only block sending
+when the buffer is full and receiving when the buffer is empty. This is one of
 the reasons that we chose Google Go: it allows us to use message passing
 without the overhead of actually sending the message.
 
