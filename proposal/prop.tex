@@ -314,63 +314,59 @@ We have developed a list of goals ordered by priority:
 
 \section{Conclusion}
 
-\begin{appendices}
-    \section{EBNF Grammar Definition}
-        \label{app:Grammar}
-%        \begin{figure*}
-            \begin{grammar}
+\appendix
+\section{EBNF Grammar Definition}
+    \label{app:Grammar}
+    \begin{grammar}
 
-            <lower-letter> ::= `...';
+    <lower-letter> ::= `...';
 
-            <upper-letter> ::= `...';
+    <upper-letter> ::= `...';
 
-            <type-name> ::= <lower-letter>, \{<upper-letter> |
-            \\ <lower-letter>\};
+    <type-name> ::= <lower-letter>, \{<upper-letter> |
+    \\ <lower-letter>\};
 
-            <error-name> ::= <lower-letter>, \{<upper-letter>
-            \\ | <lower-letter>\};
+    <error-name> ::= <lower-letter>, \{<upper-letter>
+    \\ | <lower-letter>\};
 
-            <typeclass-name> ::= <upper-letter>, \{<upper-letter>
-            \\ | <lower-letter>\};
+    <typeclass-name> ::= <upper-letter>, \{<upper-letter>
+    \\ | <lower-letter>\};
 
-            <type-var> ::= <upper-letter>, \{<upper-letter>\};
+    <type-var> ::= <upper-letter>, \{<upper-letter>\};
 
-            <var> ::= <lower-letter>, \{<lower-letter>\}
+    <var> ::= <lower-letter>, \{<lower-letter>\}
 
-            <func-name> ::= <lower-letter>, \{<upper-letter>
-            \\ | <lower-letter>\};
+    <func-name> ::= <lower-letter>, \{<upper-letter>
+    \\ | <lower-letter>\};
 
-            <func-arg> ::= (<type-var> | <type-name>), ` ', <var>
+    <func-arg> ::= (<type-var> | <type-name>), ` ', <var>
 
-            <func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
+    <func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
 
-            <func-constraint> ::= <type-var>, ` to ', <typeclass-name>,
-            \\ \{` ', <typeclass-name>\};
+    <func-constraint> ::= <type-var>, ` to ', <typeclass-name>,
+    \\ \{` ', <typeclass-name>\};
 
-            <func-constraints> ::= `constrain ', <func-constraint>,
-            \\ \{<func-constraint>\};
+    <func-constraints> ::= `constrain ', <func-constraint>,
+    \\ \{<func-constraint>\};
 
-            <func-errors> ::= ` throws ', <error-name>,
-            \\ \{`, ', <error-name>\};
+    <func-errors> ::= ` throws ', <error-name>,
+    \\ \{`, ', <error-name>\};
 
-            <typeclass-inherit> ::= ` inherits ', <typeclass-name>,
-            \\ \{`, ', <typeclass-name>\};
+    <typeclass-inherit> ::= ` inherits ', <typeclass-name>,
+    \\ \{`, ', <typeclass-name>\};
 
-            <type-implement> ::= ` implements ', <typeclass-name>,
-             \\\{`,', <typeclass-name>\};
+    <type-implement> ::= ` implements ', <typeclass-name>,
+     \\\{`,', <typeclass-name>\};
 
-            <type-decl> ::= `type ', <type-name>, [<type-implement>];
+    <type-decl> ::= `type ', <type-name>, [<type-implement>];
 
-            <typeclass-decl> ::= `typeclass ',
-            \\<typeclass-name>, [<typeclass-inherit>];
+    <typeclass-decl> ::= `typeclass ',
+    \\<typeclass-name>, [<typeclass-inherit>];
 
-            <func-decl> ::= `func ', <func-name>, [<func-constraints>], <func-args>, [<func-errors>];
+    <func-decl> ::= `func ', <func-name>, [<func-constraints>], <func-args>, [<func-errors>];
 
-            \end{grammar}
-%            \caption{Extended BNF Grammar}
-%            \label{fig:grammar}
-%        \end{figure*}
-\end{appendices}
+    \end{grammar}
+
 
 % why appropriate project?
 
