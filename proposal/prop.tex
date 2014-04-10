@@ -144,16 +144,16 @@ inference, code analysis}
 % grammar, input/output, type completion, lambda calculus (System F)
 
 Formally, our problem will be to take an input file of a specified grammar and
-generate an output of either failure due to indecidability or the same file
+generate an output of either failure due to undecidability or the same file
 with explicit types instead of type variables. In the process of doing this, we
-will also be performing typechecking. The goal is to find an explicit type for
+will also be performing type checking. The goal is to find an explicit type for
 each function call without type conflicts. Please see Appendix~\ref{app:Grammar}
 for our EBNF grammar.
 
 We define a few terms to use throughout the proposal:
 \begin{description}
 	\item[Type] A set of values. Types may implement type classes.
-	\item[Type class] A set of types. Typeclasses may inherit other type classes.
+	\item[Type class] A set of types. Type classes may inherit other type classes.
 	\item[Context] The set of explicit types and metainformation associated
 		with a function call: caller, parameter types, return type,
 		and a list of functions who care about the context.
@@ -232,18 +232,71 @@ func bar(T a) T throws weirdError
 
 \section{Parallelization}
 
-For parallelization, we propose to use an actor model: each processing unit
-acts as one function. For each function call, a node must resolve its contexts
-(its explicit types) through communicating with other nodes: its parents and
-children. Also, through composition of function calls an inner function of that
-composition may receive contexts through wrapping functions of that
-composition.
+Paratype will act as an \emph{Actor model} of computation for our type
+system: \emph{every function will be an actor}. We feel that not only will
+such a model be efficient for type resolution, but also acts as a
+natural solution to the problem. The type resolution process is
+essentially a conversation between functions: a function asks others for
+information about their type in order to resolve its own type. We take
+advantage of this natural communication, and process the problem in
+parallel.
 
-An actor with explicit context may resolve other actors' partial contexts,
-while sometimes two actors with partial contexts can resolve each others'
-contexts.
+Unfortunately the communication is not linear (as shown by our
+previous examples). This makes our task quite a bit more challenging
+(especially if we want to keep communication overhead down)! Each node
+needs to communicated to its parents and children, send partial
+contexts, and update error types. Actors also need to know when their
+process should finish, compile, or error out. This complexity,
+however, is not all for not.
 
-% actor model, functions as nodes, DAG
+\subsection{Expected Speedup}
+
+Where does speedup come from, other than the parallel computation of
+contexts? Consider a chain of function calls, in which the last
+function in the chain has a type constraint. In the serial case, types
+would need to propagate all the way down to check for a type error. In
+the parallel case, however, contexts move both up and down,
+concurrently; meeting half-way, we can check for type errors. This
+is only one factor (that only matters in invalid code). However, the
+chains themselves can now be evaluated in parallel. If we are even
+more clever, we can use shared memory for our contexts, allowing
+changes that occur at one end of a call graph to instantly propagate
+to all other nodes, without unnecessary message overhead. When
+considering the factors provide speedup for our application, it
+becomes apparent that our speedup is a function of many attributes ---
+graph width, number of functions, invalid versus valid code, etc\ldots
+These need to be considered when building our model.
+
+In some ways, speedup will be hard to measure --- we don't have a serial
+implementation for our toy language. Due to time constraints, we
+have omitted implicit typing from our grammar (not that our system
+could not handle it), preventing us from simply resolving Haskell
+types, and comparing our results to \texttt{ghc} and
+\texttt{hugs}. This acts as a future goal for us. At present, however,
+we will be able to vary the number of processing nodes being
+utilized, via \texttt{GOMAXPROCS}.
+
+\subsection{Expected Problems}
+
+Moving contexts around is no trivial task. A huge amount of
+bookkeeping will be required to prevent deadlock, hanging, unnecessary
+contexts, and host of other possible problems. Marking down where a
+context came from is not even trivial --- through composition of
+function calls an inner function of that composition may receive
+contexts through wrapping functions of that composition. While none of
+these problems are insurmountable, they require our code to be
+constructed carefully.
+
+%TODO: USE AN ACTUALL LABEL
+Our examples in Section 2 show a number of problems that must be
+resolved in our method. Perhaps the most daunting is knowing when
+execution should complete. More subtly, however, are problems that
+come from having no ``main'' function. In a traditional compiler
+setting, we have a function to begin propagation from. We, however,
+evaluation all contexts in parallel. With this lack of starting point,
+some communications become ambiguous --- do we communicate down or up
+the call tree, do we wait to be signaled, etc\ldots These are all
+problems that will need to be resolved by Paratype.
 
 \section{Methods}
 
@@ -278,8 +331,8 @@ something changed instead of sending the context again.
 \section{Analysis and Model}
 
 % variables: number of functions, function calls, contexts, partial contexts,
-% indecidability, number of physical cores available, number of types and
-% typeclasses, etc
+% undecidability, number of physical cores available, number of types and
+% type classes, etc
 
 \begin{figure*}
 	% spans two columns
