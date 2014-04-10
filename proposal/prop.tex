@@ -167,15 +167,15 @@ We define a few terms to use throughout the proposal:
 \begin{lstlisting}[caption=Grammar displayed informally,style=paratype]
 typeclass num inherits tc1, tc2, ...
 
-type int implements tc
-    = type | (type, type, ...)
+type int implements num
+    = othertype | (otype, otype, ...)
 
-func foo(type var, Typevar var2, ...)
-    type throws error1, error2, error3
-    = bar(baz(var), var2) | type
+func foo(otype var, Typevar var2, ...)
+    otype throws error1, error2, error3
+    = bar(baz(var), var2) | otype
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit Context Provided by Parents,style=paratype]
+\begin{lstlisting}[caption=Explicit context provided by parents,style=paratype]
 func foo(int x, int y) int
     = bar(y)
 
@@ -183,15 +183,15 @@ func bar(T d) T
     = T
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit Context Provided by Child,style=paratype]
+\begin{lstlisting}[caption=Explicit context provided by child,style=paratype]
 func foo(T a, S b) R
     = bar(a, b)
 
 func bar(float a, float b) int
-    = Int
+    = int
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Explicit Context Provided by Child and Parent,style=paratype]
+\begin{lstlisting}[caption=Explicit context provided by child and parent,style=paratype]
 func foo(T a, int b) int
     = barbar(a, b)
 
@@ -199,7 +199,7 @@ func barbar(int a, T b) R
     = R
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Need to Maintain Partial Contexts,style=paratype]
+\begin{lstlisting}[caption=Need to maintain partial contexts,style=paratype]
 func foo(int x) T
     = bar(x)
 
@@ -210,7 +210,7 @@ func baz(float b) T
     = bar(b)
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Unhalting Contexts,style=paratype]
+\begin{lstlisting}[caption=Unhalting context resolution,style=paratype]
 func foo(T b) int
     = bar(b)
 
