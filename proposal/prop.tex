@@ -315,7 +315,7 @@ func node(name string, c chan string) {
 	/* send message to c 
 	 * (blocks until receiver is ready)
 	 */
-	c <- name, " has a message for you."
+	c <- strings.Join(name, " has a message for you.")
 }
 
 func main() {
