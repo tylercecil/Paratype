@@ -161,6 +161,8 @@ We define a few terms to use throughout the proposal:
 	\item[Resolution] Resolving a context means giving it explicit types.
 	\item[Parent (function)] Caller of a function.
 	\item[Child (function)] A function that is called by its parent function.
+    \item[Parametric Polymorphism] A way to allow a language to express the handling of functions and types homogeneously independent of their type through the use of generic functions. Also known as generic programming.
+    \item[Bounded Parametric Polymorphism] A method of providing extra information about a generic data type. In Haskell this is achieved by creating a type class which types implement.
 \end{description}
 
 \begin{lstlisting}[caption=Grammar displayed informally,style=paratype]
@@ -306,7 +308,7 @@ Due to the actor model, the problem lends itself nicely to a distributed memory
 approach; however, it is usually commodity hardware that is used for
 compilation. Therefore, we propose to use Google Go due to its concept of
 \texttt{goroutines}. A \texttt{goroutine} is a lightweight thread that is
-managed by Go during runtime. 
+managed by Go during runtime.
 
 \begin{lstlisting}[caption=Small \texttt{goroutine} example,language=Go]
 func node(name string) {
@@ -325,7 +327,7 @@ passing in shared memory.
 We may even take advantage of the fact that not messages but references are
 passed through \texttt{channels}. This way, a specific context will update
 everywhere that it is referenced and we must only notify other actors that
-something changed instead of sending the context again. 
+something changed instead of sending the context again.
 
 
 \section{Analysis and Model}
