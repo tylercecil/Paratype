@@ -170,11 +170,19 @@ In the thread corresponding to function $f$:
 		\Statex
 		\Function{UpdateTypevar}{$C_g, V, C_f, W$}
 			\State $V \gets W$ \Comment{update type variable in $C_g$}
-			\State $\mathcal{T}(C_g)[W] \gets $ incomplete
-				\Comment{add type variable to type map}
+			\If{$\mathcal{T}(C_g)[ V ] \neq$ incomplete and
+				$\mathcal{T}(C_f)[W] \neq$ incomplete and $\mathcal{T}(C_g)[V]
+				\neq \mathcal{T}(C_f)[W]$}
+				\State type error! \Comment{\textbf{or just add an
+				implementation?}} 
+			\EndIf
+%			\State $\mathcal{T}(C_g)[W] \gets $ incomplete
+%				\Comment{add type variable to type map}
 			\If{$\mathcal{T}(C_g)[ V ] \neq $ incomplete}
 				\State $\mathcal{T}(C_g)[ W ] \gets \mathcal{T}(C_g)[ V ]$
 				\Comment{copy explicit type if it exists}
+			\Else
+				\State $\mathcal{T}(C_g)[ W ] \gets \mathcal{T}(C_f)[ W ]$
 			\EndIf
 			\State $\mathcal{W}(C_f)[V] \gets W$ \Comment{for future reference}
 		\EndFunction	
