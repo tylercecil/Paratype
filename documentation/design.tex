@@ -45,6 +45,9 @@
 % typesetting 'real code'
 \usepackage{listings,color,xcolor,MnSymbol}
 \definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{dkblue}{rgb}{0,0,0.6}
+\definecolor{cyan}{rgb}{0,0.6,0.6}
+\definecolor{maroon}{rgb}{0.5,0,0}
 
 \lstset{
 	prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rhookswarrow}},
@@ -63,13 +66,20 @@
 	xrightmargin=0em,
 	keywordstyle=\bfseries\color{dkgreen},
 	commentstyle=\itshape\color{purple},
-	identifierstyle=\color{black},
+	identifierstyle=\color{maroon},
 	stringstyle=\color{blue},
 	basicstyle=\small\ttfamily
 }
 
 \lstdefinelanguage{Paratype}{
 	morekeywords={func,inherits,implements,throws,type,typeclass,constrain,to},
+}
+
+\lstdefinelanguage{Gopp}{
+	%keywords={=>,=,*,+},
+	morestring=[b]{'},
+%	moredelim=*[s]{(}{)},
+%	moredelim=*[s]{<}{>},
 }
 
 \begin{document}
@@ -468,7 +478,7 @@ All of these seem resolvable with the current algorithm.
 Following is the grammar of our language specified in the BNF-like
 \texttt{gopp}\footnote{See \url{https://github.com/skelterjohn/gopp}} format.
 
-%\lstinputlisting[language=gopp]{grammar.gopp}
+\lstinputlisting[language=Gopp]{paratype.gopp}
 
 \subsection{EBNF}
 
