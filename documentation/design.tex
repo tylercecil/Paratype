@@ -13,7 +13,7 @@
 
 \fancyhead[R]{Design Documentation}
 \fancyhead[L]{Paratype}
-\fancyfoot[L]{Work In Progress}
+\fancyfoot[L]{WIP --- Cecil, Turrubiates, Koch}
 \fancyfoot[R]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
@@ -24,19 +24,21 @@
 % noitemsep option for enumerate and itemize
 \usepackage{enumitem}
 
+% mathbb
+\usepackage{amsmath,amssymb}
+
 % hyperlinks in table of contents
 \usepackage[hidelinks]{hyperref}
 
-% algorithms
+% typesetting algorithms
 \usepackage{algorithmicx}
 \usepackage[noend]{algpseudocode}
 \usepackage[section]{algorithm}
-\usepackage{amssymb} % mathbb
 
-\usepackage{listings,color,xcolor}
+% typesetting 'real code'
+\usepackage{listings,color,xcolor,MnSymbol}
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 
-\usepackage{MnSymbol}
 \lstset{
 	prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rhookswarrow}},
 	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rcurvearrowse\space}},
@@ -60,7 +62,7 @@
 }
 
 \lstdefinelanguage{Paratype}{
-	morekeywords={func,inherits,implements,throws,type,typeclass,contrain,to},
+	morekeywords={func,inherits,implements,throws,type,typeclass,constrain,to},
 }
 
 \begin{document}
@@ -76,9 +78,9 @@ Work In Progress}
 \pagebreak
 
 \section{Introduction}
-Saying that we evaluate types as an actor model is hardly enough information to
-get started. In this document, we attempt to describe and justify our
-algorithm, both for our and the reader's benefit.
+Saying that we evaluate types using an actor model is hardly enough information
+to get a good grasp of Paratype. In this document, we attempt to
+describe and justify our algorithm, both for our and the reader's benefit.
 
 Paratype is an actor model of \emph{type evaluation}. Type evaluation is our
 way of describing two main tasks a compiler of a language using the
@@ -97,7 +99,7 @@ badfunction = (+1) "abcdefg"
 \end{lstlisting}
 
 The compiler has two basic tasks concerned with types in this example:
-determining that \lstinline!badfunction! is a type error, and constructing an
+determining that \lstinline!badfunction! is a type error and constructing an
 integer implementation for \lstinline!map!. In reality, the produced code for
 \lstinline!map! is entirely polymorphic, but one could imagine scenarios when
 this would be necessary.
