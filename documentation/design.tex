@@ -533,10 +533,10 @@ Following is the grammar of our language in EBNF.
 
     <expr> ::= <type-name>
     \alt <type-var>
-    \alt <func-name>, `(', [\{<expr>, `,'\}, <expr>], `)'
+    \alt <func-name>, `(', [\{<expr>, `,'\}, <expr>], `)';
 
-    <func-sig> ::= `func ', <func-name>, [<func-constraints>], 
-    <func-args>, <type-place>, [<func-errors>];
+    <func-sig> ::= `func ', <func-name>, [` ', <func-constraints>], ` ',
+    <func-args>, ` ', <type-place>, [` ', <func-errors>];
 
     <func-dec> ::= <func-sig>, `\textbackslash n =', <expr> 
 \end{grammar}
