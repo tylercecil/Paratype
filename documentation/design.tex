@@ -35,6 +35,13 @@
 \usepackage[noend]{algpseudocode}
 \usepackage[section]{algorithm}
 
+% Grammar
+\usepackage{syntax, etoolbox}
+\AtBeginEnvironment{grammar}{\small}
+\setlength{\grammarparsep}{8pt plus 1pt minus 1pt}
+\setlength{\grammarindent}{12em}
+
+
 % typesetting 'real code'
 \usepackage{listings,color,xcolor,MnSymbol}
 \definecolor{dkgreen}{rgb}{0,0.6,0}
@@ -312,6 +319,9 @@ All of these seem resolvable with the current algorithm.
 			including the return type.
 	\end{itemize}
 
+	For brevity, we also use the notations $\mathcal{Y}(C_f)$ and
+	$\mathcal{Y}_f$ for some tuple-member $\mathcal{Y}$ and function $f$.
+
 	We may write $V_0 = f(V_1, V_2, \cdots, V_{\mathcal{N}-1})$ for $V_i \in
 	\mathcal{T}$ (set of types). Exact definitions for the elements of the
 	tuple will follow below.
@@ -448,5 +458,77 @@ All of these seem resolvable with the current algorithm.
 	evaluate the context of inner-most function calls before outer function
 	calls in function composition. For example, $f(g(x),h(x))$ must evaluate
 	$g$ and $h$ before it can convey context information to $f$.
+
+\pagebreak
+
+\section{Grammar}
+
+\subsection{GOPP}
+
+Following is the grammar of our language specified in the BNF-like
+\texttt{gopp}\footnote{See \url{https://github.com/skelterjohn/gopp}} format.
+
+%\lstinputlisting[language=gopp]{grammar.gopp}
+
+\subsection{EBNF}
+
+Following is the grammar of our language in EBNF.
+
+\begin{grammar}
+    <lower-letter> ::= `...';
+
+    <upper-letter> ::= `...';
+
+    <type-name> ::= <lower-letter>, \{<upper-letter> |
+     <lower-letter>\};
+
+    <error-name> ::= <lower-letter>, \{<upper-letter>
+     | <lower-letter>\};
+
+    <typeclass-name> ::= <upper-letter>, \{<upper-letter>
+     | <lower-letter>\};
+
+    <type-var> ::= <upper-letter>, \{<upper-letter>\};
+
+    <var> ::= <lower-letter>, \{<lower-letter>\}
+
+    <func-name> ::= <lower-letter>, \{<upper-letter>
+     | <lower-letter>\};
+
+    <type-place> ::= <type-var> | <type-name>
+
+    <func-arg> ::= <type-place>, ` ', <var>
+
+    <func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
+
+    <func-constraint> ::= <type-var>, ` to ', <typeclass-name>,
+     \{` ', <typeclass-name>\};
+
+    <func-constraints> ::= `constrain ', <func-constraint>,
+     \{`, ', <func-constraint>\};
+
+    <func-errors> ::= ` throws ', <error-name>,
+     \{`, ', <error-name>\};
+
+    <typeclass-inherit> ::= ` inherits ', <typeclass-name>,
+     \{`, ', <typeclass-name>\};
+
+    <type-implement> ::= ` implements ', <typeclass-name>,
+    \{`,', <typeclass-name>\};
+
+    <type-decl> ::= `type ', <type-name>, [<type-implement>];
+
+    <typeclass-decl> ::= `typeclass ',
+    <typeclass-name>, [<typeclass-inherit>];
+
+    <expr> ::= <type-name>
+    \alt <type-var>
+    \alt <func-name>, `(', [\{<expr>, `,'\}, <expr>], `)'
+
+    <func-sig> ::= `func ', <func-name>, [<func-constraints>], 
+    <func-args>, <type-place>, [<func-errors>];
+
+    <func-dec> ::= <func-sig>, `\textbackslash n =', <expr> 
+\end{grammar}
 
 \end{document}
