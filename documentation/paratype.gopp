@@ -1,0 +1,26 @@
+Type-Name => <lower-letter> <letter>*
+Error-Name => <lower-letter> <letter>*
+Typeclass-Name => <upper-letter> <letter>*
+Type-Var => <upper-letter>+
+Var => <lower-letter>+
+Func-Name => <lower-letter> <letter>*
+Type-Place => <Type-Var>
+Type-Place => <Type-Name>
+Func-Arg => <Type-Place> ' ' <Var>
+Func-Args => '(' (<Func-Arg> ',')* <Func-Arg> ')'
+Func-Constraint => <Type-Var> ' to ' (<Typeclass-Name> ',')* <Typeclass-Name>
+Func-Constraints => 'constrain ' <Func-Constraint>+
+Func-Errors => ' throws ' (<Error-Name> ',')* <Error-Name>
+Typeclass-Inherit => ' inherits ' (<Typeclass-Name> ',')* <Typeclass-Name>
+Type-Implement => ' implements ' (<Typeclass-Name> ',')* <Typeclass-Name>
+Type-Decl => 'type ' <Type-Name> [<Type-Implement>]
+Typeclass-Decl => 'typeclass ' <Typeclass-Name> [<Typeclass-Inherit>]
+Expr => <Type-Name>
+Expr => <Type-Var>
+Expr => <Func-Name> '(' [(<Expr> ',')* <Expr>] ')'
+Func-Sig => 'func ' <Func-Name> [<Func-Constraints>] <Func-Args> <Type-Place> [<Func-Errors>]
+Func-Dec => <Func-Sig> '\n=' <Expr>
+
+lower-letter = /([a-z])/
+upper-letter = /([A-Z])/
+letter = /([A-Za-z])/
