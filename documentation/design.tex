@@ -1,0 +1,365 @@
+\documentclass[10pt]{article}
+\usepackage[margin=1in]{geometry}
+
+\usepackage{fancyhdr} % fancy headers
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+
+\setlength{\parindent}{0.0in}
+\setlength{\parskip}{6pt}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{algorithmicx}
+\usepackage[noend]{algpseudocode}
+\usepackage[section]{algorithm}
+\usepackage{mathrsfs,amssymb}
+
+\fancyhead[R]{Design Documentation}
+\fancyhead[L]{Paratype}
+\fancyfoot[L]{Work In Progress}
+\fancyfoot[R]{\thepage}
+
+\begin{document}
+
+\title{Paratype --- Design Documentation\\
+Work In Progress}
+\author{Tyler Cecil, Ben Turrubiates, and Chris Koch}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+\pagebreak
+\section{Algorithm}
+
+\subsection{Setup}
+
+Every function $f$ will create its own context object and send a path-context
+object $(f, C_f)$ to its child.
+
+The atlas of each $C_f$ must contain objects for $f$ and each of its
+children; for example, if $g$ is a child of $f$, then the atlas must contain
+$f$ and $f \circ g$ and have the proper type variable relations.
+
+The context object will contain a type map and atlas for itself and the child
+function, showing the relations between type variables of the child and itself.
+
+
+\subsection{Runtime}
+
+In the thread corresponding to function $f$:
+
+\begin{enumerate}[noitemsep]
+	\item  Receive a path-context object $(P, C)$ (path, context)
+
+	%\item Add information from $C_f$ to $C$
+
+	\item $\Call{update}{C_f, C}$
+
+	\item Add $f$ (myself) to path $P$, send $(P, C)$ to all children (if
+		applicable).
+
+	\item Waiting state.
+\end{enumerate}
+
+%\begin{algorithm}
+%	\caption{Merging}
+%\begin{algorithmic}[1]
+%	\Require{context $C$ and path $P$}
+%	\Statex
+%	\Function{merge}{$C_f, C, P$}
+%	\ForAll{$D$ in $\mathcal{L}(C)$} \Comment{all direct parent contexts}
+%	\If{$D$ is in path $P$} \Comment{is $D$ on path that we received context
+%	from?}
+%	\State \Call{update}{$C_f, D$}
+%	\State \Call{merge}{$C_f, D, P$}
+%	\EndIf
+%	\EndFor
+%	\EndFunction
+%\end{algorithmic}
+%\end{algorithm}
+
+\begin{algorithm}
+	\caption{Replacing type variable $V$ in $C_g$ with type variable $W$ from
+	$C_f$}
+	\begin{algorithmic}[1]
+		\Statex
+		\Function{UpdateTypevar}{$C_g, V, C_f, W$}
+			\State $V \gets W$ \Comment{update type variable in $C_g$}
+			\State $\mathcal{T}(C_g)[W] \gets $ incomplete
+				\Comment{add type variable to type map}
+			\If{$\mathcal{T}(C_g)[ V ] \neq $ incomplete}
+				\State $\mathcal{T}(C_g)[ W ] \gets \mathcal{T}(C_g)[ V ]$
+				\Comment{copy explicit type if it exists}
+			\EndIf
+			\State $\mathcal{W}(C_f)[V] \gets W$ \Comment{for future reference}
+		\EndFunction	
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Updating one context with information from another}
+	\begin{algorithmic}[1]
+		\Require{source context $C_f$ and to-be-updated context $C_g$ ($C_f$ is
+		parent of $C_g$ in context tree)}
+		\Statex
+		\Function{Update}{$C_f, C_g$}
+		\If{$g$ is parent of $f$} \Comment{match type variables of function
+		call to function definition}
+		\State $V_1 \gets \mathcal{A}(C_g)[g \circ f]$ 
+		\State $W \gets \mathcal{A}(C_f)[f]$
+		\For{$i = 1$ to length($V_1$)}
+			\If{$V_1[i] \neq W[i]$}
+				\State \Call{UpdateTypevar}{$C_g, V_1[i], C_f, W[i]$}
+			\EndIf
+		\EndFor
+		\EndIf
+		\State
+		\ForAll{$v \in \mathcal{A}(C_g)[g]$} \Comment{If path contains
+		variables that $f$ has replaced before, replace them}
+			\If{$v \in \mathcal{W}(C_f)$}
+				\State \Call{UpdateTypevar}{$C_g, v, C_f, \mathcal{W}(C_f)[v]$}
+			\EndIf
+		\EndFor
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+\subsection{Finish}
+
+The algorithm will be considered finished when all threads are in a waiting
+state and when all channel buffers are empty.
+
+At this point, each function will try to resolve any type relations due to
+function composition or multiple function calls (currently not supported in
+grammar, but semantically the same as function composition in our case since we
+are only interested in type variables).
+
+When that is done, every function will walk up the call graph to find explicit
+types for its type variables.
+
+\subsection{Current Problems / To Do}
+
+All of these seem resolvable with the current algorithm.
+
+\begin{itemize}
+	\item Sending path-context object to all children -- there may be
+		contention for editing the same typevariables?
+
+		No -- because of locks. A child will have to lock down all of $C_f$
+		while it edits it, makes its type variable changes, etc. When child 2
+		overrides a type variable of child 1 later, it will be adding it to its
+		type variable map. 
+		
+		There is a record of what was changed -- but how do
+		we access it nicely? maybe $C_f$ should have that in its type variable
+		map for ease of resolution at the finish step?
+
+	\item To add to algorithm: When merging type variables, the type class(es)
+		that are associated with them must merge, too. 
+
+		Context should have map of type variables to type classes?
+
+	\item To add to algorithm: When and how do we detect type errors?
+
+		\begin{enumerate}
+			\item Type class errors whenever an explicit type is specified
+			\item Type class merge error
+			\item When would type variables not merge?
+			\item \ldots?
+		\end{enumerate}
+
+	\item To add to algorithm: Error types currently not incorporated (should
+		be easy, will require another type of communication though)
+
+	\item To add to algorithm: Detection of cycles in call graph (recursion,
+		mutual recursion, etc) and their type convergence (i.e. all types have
+		been enumerated)
+
+		Will converge because there are a finite set of types and thus,
+		function calls are a functional iteration on a finite sequence (the
+		types). This MUST be ultimately periodic for cycles, and we can stop
+		after a cycle is found.
+
+		Just has to be written into algorithm.
+\end{itemize}
+
+\pagebreak
+\section{Terms and Definitions}
+
+\subsection{General Terminology}
+	\paragraph{Function / Context} 
+	A function is an element of the set of functions. Functions are equipped
+	with parameters and their types, return type, error types, and composed
+	function calls.  Functions will be denoted by the lowercase roman letters
+	$f$, $g$, and $h$.  Multiple implementations (realizations with different
+	explicit types) will be denoted with differentiation notation (e.g.
+	Lagrange's notation: $f'$ or $h^{(4)}$ or $h^{iv}$).  The set of functions
+	will be denoted $\mathcal{F}$.
+
+	Every function has a \emph{context} which contains information about the
+	implementations (explicit types) of itself. A context for a function $f$ is
+	a tuple named $C_f = (\mathcal{M}, \mathcal{A}, \mathcal{W}, \mathcal{G},
+	\mathcal{X}, \mathcal{L}, \mathcal{E}, \mathcal{N})$, where
+	\begin{itemize}[noitemsep]
+		\item $\mathcal{M}$ is the type map, a dictionary that maps type
+			variables to explicit types (can also be denoted
+			$\mathcal{M}(C_f)$);
+		\item $\mathcal{A}$ is the atlas, a dictionary that maps paths in the
+			call graph to function implementations;
+		\item $\mathcal{W}$ is the type variable map, a dictionary that maps
+			type variables to type variables;
+		\item $\mathcal{G}$ is the set of child functions;
+		\item $\mathcal{X}$ is a dictionary that maps variable name to type
+			variable;
+		\item $\mathcal{L}$ is a set of references to the contexts of parent
+			functions of $f$;
+		\item $\mathcal{E}$ is a set of errors that $f$ throws or that were
+			thrown by child functions; and
+		\item $\mathcal{N} \in \mathbb{Z}^+$ is the number of parameters
+			including the return type.
+	\end{itemize}
+
+	We may write $V_0 = f(V_1, V_2, \cdots, V_{\mathcal{N}-1})$ for $V_i \in
+	\mathcal{T}$ (set of types). Exact definitions for the elements of the
+	tuple will follow below.
+	
+	\paragraph{Type}
+	A type is a named set of values. Familiar types in programming languages
+	would include \texttt{int} or \texttt{float}. We will
+	use lowercase roman characters near the beginning of the alphabet to denote
+	types and resort to subscripts if need be. The set of types will be denoted
+	$\mathcal{T}$.
+	
+	\paragraph{Type Variable}
+	A type variable is used in lieu of an explicit type to denote parametric
+	polymorphism. We will use uppercase $T$, $R$, and $S$ to denote type
+	variables and use subscripts when necessary. The set of type variables will
+	be denoted $\mathcal{V}$.
+	
+	\paragraph{Type Class}
+	A type class is a set of types (a subset of the set of types). We denote
+	type classes with uppercase roman characters near the beginning of the
+	alphabet. If $a \in A$, we say that $a$ implements $A$.
+	
+	\paragraph{Up-type}
+	An up-type is equivalent to an ``error type.''  Up-types explicitly travel
+	from callees to callers. Error types will only be denoted in code in the
+	form ``ErrorName'' preceded by the keywords ``throws''.
+
+	Up-types are a subset of the set of types. They cannot be used as return
+	types or parameter types.
+	
+	\paragraph{Down-type}
+	A down-type is a type which is passed from caller to callee. Theis
+	corresponds with the conventional definition of types. 
+	
+	\paragraph{Incomplete type}
+	An incomplete type is any type which is represented by a type variable.
+	Incomplete types are those types which we need to be completed by Paratype.
+	
+	
+\subsection{Graph Terminology}
+	\paragraph{Call Graph}
+	The call graph represents which functions call each other. It conveys
+	information about the relationship between functions, but may not describe
+	the relationship between type variables of functions. Paratype is actually
+	analyzing the \emph{type variable graph}. However, the call graph is useful
+	for simple examples and may be used in discussion.
+	
+	\paragraph{Parent}
+	A parent function is a function which is calling a child function (parent
+	node in call graph). If $f$ is the parent of $g$, we will use the notation
+	$f \circ g$.
+	
+	\paragraph{Child}
+	A child function is a function which is called by a parent (child node in
+	call graph). If $f$ is the child of $g$, we will use the notation $g \circ
+	f$.
+	
+	\paragraph{Function Composition}
+	Function composition is the pattern of using a function call as an argument
+	to another function. For single argument examples the common $f \circ
+	g$ notation will be used.
+	
+	\paragraph{Context Tree}
+	The tree representing every path in the call graph. A node of the context
+	tree represents one path in the call graph. Because the set of types is a
+	finite set, any cycles in the call graph will eventually unravel and the
+	context graph will be a context tree.
+	
+	\paragraph{Typevar Graph}
+	The type variable (typevar) graph is the graph which Paratype attempts to
+	solve. It describes the relationship between all type variables in the
+	source file.
+	
+\subsection{Algorithm Terminology}
+	\paragraph{Type Map $\mathcal{M}(C_f)$}
+	A dictionary with type variables as keys and explicit types as values. For
+	those type variables which do not yet have explicit type we will use
+	$\epsilon$.
+	
+	\[
+	\mathcal{M}(C_f) = \{ (v, t) : v \in \mathcal{V}, t \in \mathcal{T} \cup
+	\{\epsilon\} \}.
+	\]
+	 
+	\paragraph{Atlas $\mathcal{A}(C_f)$}
+	A dictionary which maps a path in the call tree that starts with $f$ to a
+	tuple of type variables.
+	
+	Let $(p, V)$ be the ordered pair where
+	\begin{itemize}[noitemsep]
+		\item $p$ is a path in the call tree. Let the end of that path be the
+			function $g$.
+		\item $V = (V_0, V_1, \cdots, V_{n-1})$ where $V_0 = g(V_{1}, V_{2},
+			\ldots, V_{n-1})$ and $V_{i} \in \mathcal{M}(C_g)$ for all $i$.
+	\end{itemize}
+	\[
+		\mathcal{A}(C_f) = \{ (p , V) : p\textrm{ begins with }f\}.
+	\]
+	The keys of the dictionary (paths) are unique.
+
+%	A dictionary which maps paths in the call tree to a list of a list of type
+%	variables. Each element of the outer-most list  represents a particular
+%	function call in the context path. The $n$th element of the inner-most list
+%	represents the $n$th argument's type variable.  
+	In the algorithm, the atlas is used to
+	identify identical type variables and to perform type checking.
+
+	\paragraph{Type Variable Map $\mathcal{W}(C_f)$}
+	A dictionary that maps type variables to type variables. To be used by $f$
+	when it has replaced a type variable and needs to keep replacing that same
+	type variable again in other functions.
+
+	\paragraph{Parent Functions $\mathcal{L}(C_f)$}
+	List of references to contexts of all callees of $f$.
+
+	\paragraph{Child Functions $\mathcal{G}(C_f)$}
+	A set of child function names. Composed function calls are considered child
+	functions.
+
+	\paragraph{Variable Dictionary $\mathcal{X}(C_f)$}
+	Dictionary that maps variable names to type variables.
+
+	\paragraph{Errors $\mathcal{E}(C_f)$}
+	A set of errors that either $f$ throws or was thrown by a child function of
+	$f$.
+
+	\paragraph{Context Update}
+	A context update is the stage in our algorithm in which the type
+	information is updated in a context, and type variables may be merged in
+	the type map.
+
+	\paragraph{In-Out Evaluation} 
+	In-Out Evaluation describes the necessity to
+	evaluate the context of inner-most function calls before outer function
+	calls in function composition. For example, $f(g(x),h(x))$ must evaluate
+	$g$ and $h$ before it can convey context information to $f$.
+
+\end{document}
