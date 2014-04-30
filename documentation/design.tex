@@ -77,6 +77,7 @@
 
 \lstdefinelanguage{Gopp}{
 	%keywords={=>,=,*,+},
+	comment=[l]{\#\#},
 	morestring=[b]{'},
 %	moredelim=*[s]{(}{)},
 %	moredelim=*[s]{<}{>},
@@ -480,65 +481,65 @@ Following is the grammar of our language specified in the BNF-like
 
 \lstinputlisting[language=Gopp]{paratype.gopp}
 
-\subsection{EBNF}
-
-Following is the grammar of our language in EBNF.
-
-\begin{grammar}
-    <lower-letter> ::= `...';
-
-    <upper-letter> ::= `...';
-
-    <type-name> ::= <lower-letter>, \{<upper-letter> |
-     <lower-letter>\};
-
-    <error-name> ::= <lower-letter>, \{<upper-letter>
-     | <lower-letter>\};
-
-    <typeclass-name> ::= <upper-letter>, \{<upper-letter>
-     | <lower-letter>\};
-
-    <type-var> ::= <upper-letter>, \{<upper-letter>\};
-
-    <var> ::= <lower-letter>, \{<lower-letter>\}
-
-    <func-name> ::= <lower-letter>, \{<upper-letter>
-     | <lower-letter>\};
-
-    <type-place> ::= <type-var> | <type-name>
-
-    <func-arg> ::= <type-place>, ` ', <var>
-
-    <func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
-
-    <func-constraint> ::= <type-var>, ` to ', <typeclass-name>,
-     \{` ', <typeclass-name>\};
-
-    <func-constraints> ::= `constrain ', <func-constraint>,
-     \{`, ', <func-constraint>\};
-
-    <func-errors> ::= ` throws ', <error-name>,
-     \{`, ', <error-name>\};
-
-    <typeclass-inherit> ::= ` inherits ', <typeclass-name>,
-     \{`, ', <typeclass-name>\};
-
-    <type-implement> ::= ` implements ', <typeclass-name>,
-    \{`,', <typeclass-name>\};
-
-    <type-decl> ::= `type ', <type-name>, [<type-implement>];
-
-    <typeclass-decl> ::= `typeclass ',
-    <typeclass-name>, [<typeclass-inherit>];
-
-    <expr> ::= <type-name>
-    \alt <type-var>
-    \alt <func-name>, `(', [\{<expr>, `,'\}, <expr>], `)';
-
-    <func-sig> ::= `func ', <func-name>, [` ', <func-constraints>], ` ',
-    <func-args>, ` ', <type-place>, [` ', <func-errors>];
-
-    <func-dec> ::= <func-sig>, `\textbackslash n =', <expr> 
-\end{grammar}
+%\subsection{EBNF}
+%
+%Following is the grammar of our language in EBNF.
+%
+%\begin{grammar}
+%    <lower-letter> ::= `...';
+%
+%    <upper-letter> ::= `...';
+%
+%    <type-name> ::= <lower-letter>, \{<upper-letter> |
+%     <lower-letter>\};
+%
+%    <error-name> ::= <lower-letter>, \{<upper-letter>
+%     | <lower-letter>\};
+%
+%    <typeclass-name> ::= <upper-letter>, \{<upper-letter>
+%     | <lower-letter>\};
+%
+%    <type-var> ::= <upper-letter>, \{<upper-letter>\};
+%
+%    <var> ::= <lower-letter>, \{<lower-letter>\}
+%
+%    <func-name> ::= <lower-letter>, \{<upper-letter>
+%     | <lower-letter>\};
+%
+%    <type-place> ::= <type-var> | <type-name>
+%
+%    <func-arg> ::= <type-place>, ` ', <var>
+%
+%    <func-args> ::= `(', \{<func-arg>, `, '\}, <func-arg>, `)';
+%
+%    <func-constraint> ::= <type-var>, ` to ', <typeclass-name>,
+%     \{` ', <typeclass-name>\};
+%
+%    <func-constraints> ::= `constrain ', <func-constraint>,
+%     \{`, ', <func-constraint>\};
+%
+%    <func-errors> ::= ` throws ', <error-name>,
+%     \{`, ', <error-name>\};
+%
+%    <typeclass-inherit> ::= ` inherits ', <typeclass-name>,
+%     \{`, ', <typeclass-name>\};
+%
+%    <type-implement> ::= ` implements ', <typeclass-name>,
+%    \{`,', <typeclass-name>\};
+%
+%    <type-decl> ::= `type ', <type-name>, [<type-implement>];
+%
+%    <typeclass-decl> ::= `typeclass ',
+%    <typeclass-name>, [<typeclass-inherit>];
+%
+%    <expr> ::= <type-name>
+%    \alt <type-var>
+%    \alt <func-name>, `(', [\{<expr>, `,'\}, <expr>], `)';
+%
+%    <func-sig> ::= `func ', <func-name>, [` ', <func-constraints>], ` ',
+%    <func-args>, ` ', <type-place>, [` ', <func-errors>];
+%
+%    <func-dec> ::= <func-sig>, `\textbackslash n =', <expr> 
+%\end{grammar}
 
 \end{document}

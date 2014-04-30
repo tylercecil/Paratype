@@ -1,3 +1,9 @@
+## ignore comments that begin at beginning of line
+ignore: /^#.*\n/
+## ignore whitespace at beginning of line
+ignore: /^(?:[ \t])+/
+
+Comma-Sep => <ws>* ',' <ws>*
 Type-Name => <lower-letter> <letter>*
 Error-Name => <lower-letter> <letter>*
 Typeclass-Name => <upper-letter> <letter>*
@@ -6,22 +12,23 @@ Var => <lower-letter>+
 Func-Name => <lower-letter> <letter>*
 Type-Place => <Type-Var>
 Type-Place => <Type-Name>
-Func-Arg => <Type-Place> ' ' <Var>
-Func-Args => '(' (<Func-Arg> ',')* <Func-Arg> ')'
-Func-Constraint => <Type-Var> ' to ' (<Typeclass-Name> ',')* <Typeclass-Name>
-Func-Constraints => 'constrain ' (<Func-Constraint> ',')* <Func-Constraint>
-Func-Errors => ' throws ' (<Error-Name> ',')* <Error-Name>
-Typeclass-Inherit => ' inherits ' (<Typeclass-Name> ',')* <Typeclass-Name>
-Type-Implement => ' implements ' (<Typeclass-Name> ',')* <Typeclass-Name>
-Type-Decl => 'type ' <Type-Name> [<Type-Implement>]
-Typeclass-Decl => 'typeclass ' <Typeclass-Name> [<Typeclass-Inherit>]
-Expr => <Type-Name>
-Expr => <Type-Var>
-Expr => <Func-Name> '(' [(<Expr> ',')* <Expr>] ')'
-Func-Sig => 'func ' <Func-Name> [' ' <Func-Constraints>] ' ' <Func-Args> ' '
-<Type-Place> [' ' <Func-Errors>]
-Func-Dec => <Func-Sig> '\n=' <Expr>
+Func-Arg => <ws>* <Type-Place> <ws>* <Var> <ws>*
+Func-Args => (<Func-Arg> ',')* <Func-Arg>
+Func-Constraint => <ws>* <Type-Var> <ws>+ 'to' <ws>+ (<Typeclass-Name> <Comma-Sep>)* <Typeclass-Name>
+Func-Constraints => <ws>+ 'constrain' <ws>+ (<Func-Constraint> <Comma-Sep>)* <Func-Constraint>
+Func-Errors => <ws>+ 'throws' <ws>+ (<Error-Name> <Comma-Sep>)* <Error-Name>
+Typeclass-Inherit => <ws>+ 'inherits' <ws>+ (<Typeclass-Name> <Comma-Sep>)* <Typeclass-Name>
+Type-Implement => <ws>+ 'implements' <ws>+ (<Typeclass-Name> <Comma-Sep>)* <Typeclass-Name>
+Type-Decl => 'type' <ws>+ <Type-Name> [<Type-Implement>]
+Typeclass-Decl => 'typeclass' <ws>+ <Typeclass-Name> [<Typeclass-Inherit>]
+Expr => <ws>* <Type-Name> <ws>*
+Expr => <ws>* <Type-Var> <ws>*
+Expr => <ws>* <Func-Name> <ws>* '(' [(<Expr> <Comma-Sep>)* <Expr>] ')' <ws>*
+Func-Sig => 'func' <ws>+ <Func-Name> [<Func-Constraints>] <ws>+ '(' <Func-Args>
+')' <ws>+ <Type-Place> [<Func-Errors>]
+Func-Decl => <Func-Sig> '\n' <ws>* '=' <Expr>
 
 lower-letter = /([a-z])/
 upper-letter = /([A-Z])/
 letter = /([A-Za-z])/
+ws = /( \t)/
