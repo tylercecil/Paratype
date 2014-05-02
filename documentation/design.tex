@@ -150,6 +150,68 @@ $f$ and $f \circ g$ and have the proper type variable relations.
 The context object will contain a type map and atlas for itself and the child
 function, showing the relations between type variables of the child and itself.
 
+\begin{algorithm}
+	\caption{Setting up function $f$}
+	\begin{algorithmic}[1]
+		\Require{function $f$ and its code}
+		\Statex
+		\Function{setup}{$f$}
+			\State $\mathcal{W}_f \gets \{\}$ \Comment{empty dict}
+			\State $\mathcal{G}_f \gets $ list of child functions (from code)
+			\State $\mathcal{L}_f \gets ()$ \Comment{empty list}
+			\State $\mathcal{E}_f \gets $ set of errors that $f$ throws (from
+			code)
+			\State $\mathcal{N}_f \gets $ number of parameters of $f$ (from
+			code)
+			\State $\mathcal{M}_f \gets \{F_0 : \textrm{return type if explicit,
+				\texttt{incomplete} otherwise} \}$
+			\State $\mathcal{A}_f \gets \{ f : (F_0) \}$
+			\State $V \gets \{\}$ \Comment{map typevar names in code to new
+			typevar names}
+			\State $i \gets 1$ \Comment{$i$ is counter for typevariable names}
+			\ForAll{parameters of $f$ in order}
+				\If{typevar name in code is not key in $V$}
+					\State $F_i \gets $ new typevar
+					\State $V[$ typevar name in code $] \gets F_i$
+					\State $\mathcal{M}_f[F_i] \gets $ explicit type or
+					\texttt{incomplete}
+					\State $\mathcal{K}_f[F_i] \gets $ type classes if
+					specified, \texttt{resolved} for explicit type, or
+					\texttt{any} if unspecified
+					\State $T \gets F_i$
+					\State $i \gets i+1$
+				\Else \Comment{typevar reused}
+					\State $T \gets V[$ typevar name in code $]$
+				\EndIf
+				\State $\mathcal{X}_f[$ variable name $] \gets T$ 
+				\State $\Call{append}{\mathcal{A}_f[f], T}$ \Comment{add new
+					typevariable to tuple}
+			\EndFor
+
+			\State
+			\ForAll{child function $g$ of $f$ (func composition: outer to inner)}
+				\State $R \gets $ typevar of return type of $g$ due to function
+				composition (or $F_0$ for outermost function)
+				\State $\mathcal{A}_f[f \circ g] \gets (R)$
+				\ForAll{parameters of $g$ in order}
+					\If{parameter is explicit type}
+						\State $F_i \gets $ new typevar
+						\State $\Call{append}{\mathcal{A}_f[f \circ g], F_i}$ \Comment{add new
+						typevariable to tuple}
+						\State $\mathcal{M}_f[F_i] \gets $ explicit type
+						\State $\mathcal{K}_f[F_i] \gets $ \texttt{resolved}
+						\Comment{does not matter anyway}
+						\State $i \gets i+1$
+					\ElsIf{parameter is variable name}
+						\State $\Call{append}{\mathcal{A}_f[f \circ g],
+						\mathcal{X}_f[$ variable name $]}$ \Comment{add new
+							typevariable to tuple}
+					\EndIf
+				\EndFor
+			\EndFor
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
 
 \subsection{Runtime}
 
@@ -175,16 +237,18 @@ In the thread corresponding to function $f$:
 		translated into objects by GOPP in the actual algorithm)}
 		\Statex
 		\Function{runtime}{$f$}
-		\State state $\gets$ running
+		\State state$_f$ $\gets$ running
 		\State \Call{setup}{$f$}
-		\While{$(P, C) \gets \Call{readBlockingChannel}{f}$}
-			\State state $\gets$ running
+		\State state$_f$ $\gets$ waiting
+		\While{$(P, C) \gets
+			\Call{readBlockingChannel}{f}$}\Comment{path-context object}
+			\State state$_f$ $\gets$ running
 			\State \Call{update}{$C_f, C$}
 			\State $P \gets P \circ f$ \Comment{add myself to path}
 			\ForAll{$g \in \mathcal{G}_f$}
-				\State send $(P, C)$ to $g$.
+				\State send $(P, C)$ to $g$
 			\EndFor
-			\State state $\gets$ waiting 
+			\State state$_f$ $\gets$ waiting 
 		\EndWhile
 		\If{every thread is in waiting state and all buffers are empty}
 			\State \Call{finish}{$f$}
@@ -293,7 +357,6 @@ When that is done, every function will walk up the call graph to find explicit
 types for its type variables.
 
 
-\pagebreak
 \subsection{Current Problems / To Do}
 
 All of these seem resolvable with the current algorithm.
@@ -374,7 +437,8 @@ All of these seem resolvable with the current algorithm.
 		\item $\mathcal{K}$ maps type variables to a subset of type classes
 			(the type classes that the type variable may be). \texttt{Any} will
 			be used if there is no restriction, it will act as the universal
-			set of type classes.
+			set of type classes. \texttt{Resolved} will be used if the type was
+			explicit.
 		\item $\mathcal{E}$ is a set of errors that $f$ throws or that were
 			thrown by child functions; and
 		\item $\mathcal{N} \in \mathbb{Z}^+$ is the number of parameters
