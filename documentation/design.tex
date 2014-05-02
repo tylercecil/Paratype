@@ -436,12 +436,13 @@ types for its type variables.
 \end{algorithm}
 
 \begin{algorithm}
-	\caption{Collecting implementations of $f$ up the call graph}
+	\caption{Collecting implementations of $f$ up the call graph, depth first}
 	\begin{algorithmic}[1]
 		\Function{finishRec}{$C_g, C_f$}
 			\State $I \gets \{\}$ \Comment{set}
 			\ForAll{$C_h \in \mathcal{L}_g$}
-				\State $i \gets ()$
+				\State $i \gets ()$ \Comment{check whether $h$ has a full
+				implementation for $f$}
 				\ForAll{$v \in \mathcal{A}_f[f]$} \Comment{my typevariables}
 					\If{$\mathcal{M}_h[v] \neq $ \texttt{incomplete}}
 						\State \Call{append}{$i, \mathcal{M}_h[v]$}
@@ -450,11 +451,14 @@ types for its type variables.
 					\EndIf
 				\EndFor
 				\If{$i$ still exists}
-					\State add $i$ to list implementations $I$
+					\State add $i$ to list of implementations $I$
+				\EndIf
+				\If{$h$ has no parents and has no implementation for $f$}
+					\State \Return \textbf{type error}
 				\EndIf
 				\State $I \gets I \cup \Call{finishRec}{C_h, C_f}$
 			\EndFor
-			\Return $I$
+			\State \Return $I$
 		\EndFunction
 	\end{algorithmic}
 \end{algorithm}
