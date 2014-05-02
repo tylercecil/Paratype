@@ -168,6 +168,30 @@ In the thread corresponding to function $f$:
 	\item Waiting state.
 \end{enumerate}
 
+\begin{algorithm}
+	\caption{Runtime for each thread}
+	\begin{algorithmic}[1]
+		\Require{function $f$}
+		\Statex
+		\Function{runtime}{$f$}
+		\State state $\gets$ running
+		\State \Call{setup}{$f$}
+		\While{$(P, C) \gets \Call{readBlockingChannel}{f}$}
+			\State state $\gets$ running
+			\State \Call{update}{$C_f, C$}
+			\State $P \gets P \circ f$ \Comment{add myself to path}
+			\ForAll{$g \in \mathcal{G}_f$}
+				\State send $(P, C)$ to $g$.
+			\EndFor
+			\State state $\gets$ waiting 
+		\EndWhile
+		\If{every thread is in waiting state and all buffers are empty}
+			\State \Call{finish}{$f$}
+		\EndIf
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
 %\begin{algorithm}
 %	\caption{Merging}
 %\begin{algorithmic}[1]
@@ -176,7 +200,7 @@ In the thread corresponding to function $f$:
 %	\Function{merge}{$C_f, C, P$}
 %	\ForAll{$D$ in $\mathcal{L}(C)$} \Comment{all direct parent contexts}
 %	\If{$D$ is in path $P$} \Comment{is $D$ on path that we received context
-%	from?}
+	%	from?}
 %	\State \Call{update}{$C_f, D$}
 %	\State \Call{merge}{$C_f, D, P$}
 %	\EndIf
@@ -266,6 +290,8 @@ are only interested in type variables).
 When that is done, every function will walk up the call graph to find explicit
 types for its type variables.
 
+
+\pagebreak
 \subsection{Current Problems / To Do}
 
 All of these seem resolvable with the current algorithm.
@@ -298,8 +324,8 @@ All of these seem resolvable with the current algorithm.
 			\item \ldots?
 		\end{enumerate}
 
-	\item To add to algorithm: Error types currently not incorporated (should
-		be easy, will require another type of communication though)
+	\item \st{To add to algorithm: Error types currently not incorporated
+		(should be easy, will require another type of communication though)}
 
 	\item To add to algorithm: Detection of cycles in call graph (recursion,
 		mutual recursion, etc) and their type convergence (i.e. all types have
