@@ -3,34 +3,32 @@ ignore: /^#.*\n/
 ## ignore whitespace at beginning of line
 ignore: /^(?:[ \t])+/
 
-Comma-Sep => <ws>* ',' <ws>*
-Type-Name => <lower-letter> <letter>*
-Error-Name => <lower-letter> <letter>*
-Typeclass-Name => <upper-letter> <letter>*
-Type-Var => <upper-letter>+
-Func-Name => <lower-letter> <letter>*
-Type-Place => <Type-Var>
-Type-Place => <Type-Name>
-Func-Arg => <ws>* <Type-Place> <ws>*
-Func-Args => (<Func-Arg> <Comma-Sep>)* <Func-Arg>
-Func-Constraint => <ws>* <Type-Var> <ws>+ 'to' <ws>+ (<Typeclass-Name> <Comma-Sep>)* <Typeclass-Name>
-Func-Constraints => <ws>+ 'constrain' <ws>+ (<Func-Constraint> <Comma-Sep>)* <Func-Constraint>
-Func-Errors => <ws>+ 'throws' <ws>+ (<Error-Name> <Comma-Sep>)* <Error-Name>
-Typeclass-Inherit => <ws>+ 'inherits' <ws>+ (<Typeclass-Name> <Comma-Sep>)* <Typeclass-Name>
-Type-Implement => <ws>+ 'implements' <ws>+ (<Typeclass-Name> <Comma-Sep>)* <Typeclass-Name>
-Type-Decl => 'type' <ws>+ <Type-Name> [<Type-Implement>]
-Typeclass-Decl => 'typeclass' <ws>+ <Typeclass-Name> [<Typeclass-Inherit>]
-Expr => <ws>* <Type-Name> <ws>*
-Expr => <ws>* <Type-Var> <ws>*
-Expr => <ws>* <Func-Name> <ws>* '(' [(<Expr> <Comma-Sep>)* <Expr>] ')' <ws>*
-Func-Sig => 'func' <ws>+ <Func-Name> [<Func-Constraints>] <ws>+ '(' <Func-Args>
-')' <ws>+ <Type-Place> [<Func-Errors>]
-Func-Decl => <Func-Sig> '\n' <ws>* '=' <Expr>
-Start => <Func-Decl>
-Start => <Type-Decl>
-Start => <Typeclass-Decl>
+Start => <TypeclassDecl>* '\n'* <TypeDecl>+ '\n'+ <FuncDecl>+ '\n'
 
-lower-letter = /([a-z])/
-upper-letter = /([A-Z])/
+CommaSep => <ws>* ',' <ws>*
+TypeName => <lowerletter> <letter>*
+ErrorName => <lowerletter> <letter>*
+TypeclassName => <upperletter> <letter>*
+TypeVar => <upperletter>+
+FuncName => <lowerletter> <letter>*
+TypePlace => <TypeVar>
+TypePlace => <TypeName>
+FuncArg => <ws>* <TypePlace> <ws>*
+FuncArgs => (<FuncArg> <CommaSep>)* <FuncArg>
+FuncConstraint => <ws>* <TypeVar> <ws>+ 'to' <ws>+ (<TypeclassName> <CommaSep>)* <TypeclassName>
+FuncConstraints => <ws>+ 'constrain' <ws>+ (<FuncConstraint> <CommaSep>)* <FuncConstraint>
+FuncErrors => <ws>+ 'throws' <ws>+ (<ErrorName> <CommaSep>)* <ErrorName>
+TypeclassInherit => <ws>+ 'inherits' <ws>+ (<TypeclassName> <CommaSep>)* <TypeclassName>
+TypeImplement => <ws>+ 'implements' <ws>+ (<TypeclassName> <CommaSep>)* <TypeclassName>
+TypeDecl => 'type' <ws>+ <TypeName> [<TypeImplement>] '\n'+
+TypeclassDecl => 'typeclass' <ws>+ <TypeclassName> [<TypeclassInherit>] '\n'+
+Expr => <ws>* <TypeName> <ws>*
+Expr => <ws>* <TypeVar> <ws>*
+Expr => <ws>* <FuncName> <ws>* '(' [(<Expr> <CommaSep>)* <Expr>] ')' <ws>*
+FuncSig => 'func' <ws>+ <FuncName> [<FuncConstraints>] <ws>+ '(' <FuncArgs> ')' <ws>+ <TypePlace> [<FuncErrors>]
+FuncDecl => <FuncSig> '\n' <ws>* '=' <Expr> '\n'+
+
+lowerletter = /([a-z])/
+upperletter = /([A-Z])/
 letter = /([A-Za-z])/
 ws = /([ \t])/
