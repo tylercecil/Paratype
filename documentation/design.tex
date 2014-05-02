@@ -34,6 +34,8 @@
 \usepackage{algorithmicx}
 \usepackage[noend]{algpseudocode}
 \usepackage[section]{algorithm}
+\usepackage[nottoc,numbib]{tocbibind}
+
 
 % Grammar
 \usepackage{syntax, etoolbox}
@@ -87,6 +89,16 @@
 
 \begin{document}
 
+\renewcommand{\listofalgorithms}{\begingroup
+	\tocfile{List of Algorithms}{loa}
+	\endgroup
+}
+\makeatletter
+\let\l@algorithm\l@figure
+\makeatother
+\pagenumbering{roman}
+
+
 \title{Paratype --- Design Documentation\\
 Work In Progress}
 \author{Tyler Cecil, Ben Turrubiates, and Chris Koch}
@@ -94,8 +106,11 @@ Work In Progress}
 \maketitle
 
 \tableofcontents
+\listofalgorithms
 
 \pagebreak
+\setcounter{page}{0}
+\pagenumbering{arabic}
 
 \section{Introduction}
 Saying that we evaluate types using an actor model is hardly enough information
@@ -257,7 +272,7 @@ In the thread corresponding to function $f$:
 \end{enumerate}
 
 \begin{algorithm}
-	\caption{Runtime for each thread}
+	\caption{Runtime for function $f$}
 	\begin{algorithmic}[1]
 		\Require{function $f$ and its code (i.e. part of the AST that is
 		translated into objects by GOPP in the actual algorithm)}
@@ -382,6 +397,18 @@ are only interested in type variables).
 When that is done, every function will walk up the call graph to find explicit
 types for its type variables.
 
+\subsection{Type Error Detection}
+
+Type errors are detected when:
+\begin{enumerate}
+	\item The algorithm tries to merge two incompatible explicit types
+	\item The algorithm tries to merge two incompatible sets of type classes
+		(given two sets of type class constraints on the same type variable,
+		their intersection is empty) 
+	\item An explicit type seen in the code is undeclared
+	\item An explicit type class seen in the code is undeclared
+	\item \ldots
+\end{enumerate}
 
 \subsection{Current Problems / To Do}
 
@@ -552,11 +579,12 @@ All of these seem resolvable with the current algorithm.
 	\paragraph{Type Map $\mathcal{M}(C_f)$}
 	A dictionary with type variables as keys and explicit types as values. For
 	those type variables which do not yet have explicit type we will use
-	$\epsilon$.
+	$\epsilon$ (\texttt{incomplete}).
 	
 	\[
-	\mathcal{M}(C_f) \subseteq \{ (v, t) : v \in \mathcal{V}, t \in \mathcal{T}
-	\cup \{\epsilon\} \}.
+	\mathcal{M}(C_f) \subseteq \{ (v, t) : t \in \mathcal{T}
+	\cup \{\epsilon\}, v \in \mathcal{V}\textrm{ and $v$ part of some path in
+	}\mathcal{A}(C_f) \}.
 	\]
 	 
 	\paragraph{Atlas $\mathcal{A}(C_f)$}

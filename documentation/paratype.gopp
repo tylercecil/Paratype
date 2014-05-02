@@ -31,4 +31,4 @@ Func-Decl => <Func-Sig> '\n' <ws>* '=' <Expr>
 lower-letter = /([a-z])/
 upper-letter = /([A-Z])/
 letter = /([A-Za-z])/
-ws = /( \t)/
+ws = /([ \t])/
