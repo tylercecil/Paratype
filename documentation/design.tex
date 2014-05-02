@@ -150,6 +150,16 @@ research than what Paratype covers; this is only a preliminary experiment.
 Functions as actors is not enough to understand the relationships between
 types.
 
+\section{Architecture}
+
+Paratype is written in Google Go.
+
+In Paratype, every function is an actor. In Go, we represent each actor to be a
+\texttt{goroutine}, which is essentially a lightweight thread. The
+\textsc{runtime} algorithm presented below is the \texttt{goroutine}. The
+functions (\texttt{goroutines}) communicate through a construct in Go called
+channels.
+
 \pagebreak
 \section{Algorithm}
 
@@ -206,7 +216,6 @@ function, showing the relations between type variables of the child and itself.
 %				\Else \Comment{typevar reused}
 %					\State $T \gets V[$ typevar name in code $]$
 %				\EndIf
-				\State $\mathcal{X}_f[$ variable name $] \gets T$ 
 				\State $\Call{append}{\mathcal{A}_f[f], T}$ \Comment{add new
 					typevariable to tuple}
 			\EndFor
@@ -240,13 +249,12 @@ function, showing the relations between type variables of the child and itself.
 						\State $\mathcal{M}_f[F_i] \gets $ \texttt{incomplete}
 						\State $\mathcal{K}_f[F_i] \gets $ \texttt{any}
 						\State $i \gets i+1$
-
-					\ElsIf{parameter is variable name}
-						\State $\Call{append}{\mathcal{A}_f[f \circ g],
-						\mathcal{X}_f[$ variable name $]}$ \Comment{add new
-							typevariable to tuple}
 					\ElsIf{parameter is typevar name $T$}
-						\State $\Call{append}{\mathcal{A}_f[f \circ g], T}$
+						\If{$T \in \mathcal{M}_f$}
+							\State $\Call{append}{\mathcal{A}_f[f \circ g], T}$
+						\Else
+							\State \Return \textbf{type error}
+						\EndIf
 					\EndIf
 				\EndFor
 			\EndFor
@@ -283,7 +291,8 @@ In the thread corresponding to function $f$:
 		\State state$_f$ $\gets$ waiting
 		\While{$(P, C) \gets
 			\Call{readBlockingChannel}{f}$}\Comment{path-context object}
-			\State state$_f$ $\gets$ running
+			\State state$_f$ $\gets$ running \Comment{\textbf{ADD CYCLE
+			DETECTION}}
 			\State \Call{update}{$C_f, C$}
 			\State $P \gets P \circ f$ \Comment{add myself to path}
 			\ForAll{$g \in \mathcal{G}_f$}
@@ -365,7 +374,7 @@ In the thread corresponding to function $f$:
 		\State $V \gets \mathcal{A}_g[g \circ f]$ 
 		\State $W \gets \mathcal{A}_f[f]$
 		\For{$i = 0$ to $\Call{length}{V}-1$}
-			\If{$V[i] \neq W[i]$}
+		\If{$V[i] \neq W[i]$} \Comment{\textbf{NEEDS CHANGE.}}
 				\State \Call{UpdateTypevar}{$C_g, V[i], C_f, W[i]$}
 			\EndIf
 		\EndFor
@@ -438,6 +447,8 @@ All of these seem resolvable with the current algorithm.
 		\begin{enumerate}
 			\item \st{Type class errors whenever an explicit type is specified}
 			\item \st{Type class merge error}
+			\item Explicit types that are not the same will not merge -- can
+				there be compatible explicit types?
 			\item When would type variables not merge?
 			\item \ldots?
 		\end{enumerate}
@@ -473,7 +484,7 @@ All of these seem resolvable with the current algorithm.
 	Every function has a \emph{context} which contains information about the
 	implementations (explicit types) of itself. A context for a function $f$ is
 	a tuple named $C_f = (\mathcal{M}, \mathcal{A}, \mathcal{W}, \mathcal{G},
-	\mathcal{X}, \mathcal{L}, \mathcal{K}, \mathcal{E}, \mathcal{N})$, where
+	\mathcal{L}, \mathcal{K}, \mathcal{E}, \mathcal{N})$, where
 	\begin{itemize}[noitemsep]
 		\item $\mathcal{M}$ is the type map, a dictionary that maps type
 			variables to explicit types (can also be denoted
@@ -483,15 +494,10 @@ All of these seem resolvable with the current algorithm.
 		\item $\mathcal{W}$ is the type variable map, a dictionary that maps
 			type variables to type variables;
 		\item $\mathcal{G}$ is the set of child functions;
-		\item $\mathcal{X}$ is a dictionary that maps variable name to type
-			variable;
 		\item $\mathcal{L}$ is a set of references to the contexts of parent
 			functions of $f$;
 		\item $\mathcal{K}$ maps type variables to a subset of type classes
-			(the type classes that the type variable may be). \texttt{Any} will
-			be used if there is no restriction, it will act as the universal
-			set of type classes. \texttt{Resolved} will be used if the type was
-			explicit.
+			(the type classes that the type variable may be); and
 		\item $\mathcal{E}$ is a set of errors that $f$ throws or that were
 			thrown by child functions; and
 		\item $\mathcal{N} \in \mathbb{Z}^+$ is the number of parameters
@@ -561,8 +567,7 @@ All of these seem resolvable with the current algorithm.
 	
 	\paragraph{Function Composition}
 	Function composition is the pattern of using a function call as an argument
-	to another function. For single argument examples the common $f \circ
-	g$ notation will be used.
+	to another function.
 	
 	\paragraph{Context Tree}
 	The tree representing every path in the call graph. A node of the context
@@ -622,8 +627,16 @@ All of these seem resolvable with the current algorithm.
 	A set of child function names. Composed function calls are considered child
 	functions.
 
-	\paragraph{Variable Dictionary $\mathcal{X}(C_f)$}
-	Dictionary that maps variable names to type variables.
+
+	\paragraph{Type Class Restriction $\mathcal{K}(C_f)$}
+
+	$\mathcal{K}$ is a dictionary that maps type variables to the type classes
+	that they are allowed to be.
+
+	\texttt{Any} will
+	be used if there is no restriction, it will act as the universal
+	set of type classes. \texttt{Resolved} will be used if the type was
+	explicit.
 
 	\paragraph{Errors $\mathcal{E}(C_f)$}
 	A set of errors that either $f$ throws or was thrown by a child function of
