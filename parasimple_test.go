@@ -20,23 +20,36 @@ type Type struct {
     Name string
 }
 
-type TypePlace struct{
-}
-
 type Func struct {
     Name string
+	Arguments []Argument
+	LastArgument TypePlace
 	ReturnType TypePlace
+	Errors []Error
+	LastError TypePlace
+	Expr
 }
 
+type Expr interface{}
+
+type Error struct {
+	Name TypePlace
+}
+
+type Argument struct {
+	Name TypePlace
+}
+
+type TypePlace interface{}
+
 type TypeVar struct {
-	TypePlace
 	Name string
 }
 
 type TypeName struct {
-	TypePlace
 	Name string
 }
+
 
 const paragopp = `
 ## ignore comments that begin at beginning of line
@@ -46,16 +59,23 @@ ignore: /^(?:[ \t])+/
 
 Start => {type=Base} {field=FuncDecls} <<FuncDecl>>+
 
+CommaSep => ',' 
 FuncName => <ident>
 TypeVar => {type=TypeVar} {field=Name} <typevar>
 TypeName => {type=TypeName} {field=Name} <ident>
 TypePlace => <TypeVar>
 TypePlace => <TypeName>
-FuncDecl => 'func' <ws>+ {field=Name} <FuncName> {field=ReturnType} <<TypePlace>>
+FuncArgss => {field=Name} <TypePlace> <CommaSep>
+FuncArgs => {field=Arguments} <<FuncArgss>>* [{field=LastArgument} <TypePlace>]
+FuncErrorss => {field=Name} <TypePlace> <CommaSep>
+FuncErrors => {field=Errors} <<FuncArgss>>* {field=LastError} <TypePlace>
+Expr => <TypePlace>
+Expr => {type=Func} {field=Name} <FuncName> '(' [(<Expr> <CommaSep>)* <Expr>] ')' 
+FuncSig => 'func ' {field=Name} <FuncName> '(' <FuncArgs> ')' {field=ReturnType} <<TypePlace>> ['throws ' <FuncErrors>]
+FuncDecl => {type=Func} <FuncSig> '\n=' {field=Expr} <<Expr>>
 
 ident = /([a-z][a-zA-Z]*)/
 typevar = /([A-Z]*)/
-ws = /([ \t])/
 `
 func TestGrammar(t *testing.T) {
     df, err := gopp.NewDecoderFactory(paragopp, "Start")
@@ -63,7 +83,10 @@ func TestGrammar(t *testing.T) {
         t.Error(err)
         return
     }
-    dec := df.NewDecoder(strings.NewReader("func foo int"))
+	df.RegisterType(TypeVar{})
+	df.RegisterType(TypeName{})
+	df.RegisterType(Func{})
+    dec := df.NewDecoder(strings.NewReader("func foo() iNT\n=int"))
 	out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
