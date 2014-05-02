@@ -41,6 +41,8 @@
 \setlength{\grammarparsep}{8pt plus 1pt minus 1pt}
 \setlength{\grammarindent}{12em}
 
+% strike through text
+\usepackage{soul}
 
 % typesetting 'real code'
 \usepackage{listings,color,xcolor,MnSymbol}
@@ -190,21 +192,32 @@ In the thread corresponding to function $f$:
 		\Statex
 		\Function{UpdateTypevar}{$C_g, V, C_f, W$}
 			\State $V \gets W$ \Comment{update type variable in $C_g$}
-			\If{$\mathcal{T}(C_g)[ V ] \neq$ incomplete and
-				$\mathcal{T}(C_f)[W] \neq$ incomplete and $\mathcal{T}(C_g)[V]
-				\neq \mathcal{T}(C_f)[W]$}
-				\State type error! \Comment{\textbf{or just add an
-				implementation?}} 
+			\If{$\mathcal{T}_g[ V ] \neq$ incomplete and
+				$\mathcal{T}_f[W] \neq$ incomplete and $\mathcal{T}_g[V]
+				\neq \mathcal{T}_f[W]$}
+				\State\Return type error!
 			\EndIf
+	
 %			\State $\mathcal{T}(C_g)[W] \gets $ incomplete
 %				\Comment{add type variable to type map}
-			\If{$\mathcal{T}(C_g)[ V ] \neq $ incomplete}
-				\State $\mathcal{T}(C_g)[ W ] \gets \mathcal{T}(C_g)[ V ]$
+			\State \Comment{add new type variable to type map}
+			\If{$\mathcal{T}_g[ V ] \neq $ incomplete}
+				\State $\mathcal{T}_g[ W ] \gets \mathcal{T}_g[ V ]$
 				\Comment{copy explicit type if it exists}
 			\Else
-				\State $\mathcal{T}(C_g)[ W ] \gets \mathcal{T}(C_f)[ W ]$
+				\State $\mathcal{T}_g[ W ] \gets \mathcal{T}_f[ W ]$
 			\EndIf
-			\State $\mathcal{W}(C_f)[V] \gets W$ \Comment{for future reference}
+
+			\State \Comment{merge type classes}
+			\State $\mathcal{K}_g[ W ] \gets \mathcal{K}_g[V] \cap
+			\mathcal{K}_f[W]$. \Comment{\texttt{Any} $\cap D = D$}
+			\If{$\mathcal{K}_g[ W ] = \emptyset$ or $\mathcal{T}_g[W]
+			\not \in \mathcal{K}_g[W]$} 
+				\State \Return type error! \Comment{if no type class or typevar
+			is not part of typeclass}
+			\EndIf
+
+			\State $\mathcal{W}_f[V] \gets W$ \Comment{for future reference}
 		\EndFunction	
 	\end{algorithmic}
 \end{algorithm}
@@ -218,8 +231,8 @@ In the thread corresponding to function $f$:
 		\Function{Update}{$C_f, C_g$}
 		\If{$g$ is parent of $f$} \Comment{match type variables of function
 		call to function definition}
-		\State $V_1 \gets \mathcal{A}(C_g)[g \circ f]$ 
-		\State $W \gets \mathcal{A}(C_f)[f]$
+		\State $V_1 \gets \mathcal{A}_g[g \circ f]$ 
+		\State $W \gets \mathcal{A}_f[f]$
 		\For{$i = 1$ to length($V_1$)}
 			\If{$V_1[i] \neq W[i]$}
 				\State \Call{UpdateTypevar}{$C_g, V_1[i], C_f, W[i]$}
@@ -227,10 +240,10 @@ In the thread corresponding to function $f$:
 		\EndFor
 		\EndIf
 		\State
-		\ForAll{$v \in \mathcal{A}(C_g)[g]$} \Comment{If path contains
+		\ForAll{$v \in \mathcal{A}_g[g]$} \Comment{If path contains
 		variables that $f$ has replaced before, replace them}
-			\If{$v \in \mathcal{W}(C_f)$}
-				\State \Call{UpdateTypevar}{$C_g, v, C_f, \mathcal{W}(C_f)[v]$}
+			\If{$v \in \mathcal{W}_f$}
+			\State \Call{UpdateTypevar}{$C_g, v, C_f, \mathcal{W}_f[v]$}
 			\EndIf
 		\EndFor
 		\EndFunction
@@ -267,10 +280,11 @@ All of these seem resolvable with the current algorithm.
 		we access it nicely? maybe $C_f$ should have that in its type variable
 		map for ease of resolution at the finish step?
 
-	\item To add to algorithm: When merging type variables, the type class(es)
-		that are associated with them must merge, too. 
+	\item \st{To add to algorithm: When merging type variables, the type
+			class(es) that are associated with them must merge, too. 
 
-		Context should have map of type variables to type classes?
+			Context should have map of type variables to type classes?} Dealt
+			with.
 
 	\item To add to algorithm: When and how do we detect type errors?
 
@@ -312,7 +326,7 @@ All of these seem resolvable with the current algorithm.
 	Every function has a \emph{context} which contains information about the
 	implementations (explicit types) of itself. A context for a function $f$ is
 	a tuple named $C_f = (\mathcal{M}, \mathcal{A}, \mathcal{W}, \mathcal{G},
-	\mathcal{X}, \mathcal{L}, \mathcal{E}, \mathcal{N})$, where
+	\mathcal{X}, \mathcal{L}, \mathcal{K}, \mathcal{E}, \mathcal{N})$, where
 	\begin{itemize}[noitemsep]
 		\item $\mathcal{M}$ is the type map, a dictionary that maps type
 			variables to explicit types (can also be denoted
@@ -326,6 +340,10 @@ All of these seem resolvable with the current algorithm.
 			variable;
 		\item $\mathcal{L}$ is a set of references to the contexts of parent
 			functions of $f$;
+		\item $\mathcal{K}$ maps type variables to a subset of type classes
+			(the type classes that the type variable may be). \texttt{Any} will
+			be used if there is no restriction, it will act as the universal
+			set of type classes.
 		\item $\mathcal{E}$ is a set of errors that $f$ throws or that were
 			thrown by child functions; and
 		\item $\mathcal{N} \in \mathbb{Z}^+$ is the number of parameters
@@ -355,7 +373,8 @@ All of these seem resolvable with the current algorithm.
 	\paragraph{Type Class}
 	A type class is a set of types (a subset of the set of types). We denote
 	type classes with uppercase roman characters near the beginning of the
-	alphabet. If $a \in A$, we say that $a$ implements $A$.
+	alphabet. If $a \in A$, we say that $a$ implements $A$. The set of type
+	classes is denoted $\mathcal{C}$.
 	
 	\paragraph{Up-type}
 	An up-type is equivalent to an ``error type.''  Up-types explicitly travel
@@ -415,8 +434,8 @@ All of these seem resolvable with the current algorithm.
 	$\epsilon$.
 	
 	\[
-	\mathcal{M}(C_f) = \{ (v, t) : v \in \mathcal{V}, t \in \mathcal{T} \cup
-	\{\epsilon\} \}.
+	\mathcal{M}(C_f) \subseteq \{ (v, t) : v \in \mathcal{V}, t \in \mathcal{T}
+	\cup \{\epsilon\} \}.
 	\]
 	 
 	\paragraph{Atlas $\mathcal{A}(C_f)$}
@@ -431,7 +450,7 @@ All of these seem resolvable with the current algorithm.
 			\ldots, V_{n-1})$ and $V_{i} \in \mathcal{M}(C_g)$ for all $i$.
 	\end{itemize}
 	\[
-		\mathcal{A}(C_f) = \{ (p , V) : p\textrm{ begins with }f\}.
+		\mathcal{A}(C_f) \subseteq \{ (p , V) : p\textrm{ begins with }f\}.
 	\]
 	The keys of the dictionary (paths) are unique.
 
