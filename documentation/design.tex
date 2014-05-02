@@ -192,26 +192,26 @@ In the thread corresponding to function $f$:
 		\Statex
 		\Function{UpdateTypevar}{$C_g, V, C_f, W$}
 			\State $V \gets W$ \Comment{update type variable in $C_g$}
-			\If{$\mathcal{T}_g[ V ] \neq$ incomplete and
-				$\mathcal{T}_f[W] \neq$ incomplete and $\mathcal{T}_g[V]
-				\neq \mathcal{T}_f[W]$}
+			\If{$\mathcal{M}_g[ V ] \neq$ \texttt{incomplete} and
+			$\mathcal{M}_f[W] \neq$ \texttt{incomplete} and $\mathcal{M}_g[V]
+				\neq \mathcal{M}_f[W]$}
 				\State\Return type error!
 			\EndIf
 	
 %			\State $\mathcal{T}(C_g)[W] \gets $ incomplete
 %				\Comment{add type variable to type map}
 			\State \Comment{add new type variable to type map}
-			\If{$\mathcal{T}_g[ V ] \neq $ incomplete}
-				\State $\mathcal{T}_g[ W ] \gets \mathcal{T}_g[ V ]$
+			\If{$\mathcal{M}_g[ V ] \neq $ \texttt{incomplete}}
+				\State $\mathcal{M}_g[ W ] \gets \mathcal{M}_g[ V ]$
 				\Comment{copy explicit type if it exists}
 			\Else
-				\State $\mathcal{T}_g[ W ] \gets \mathcal{T}_f[ W ]$
+				\State $\mathcal{M}_g[ W ] \gets \mathcal{M}_f[ W ]$
 			\EndIf
 
 			\State \Comment{merge type classes}
 			\State $\mathcal{K}_g[ W ] \gets \mathcal{K}_g[V] \cap
 			\mathcal{K}_f[W]$. \Comment{\texttt{Any} $\cap D = D$}
-			\If{$\mathcal{K}_g[ W ] = \emptyset$ or $\mathcal{T}_g[W]
+			\If{$\mathcal{K}_g[ W ] = \emptyset$ or $\mathcal{M}_g[W]
 			\not \in \mathcal{K}_g[W]$} 
 				\State \Return type error! \Comment{if no type class or typevar
 			is not part of typeclass}
@@ -229,23 +229,26 @@ In the thread corresponding to function $f$:
 		parent of $C_g$ in context tree)}
 		\Statex
 		\Function{Update}{$C_f, C_g$}
-		\If{$g$ is parent of $f$} \Comment{match type variables of function
-		call to function definition}
-		\State $V_1 \gets \mathcal{A}_g[g \circ f]$ 
+		\If{$g$ is direct parent of $f$} \Comment{match type variables of
+		function call to function definition}
+		\State $V \gets \mathcal{A}_g[g \circ f]$ 
 		\State $W \gets \mathcal{A}_f[f]$
-		\For{$i = 1$ to length($V_1$)}
-			\If{$V_1[i] \neq W[i]$}
-				\State \Call{UpdateTypevar}{$C_g, V_1[i], C_f, W[i]$}
+		\For{$i = 0$ to $\Call{length}{V}-1$}
+			\If{$V[i] \neq W[i]$}
+				\State \Call{UpdateTypevar}{$C_g, V[i], C_f, W[i]$}
 			\EndIf
 		\EndFor
 		\EndIf
-		\State
-		\ForAll{$v \in \mathcal{A}_g[g]$} \Comment{If path contains
-		variables that $f$ has replaced before, replace them}
+		\State	
+		\State \Comment{If $g$'s implementation
+		contains variables that $f$ has replaced before, replace them}
+		\ForAll{$v \in \mathcal{A}_g[g]$} 
 			\If{$v \in \mathcal{W}_f$}
 			\State \Call{UpdateTypevar}{$C_g, v, C_f, \mathcal{W}_f[v]$}
 			\EndIf
 		\EndFor
+		\State $\mathcal{E}_g \gets \mathcal{E}_g \cup \mathcal{E}_f$
+		\Comment{merge error types}
 		\EndFunction
 	\end{algorithmic}
 \end{algorithm}
@@ -289,8 +292,8 @@ All of these seem resolvable with the current algorithm.
 	\item To add to algorithm: When and how do we detect type errors?
 
 		\begin{enumerate}
-			\item Type class errors whenever an explicit type is specified
-			\item Type class merge error
+			\item \st{Type class errors whenever an explicit type is specified}
+			\item \st{Type class merge error}
 			\item When would type variables not merge?
 			\item \ldots?
 		\end{enumerate}
