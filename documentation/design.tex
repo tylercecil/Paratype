@@ -250,7 +250,11 @@ function, showing the relations between type variables of the child and itself.
 						\State $\mathcal{K}_f[F_i] \gets $ \texttt{any}
 						\State $i \gets i+1$
 					\ElsIf{parameter is typevar name $T$}
-						\State $\Call{append}{\mathcal{A}_f[f \circ g], T}$
+						\If{$T \in \mathcal{M}_f$}
+							\State $\Call{append}{\mathcal{A}_f[f \circ g], T}$
+						\Else
+							\State \Return \textbf{type error}
+						\EndIf
 					\EndIf
 				\EndFor
 			\EndFor
