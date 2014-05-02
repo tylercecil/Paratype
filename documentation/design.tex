@@ -500,10 +500,7 @@ All of these seem resolvable with the current algorithm.
 		\item $\mathcal{L}$ is a set of references to the contexts of parent
 			functions of $f$;
 		\item $\mathcal{K}$ maps type variables to a subset of type classes
-			(the type classes that the type variable may be). \texttt{Any} will
-			be used if there is no restriction, it will act as the universal
-			set of type classes. \texttt{Resolved} will be used if the type was
-			explicit.
+			(the type classes that the type variable may be); and
 		\item $\mathcal{E}$ is a set of errors that $f$ throws or that were
 			thrown by child functions; and
 		\item $\mathcal{N} \in \mathbb{Z}^+$ is the number of parameters
@@ -573,8 +570,7 @@ All of these seem resolvable with the current algorithm.
 	
 	\paragraph{Function Composition}
 	Function composition is the pattern of using a function call as an argument
-	to another function. For single argument examples the common $f \circ
-	g$ notation will be used.
+	to another function.
 	
 	\paragraph{Context Tree}
 	The tree representing every path in the call graph. A node of the context
@@ -636,6 +632,16 @@ All of these seem resolvable with the current algorithm.
 
 	\paragraph{Variable Dictionary $\mathcal{X}(C_f)$}
 	Dictionary that maps variable names to type variables.
+
+	\paragraph{Type Class Restriction $\mathcal{K}(C_f)$}
+
+	$\mathcal{K}$ is a dictionary that maps type variables to the type classes
+	that they are allowed to be.
+
+	\texttt{Any} will
+	be used if there is no restriction, it will act as the universal
+	set of type classes. \texttt{Resolved} will be used if the type was
+	explicit.
 
 	\paragraph{Errors $\mathcal{E}(C_f)$}
 	A set of errors that either $f$ throws or was thrown by a child function of
