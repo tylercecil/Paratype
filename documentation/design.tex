@@ -150,6 +150,16 @@ research than what Paratype covers; this is only a preliminary experiment.
 Functions as actors is not enough to understand the relationships between
 types.
 
+\section{Architecture}
+
+Paratype is written in Google Go.
+
+In Paratype, every function is an actor. In Go, we represent each actor to be a
+\texttt{goroutine}, which is essentially a lightweight thread. The
+\textsc{runtime} algorithm presented below is the \texttt{goroutine}. The
+functions (\texttt{goroutines}) communicate through a construct in Go called
+channels.
+
 \pagebreak
 \section{Algorithm}
 
@@ -438,6 +448,8 @@ All of these seem resolvable with the current algorithm.
 		\begin{enumerate}
 			\item \st{Type class errors whenever an explicit type is specified}
 			\item \st{Type class merge error}
+			\item Explicit types that are not the same will not merge -- can
+				there be compatible explicit types?
 			\item When would type variables not merge?
 			\item \ldots?
 		\end{enumerate}

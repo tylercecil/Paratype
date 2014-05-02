@@ -12,6 +12,7 @@
 *.aux
 *.lof
 *.log
+*.loa
 *.lot
 *.fls
 *.out
