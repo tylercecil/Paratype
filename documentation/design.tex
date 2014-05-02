@@ -156,50 +156,63 @@ function, showing the relations between type variables of the child and itself.
 		\Require{function $f$ and its code}
 		\Statex
 		\Function{setup}{$f$}
-			\State $\mathcal{W}_f \gets \{\}$ \Comment{empty dict}
+			\State $\mathcal{W}_f \gets \{\}$ \Comment{empty dict --
+			typevar-to-typevar map}
 			\State $\mathcal{G}_f \gets $ list of child functions (from code)
-			\State $\mathcal{L}_f \gets ()$ \Comment{empty list}
+			\State $\mathcal{L}_f \gets ()$ \Comment{empty list -- list of
+			parent contexts}
 			\State $\mathcal{E}_f \gets $ set of errors that $f$ throws (from
 			code)
 			\State $\mathcal{N}_f \gets $ number of parameters of $f$ (from
 			code)
 			\State $\mathcal{M}_f \gets \{F_0 : \textrm{return type if explicit,
-				\texttt{incomplete} otherwise} \}$
-			\State $\mathcal{A}_f \gets \{ f : (F_0) \}$
-			\State $V \gets \{\}$ \Comment{map typevar names in code to new
-			typevar names}
-			\State $i \gets 1$ \Comment{$i$ is counter for typevariable names}
+				\texttt{incomplete} otherwise} \}$ \Comment{type map}
+				\State $\mathcal{A}_f \gets \{ f : (F_0) \}$ \Comment{atlas}
+%			\State $V \gets \{\}$ \Comment{map typevar names in code to new
+%			typevar names for algorithm}
 			\ForAll{parameters of $f$ in order}
-				\If{typevar name in code is not key in $V$}
-					\State $F_i \gets $ new typevar
-					\State $V[$ typevar name in code $] \gets F_i$
-					\State $\mathcal{M}_f[F_i] \gets $ explicit type or
-					\texttt{incomplete}
-					\State $\mathcal{K}_f[F_i] \gets $ type classes if
+				\State $T \gets $ typevar name from code
+				\If{$T$ not in $\mathcal{M}_f$} \Comment{not in type map
+					yet}
+
+					\State $\mathcal{M}_f[T] \gets $ explicit type or
+						\texttt{incomplete}
+					\If{type in $\mathcal{M}_f[T]$ unknown (undeclared)}
+						\State \Return \textbf{type error}
+					\EndIf
+					\State $\mathcal{K}_f[T] \gets $ type classes if
 					specified, \texttt{resolved} for explicit type, or
-					\texttt{any} if unspecified
-					\State $T \gets F_i$
-					\State $i \gets i+1$
-				\Else \Comment{typevar reused}
-					\State $T \gets V[$ typevar name in code $]$
+					\texttt{any} if unspecified 
+					\If{type classes in $\mathcal{K}_f[T]$ unknown
+						(undeclared)}
+						\State \Return \textbf{type error}
+					\EndIf
 				\EndIf
+%				\Else \Comment{typevar reused}
+%					\State $T \gets V[$ typevar name in code $]$
+%				\EndIf
 				\State $\mathcal{X}_f[$ variable name $] \gets T$ 
 				\State $\Call{append}{\mathcal{A}_f[f], T}$ \Comment{add new
 					typevariable to tuple}
 			\EndFor
 
-			\State
+			\State $i \gets 1$ \Comment{$i$ is counter for new typevariable names}
 			\ForAll{child function $g$ of $f$ (func composition: outer to inner)}
 				\If{$g$ is outermost function call}
 					\State $\mathcal{A}_f[f \circ g] \gets (F_0)$
 					\Comment{Return type}
 				\EndIf
 				\ForAll{parameters of $g$ in order}
-					\If{parameter is explicit type}
+					\If{parameter is explicit type $t$}
 						\State $F_i \gets $ new typevar
 						\State $\Call{append}{\mathcal{A}_f[f \circ g], F_i}$ \Comment{add new
 						typevariable to tuple}
-						\State $\mathcal{M}_f[F_i] \gets $ explicit type
+						\State $\mathcal{M}_f[F_i] \gets t$ 
+
+						\If{type in $\mathcal{M}_f[F_i]$ unknown (undeclared)}
+							\State \Return \textbf{type error}
+						\EndIf
+
 						\State $\mathcal{K}_f[F_i] \gets $ \texttt{resolved}
 						\Comment{does not matter anyway}
 						\State $i \gets i+1$
@@ -217,6 +230,8 @@ function, showing the relations between type variables of the child and itself.
 						\State $\Call{append}{\mathcal{A}_f[f \circ g],
 						\mathcal{X}_f[$ variable name $]}$ \Comment{add new
 							typevariable to tuple}
+					\ElsIf{parameter is typevar name $T$}
+						\State $\Call{append}{\mathcal{A}_f[f \circ g], T}$
 					\EndIf
 				\EndFor
 			\EndFor
