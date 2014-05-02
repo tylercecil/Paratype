@@ -351,15 +351,16 @@ In the thread corresponding to function $f$:
 			\State \Comment{merge type classes}
 			\State $\mathcal{K}_g[ W ] \gets \mathcal{K}_g[V] \cap
 			\mathcal{K}_f[W]$. \Comment{\texttt{Any} $\cap D = D$}
-			\If{$\mathcal{K}_g[ W ] = \emptyset$ or $\mathcal{M}_g[W]
-			\not \in \mathcal{K}_g[W]$} 
+			\If{$\mathcal{K}_g[ W ] = \emptyset$ or ($\mathcal{M}_g[W] \neq $
+			\texttt{incomplete} and $\mathcal{M}_g[W]
+			\not \in \mathcal{K}_g[W]$)} 
 				\State \Return \textbf{type error} \Comment{if no type class or
 				typevar is not part of typeclass}
 			\EndIf
 
 			\State $\mathcal{W}_f[V] \gets W$ \Comment{for future reference}
 
-			\State $V \gets W$ \Comment{update type variable in $C_g$}
+			%\State $V \gets W$ \Comment{update type variable in $C_g$}
 		\EndFunction	
 	\end{algorithmic}
 \end{algorithm}
@@ -418,6 +419,9 @@ Type errors are detected when:
 		their intersection is empty) 
 	\item An explicit type seen in the code is undeclared
 	\item An explicit type class seen in the code is undeclared
+	\item A type variable is referred to in the body of a function that was not
+		declared by any function parameter (might have to be changed -- local
+		variables?)
 	\item \ldots
 \end{enumerate}
 
