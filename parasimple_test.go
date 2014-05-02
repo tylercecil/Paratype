@@ -23,7 +23,7 @@ type Type struct {
 
 type Func struct {
     Name string
-	Arguments []Argument
+	Arguments []TypePlace
 	LastArgument TypePlace
 	ReturnType TypePlace
 	Errors []Error
@@ -34,10 +34,6 @@ type Func struct {
 type Expr interface{}
 
 type Error struct {
-	Name TypePlace
-}
-
-type Argument struct {
 	Name TypePlace
 }
 
@@ -66,7 +62,7 @@ TypeVar => {type=TypeVar} {field=Name} <typevar>
 TypeName => {type=TypeName} {field=Name} <ident>
 TypePlace => <TypeVar>
 TypePlace => <TypeName>
-FuncArgss => {field=Name} <<TypePlace>> <CommaSep>
+FuncArgss => <TypePlace> <CommaSep>
 FuncArgs => {field=Arguments} <<FuncArgss>>* [{field=LastArgument} <<TypePlace>>]
 FuncErrorss => {field=Name} <TypePlace> <CommaSep>
 FuncErrors => {field=Errors} <<FuncArgss>>* {field=LastError} <TypePlace>
