@@ -4,6 +4,7 @@ import (
     "github.com/skelterjohn/gopp"
     "strings"
     "testing"
+//    "reflect"
 )
 
 type Base struct {
@@ -59,20 +60,20 @@ ignore: /^(?:[ \t])+/
 
 Start => {type=Base} {field=FuncDecls} <<FuncDecl>>+
 
-CommaSep => ',' 
+CommaSep => ','
 FuncName => <ident>
 TypeVar => {type=TypeVar} {field=Name} <typevar>
 TypeName => {type=TypeName} {field=Name} <ident>
 TypePlace => <TypeVar>
 TypePlace => <TypeName>
-FuncArgss => {field=Name} <TypePlace> <CommaSep>
-FuncArgs => {field=Arguments} <<FuncArgss>>* [{field=LastArgument} <TypePlace>]
+FuncArgss => {field=Name} <<TypePlace>> <CommaSep>
+FuncArgs => {field=Arguments} <<FuncArgss>>* [{field=LastArgument} <<TypePlace>>]
 FuncErrorss => {field=Name} <TypePlace> <CommaSep>
 FuncErrors => {field=Errors} <<FuncArgss>>* {field=LastError} <TypePlace>
 Expr => <TypePlace>
-Expr => {type=Func} {field=Name} <FuncName> '(' [(<Expr> <CommaSep>)* <Expr>] ')' 
+Expr => {type=Func} {field=Name} <FuncName> '(' [(<Expr> <CommaSep>)* <Expr>] ')'
 FuncSig => 'func ' {field=Name} <FuncName> '(' <FuncArgs> ')' {field=ReturnType} <<TypePlace>> ['throws ' <FuncErrors>]
-FuncDecl => {type=Func} <FuncSig> '\n=' {field=Expr} <<Expr>>
+FuncDecl => {type=Func} <FuncSig> '\n=' {field=Expr} <<Expr>> '\n'
 
 ident = /([a-z][a-zA-Z]*)/
 typevar = /([A-Z]*)/
@@ -86,14 +87,14 @@ func TestGrammar(t *testing.T) {
 	df.RegisterType(TypeVar{})
 	df.RegisterType(TypeName{})
 	df.RegisterType(Func{})
-    dec := df.NewDecoder(strings.NewReader("func foo() iNT\n=int"))
+    dec := df.NewDecoder(strings.NewReader("func foo(d, g, y) iNT\n=ars\n"))
 	out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
 		t.Error(err)
 	}
-	t.Logf("name %v\n", out.FuncDecls)
-    t.Logf("abc %T", dec)
+	t.Logf("%+v\n", out)
+    //t.Logf("%+v\n", reflect.TypeOf(out.FuncDecls[0].Expr))
 }
 
 
