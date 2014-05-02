@@ -190,9 +190,10 @@ function, showing the relations between type variables of the child and itself.
 
 			\State
 			\ForAll{child function $g$ of $f$ (func composition: outer to inner)}
-				\State $R \gets $ typevar of return type of $g$ due to function
-				composition (or $F_0$ for outermost function)
-				\State $\mathcal{A}_f[f \circ g] \gets (R)$
+				\If{$g$ is outermost function call}
+					\State $\mathcal{A}_f[f \circ g] \gets (F_0)$
+					\Comment{Return type}
+				\EndIf
 				\ForAll{parameters of $g$ in order}
 					\If{parameter is explicit type}
 						\State $F_i \gets $ new typevar
@@ -202,6 +203,16 @@ function, showing the relations between type variables of the child and itself.
 						\State $\mathcal{K}_f[F_i] \gets $ \texttt{resolved}
 						\Comment{does not matter anyway}
 						\State $i \gets i+1$
+					\ElsIf{parameter is function call to $h$}
+						\State $F_i \gets $ new typevar
+						\State $\Call{append}{\mathcal{A}_f[f \circ g], F_i}$
+						\Comment{add new typevariable to tuple}
+						\State $\mathcal{A}_f[f \circ h] \gets (F_i)$
+						\Comment{return type for $h$}
+						\State $\mathcal{M}_f[F_i] \gets $ \texttt{incomplete}
+						\State $\mathcal{K}_f[F_i] \gets $ \texttt{any}
+						\State $i \gets i+1$
+
 					\ElsIf{parameter is variable name}
 						\State $\Call{append}{\mathcal{A}_f[f \circ g],
 						\mathcal{X}_f[$ variable name $]}$ \Comment{add new
