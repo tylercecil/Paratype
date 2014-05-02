@@ -216,7 +216,6 @@ function, showing the relations between type variables of the child and itself.
 %				\Else \Comment{typevar reused}
 %					\State $T \gets V[$ typevar name in code $]$
 %				\EndIf
-				\State $\mathcal{X}_f[$ variable name $] \gets T$ 
 				\State $\Call{append}{\mathcal{A}_f[f], T}$ \Comment{add new
 					typevariable to tuple}
 			\EndFor
@@ -250,11 +249,6 @@ function, showing the relations between type variables of the child and itself.
 						\State $\mathcal{M}_f[F_i] \gets $ \texttt{incomplete}
 						\State $\mathcal{K}_f[F_i] \gets $ \texttt{any}
 						\State $i \gets i+1$
-
-					\ElsIf{parameter is variable name}
-						\State $\Call{append}{\mathcal{A}_f[f \circ g],
-						\mathcal{X}_f[$ variable name $]}$ \Comment{add new
-							typevariable to tuple}
 					\ElsIf{parameter is typevar name $T$}
 						\State $\Call{append}{\mathcal{A}_f[f \circ g], T}$
 					\EndIf
@@ -293,7 +287,8 @@ In the thread corresponding to function $f$:
 		\State state$_f$ $\gets$ waiting
 		\While{$(P, C) \gets
 			\Call{readBlockingChannel}{f}$}\Comment{path-context object}
-			\State state$_f$ $\gets$ running
+			\State state$_f$ $\gets$ running \Comment{\textbf{ADD CYCLE
+			DETECTION}}
 			\State \Call{update}{$C_f, C$}
 			\State $P \gets P \circ f$ \Comment{add myself to path}
 			\ForAll{$g \in \mathcal{G}_f$}
@@ -375,7 +370,7 @@ In the thread corresponding to function $f$:
 		\State $V \gets \mathcal{A}_g[g \circ f]$ 
 		\State $W \gets \mathcal{A}_f[f]$
 		\For{$i = 0$ to $\Call{length}{V}-1$}
-			\If{$V[i] \neq W[i]$}
+		\If{$V[i] \neq W[i]$} \Comment{\textbf{NEEDS CHANGE.}}
 				\State \Call{UpdateTypevar}{$C_g, V[i], C_f, W[i]$}
 			\EndIf
 		\EndFor
@@ -485,7 +480,7 @@ All of these seem resolvable with the current algorithm.
 	Every function has a \emph{context} which contains information about the
 	implementations (explicit types) of itself. A context for a function $f$ is
 	a tuple named $C_f = (\mathcal{M}, \mathcal{A}, \mathcal{W}, \mathcal{G},
-	\mathcal{X}, \mathcal{L}, \mathcal{K}, \mathcal{E}, \mathcal{N})$, where
+	\mathcal{L}, \mathcal{K}, \mathcal{E}, \mathcal{N})$, where
 	\begin{itemize}[noitemsep]
 		\item $\mathcal{M}$ is the type map, a dictionary that maps type
 			variables to explicit types (can also be denoted
@@ -495,8 +490,6 @@ All of these seem resolvable with the current algorithm.
 		\item $\mathcal{W}$ is the type variable map, a dictionary that maps
 			type variables to type variables;
 		\item $\mathcal{G}$ is the set of child functions;
-		\item $\mathcal{X}$ is a dictionary that maps variable name to type
-			variable;
 		\item $\mathcal{L}$ is a set of references to the contexts of parent
 			functions of $f$;
 		\item $\mathcal{K}$ maps type variables to a subset of type classes
@@ -630,8 +623,6 @@ All of these seem resolvable with the current algorithm.
 	A set of child function names. Composed function calls are considered child
 	functions.
 
-	\paragraph{Variable Dictionary $\mathcal{X}(C_f)$}
-	Dictionary that maps variable names to type variables.
 
 	\paragraph{Type Class Restriction $\mathcal{K}(C_f)$}
 
