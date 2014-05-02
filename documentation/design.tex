@@ -171,7 +171,8 @@ In the thread corresponding to function $f$:
 \begin{algorithm}
 	\caption{Runtime for each thread}
 	\begin{algorithmic}[1]
-		\Require{function $f$}
+		\Require{function $f$ and its code (i.e. part of the AST that is
+		translated into objects by GOPP in the actual algorithm)}
 		\Statex
 		\Function{runtime}{$f$}
 		\State state $\gets$ running
@@ -215,7 +216,6 @@ In the thread corresponding to function $f$:
 	\begin{algorithmic}[1]
 		\Statex
 		\Function{UpdateTypevar}{$C_g, V, C_f, W$}
-			\State $V \gets W$ \Comment{update type variable in $C_g$}
 			\If{$\mathcal{M}_g[ V ] \neq$ \texttt{incomplete} and
 			$\mathcal{M}_f[W] \neq$ \texttt{incomplete} and $\mathcal{M}_g[V]
 				\neq \mathcal{M}_f[W]$}
@@ -242,6 +242,8 @@ In the thread corresponding to function $f$:
 			\EndIf
 
 			\State $\mathcal{W}_f[V] \gets W$ \Comment{for future reference}
+
+			\State $V \gets W$ \Comment{update type variable in $C_g$}
 		\EndFunction	
 	\end{algorithmic}
 \end{algorithm}
