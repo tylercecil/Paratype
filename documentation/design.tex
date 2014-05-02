@@ -187,12 +187,14 @@ function, showing the relations between type variables of the child and itself.
 			\State $\mathcal{L}_f \gets ()$ \Comment{empty list -- list of
 			parent contexts}
 			\State $\mathcal{E}_f \gets $ set of errors that $f$ throws (from
-			code)
-			\State $\mathcal{N}_f \gets $ number of parameters of $f$ (from
+			code) \Comment{error types are declared implicitly}
+			\State $\mathcal{N}_f \gets $ number of parameters of $f$ including
+			return type (from
 			code)
 			\State $\mathcal{M}_f \gets \{F_0 : \textrm{return type if explicit,
 				\texttt{incomplete} otherwise} \}$ \Comment{type map}
-				\State $\mathcal{A}_f \gets \{ f : (F_0) \}$ \Comment{atlas}
+			\State $\mathcal{K}_f[F_0] \gets \texttt{any}$
+			\State $\mathcal{A}_f \gets \{ f : (F_0) \}$ \Comment{atlas}
 %			\State $V \gets \{\}$ \Comment{map typevar names in code to new
 %			typevar names for algorithm}
 			\ForAll{parameters of $f$ in order}
@@ -333,7 +335,7 @@ In the thread corresponding to function $f$:
 			\If{$\mathcal{M}_g[ V ] \neq$ \texttt{incomplete} and
 			$\mathcal{M}_f[W] \neq$ \texttt{incomplete} and $\mathcal{M}_g[V]
 				\neq \mathcal{M}_f[W]$}
-				\State\Return type error!
+				\State \Return \textbf{type error}
 			\EndIf
 	
 %			\State $\mathcal{T}(C_g)[W] \gets $ incomplete
@@ -349,15 +351,16 @@ In the thread corresponding to function $f$:
 			\State \Comment{merge type classes}
 			\State $\mathcal{K}_g[ W ] \gets \mathcal{K}_g[V] \cap
 			\mathcal{K}_f[W]$. \Comment{\texttt{Any} $\cap D = D$}
-			\If{$\mathcal{K}_g[ W ] = \emptyset$ or $\mathcal{M}_g[W]
-			\not \in \mathcal{K}_g[W]$} 
-				\State \Return type error! \Comment{if no type class or typevar
-			is not part of typeclass}
+			\If{$\mathcal{K}_g[ W ] = \emptyset$ or ($\mathcal{M}_g[W] \neq $
+			\texttt{incomplete} and $\mathcal{M}_g[W]
+			\not \in \mathcal{K}_g[W]$)} 
+				\State \Return \textbf{type error} \Comment{if no type class or
+				typevar is not part of typeclass}
 			\EndIf
 
 			\State $\mathcal{W}_f[V] \gets W$ \Comment{for future reference}
 
-			\State $V \gets W$ \Comment{update type variable in $C_g$}
+			%\State $V \gets W$ \Comment{update type variable in $C_g$}
 		\EndFunction	
 	\end{algorithmic}
 \end{algorithm}
@@ -374,9 +377,11 @@ In the thread corresponding to function $f$:
 		\State $V \gets \mathcal{A}_g[g \circ f]$ 
 		\State $W \gets \mathcal{A}_f[f]$
 		\For{$i = 0$ to $\Call{length}{V}-1$}
-		\If{$V[i] \neq W[i]$} \Comment{\textbf{NEEDS CHANGE.}}
+		%\If{$V[i] \neq W[i]$} \Comment{\textbf{NEEDS CHANGE.}}
 				\State \Call{UpdateTypevar}{$C_g, V[i], C_f, W[i]$}
-			\EndIf
+				\State \Call{append}{$\mathcal{L}_f, C_g$}
+				\Comment{add reference to parent}
+		%	\EndIf
 		\EndFor
 		\EndIf
 		\State	
@@ -406,6 +411,58 @@ are only interested in type variables).
 When that is done, every function will walk up the call graph to find explicit
 types for its type variables.
 
+\begin{algorithm}
+	\caption{Finish condition}
+	\begin{algorithmic}[1]
+		\Function{finish}{$f$}
+			\State function composition resolution
+			\State $I \gets \Call{finishRec}{C_f, C_f}$
+%			\State $I \gets \{\}$ \Comment{set}
+%			\ForAll{$C_g \in \mathcal{L}_f$}
+%				\State $i \gets ()$
+%				\ForAll{$v \in \mathcal{A}_f[f]$} \Comment{my typevariables}
+%					\If{$\mathcal{M}_g[v] \neq $ \texttt{incomplete}}
+%						\State \Call{append}{$i, \mathcal{M}_g[v]$}
+%					\Else
+%						\State destroy $i$
+%					\EndIf
+%				\EndFor
+%				\If{$i$ still exists}
+%					\State add $i$ to list implementations $I$
+%				\EndIf
+%			\EndFor
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Collecting implementations of $f$ up the call graph, depth first}
+	\begin{algorithmic}[1]
+		\Function{finishRec}{$C_g, C_f$}
+			\State $I \gets \{\}$ \Comment{set}
+			\ForAll{$C_h \in \mathcal{L}_g$}
+				\State $i \gets ()$ \Comment{check whether $h$ has a full
+				implementation for $f$}
+				\ForAll{$v \in \mathcal{A}_f[f]$} \Comment{my typevariables}
+					\If{$\mathcal{M}_h[v] \neq $ \texttt{incomplete}}
+						\State \Call{append}{$i, \mathcal{M}_h[v]$}
+					\Else
+						\State destroy $i$
+					\EndIf
+				\EndFor
+				\If{$i$ still exists}
+					\State add $i$ to list of implementations $I$
+				\EndIf
+				\If{$h$ has no parents and has no implementation for $f$}
+					\State \Return \textbf{type error}
+				\EndIf
+				\State $I \gets I \cup \Call{finishRec}{C_h, C_f}$
+			\EndFor
+			\State \Return $I$
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
 \subsection{Type Error Detection}
 
 Type errors are detected when:
@@ -416,9 +473,14 @@ Type errors are detected when:
 		their intersection is empty) 
 	\item An explicit type seen in the code is undeclared
 	\item An explicit type class seen in the code is undeclared
+	\item A type variable is referred to in the body of a function that was not
+		declared by any function parameter (might have to be changed -- local
+		variables?)
 	\item \ldots
 \end{enumerate}
 
+
+\pagebreak
 \subsection{Current Problems / To Do}
 
 All of these seem resolvable with the current algorithm.
