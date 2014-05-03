@@ -1,6 +1,5 @@
 package context
 
-import "sync"
 
 type TypeClass struct {
 	Name		string
@@ -24,7 +23,8 @@ type Type struct {
 //Representation of a "Function Actor", the main component of Paratype.
 type Function struct {
 	Name        string
-	numArgs		int
+	NumArgs		int
+	Id			int
 	Context
 }
 
