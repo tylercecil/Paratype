@@ -6,6 +6,16 @@ import (
 	"fmt"
 )
 
+var errors = [...]string{
+	"Explicit type conflict",
+	"Type class conflict",
+	"Explicit type not of merged type class",
+};
+
+func PrintError(errcode int, f *Function, g *Function) {
+	fmt.Printf("\n===TYPE ERROR %v===\n%v in %v when merged with %v\n\n", errcode, errors[errcode], f.Name, g.Name)
+}
+
 func ConvertPath(f []*Function) string {
 	var buf bytes.Buffer
 
@@ -22,7 +32,8 @@ func ConvertPath(f []*Function) string {
 func (g *Function) updateTypevar(path string, funcarg int, f *Function, w *TypeVariable) {
 	v := g.Atlas[path][funcarg]
 	if f.TypeMap[w] != nil && g.TypeMap[v] != nil && f.TypeMap[w] != g.TypeMap[v] {
-		fmt.Printf("TYPE ERROR1")
+		// explicit types do not match
+		PrintError(0, g, f)
 	}
 
 	// find explicit type if it exists (nil otherwise)
@@ -42,23 +53,27 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function, w *TypeV
 	} else if v.Constraints[nil] == false {
 		for typeclass := range w.Constraints {
 			if v.Constraints[typeclass] == false {
-				w.Constraints[typeclass] = false
+				delete(w.Constraints, typeclass)
 			}
 		}
 	}
 
 	// is new explicit type adhering to type Constraints?
 	if len(w.Constraints) == 0 {
-		fmt.Printf("TYPE ERROR 2: TypeClass conflict")
-	} else if g.TypeMap[w].Implements[nil] == false {
-		impl := false
+		// merging typeclasses brought us no typeclasses.
+		PrintError(1, g, f)
+	} else if w.Constraints[nil] == false {
+		var impl *TypeClass = nil
 		for typeclass := range w.Constraints {
 			if g.TypeMap[w].Implements[typeclass] {
-				impl = true
+				impl = typeclass
 			}
 		}
-		if impl == false {
-			fmt.Printf("TYPE ERROR 3")
+
+		// the explicit type does not implemented any of the allowed merged
+		// TypeClasses
+		if impl == nil {
+			PrintError(2, g, f)
 		}
 	}
 
@@ -77,7 +92,6 @@ func (f *Function) Update(g *Function) {
 	// f is child of g
 	if g.Children[&f.Context] {
 		for funcarg, typevar := range f.Atlas[pf] {
-			fmt.Printf("%+v\n", typevar)
 			g.updateTypevar(pgf, funcarg, f, typevar)
 		}
 
