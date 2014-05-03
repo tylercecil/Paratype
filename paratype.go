@@ -10,7 +10,7 @@ import (
 
 // Object to represent a communication
 type Communication struct {
-	path	context.Path
+	path	string
 	context	*context.Context
 }
 
@@ -62,7 +62,7 @@ func main() {
 		fActor.activeGroup = readyToFinish
 		go fActor.Run()
 	}
-	
+
 	fmt.Println("Waiting for halting...")
 	readyToFinish.Wait()
 	fmt.Println("Done!")

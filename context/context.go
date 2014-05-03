@@ -22,19 +22,21 @@ type Type struct {
 //Representation of a "Function Actor", the main component of Paratype.
 type Function struct {
 	name        string
+	id			int
 	numArgs		int
 	Context
 }
 
-type Path []struct {
+//type Path string;
+/*type Path []struct {
 	function	*Function
 	cycleNum	int // f^(n) per our notation
-}
+}*/
 
 //A Context object represents information about the implementation of
 //a function, and its relationship to other functions.
 type Context struct {
-	atlas		map[*Path](map[int]*TypeVariable) // path -> funcarg -> typevar
+	atlas		map[string](map[int]*TypeVariable) // path -> funcarg -> typevar
 	typeMap		map[*TypeVariable]*Type
 	typeVarMap	map[*TypeVariable]*TypeVariable
 	errors		map[*Type]bool

@@ -1,5 +1,21 @@
 package context
 
+import (
+	"bytes"
+	"strconv"
+)
+
+func ConvertPath(f []*Function) string {
+	var buf bytes.Buffer
+
+	for _, fun := range f {
+		buf.WriteString(strconv.Itoa(fun.id))
+		buf.WriteString("-")
+	}
+	s := buf.String()
+	s = s[:len(s)-1] // remove last character
+	return s
+}
 
 // updates typevar v in g to be typevar w in f
 func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) {
@@ -48,20 +64,24 @@ func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) 
 func (f *Function) Update(g *Function) {
 	// lock both f and g
 
+	var pf = ConvertPath([]*Function{f})
+	var pgf = ConvertPath([]*Function{g, f})
+	var pg = ConvertPath([]*Function{g})
+
 	// f is child of g
-	/*if g.children[f] {
-		for funcarg, typevar := range f.atlas[f] {
-			g.updateTypevar(g.atlas[g of f][funcarg], f, typevar)
+	if g.children[&f.Context] {
+		for funcarg, typevar := range f.atlas[pf] {
+			g.updateTypevar(g.atlas[pgf][funcarg], f, typevar)
 		}
 
-		f.parents[g] = true
+		f.parents[&g.Context] = true
 	}
 
-	for funcarg, typevar := g.atlas[g] {
+	for funcarg, typevar := range g.atlas[pg] {
 		if f.typeVarMap[typevar] != nil {
-			g.updateTypevar(typevar, f, f.atlas[f][funcarg])
+			g.updateTypevar(typevar, f, f.atlas[pf][funcarg])
 		}
-	}*/
+	}
 
 	// E_g = E_g union E_f
 	for errorType := range f.errors {
