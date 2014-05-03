@@ -1,5 +1,6 @@
 package context
 
+
 // updates typevar v in g to be typevar w in f
 func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) {
 	//
@@ -34,6 +35,9 @@ func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) 
 			if g.typeMap[w].implements[typeclass] {
 				impl = true
 			}
+		}
+		if impl == false {
+			// TYPE ERROR
 		}
 	}
 
