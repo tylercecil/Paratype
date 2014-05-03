@@ -72,7 +72,7 @@ FuncErrorss => {field=Name} <TypePlace> <CommaSep>
 FuncErrors => {field=Errors} <<FuncArgss>>* {field=LastError} <TypePlace>
 CallArgss => <Expr> <CommaSep>
 CallArgs => {field=Arguments} <<CallArgss>>* [{field=LastArgument} <<Expr>>]
-Expr => {type=FuncCall} {field=Name} <<FuncName>>'('<CallArgs> ')'
+Expr => {type=FuncCall} {field=Name} <FuncName>'('<CallArgs> ')'
 Expr => <TypePlace>
 FuncSig => 'func ' {field=Name} <FuncName> '(' <FuncArgs> ')' {field=ReturnType} <<TypePlace>> ['throws ' <FuncErrors>]
 FuncDecl => {type=Func} <FuncSig> '\n=' {field=Expr} <<Expr>> '\n'
@@ -90,14 +90,14 @@ func TestGrammar(t *testing.T) {
 	df.RegisterType(TypeName{})
 	df.RegisterType(Func{})
     df.RegisterType(FuncCall{})
-    dec := df.NewDecoder(strings.NewReader("func foo(d, g, y) iNT\n=foo(g,x)\n"))
+    dec := df.NewDecoder(strings.NewReader("func foo(d, g, y) iNT\n=foo(bar(d,G),T,x)\n"))
 	out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
 		t.Error(err)
 	}
 	t.Logf("%+v\n", out)
-    t.Logf("%+v\n", reflect.TypeOf(out.FuncDecls[0].Expr))
+    t.Logf("%+v\n", reflect.TypeOf(out.FuncDecls[0].Expr.(FuncCall).Arguments[0].(FuncCall).Name))
 }
 
 
