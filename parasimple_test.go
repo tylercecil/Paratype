@@ -19,6 +19,8 @@ type Typeclass struct {
 
 type Type struct {
     Name string
+    Implements []Typeclass
+    LastImplement Typeclass
 }
 
 type Func struct {
@@ -66,7 +68,7 @@ ignore: /^#.*\n/
 ## ignore whitespace at beginning of line
 ignore: /^(?:[ \t])+/
 
-Start => {type=Base} {field=FuncDecls} <<FuncDecl>>+
+Start => {type=Base} {field=TypeDecls} <<TypeDecl>>* {field=FuncDecls} <<FuncDecl>>+
 
 CommaSep => ','
 FuncName => <ident>
@@ -84,6 +86,7 @@ CallArgss => <Expr> <CommaSep>
 CallArgs => {field=Arguments} <<CallArgss>>* [{field=LastArgument} <<Expr>>]
 Expr => {type=FuncCall} {field=Name} <FuncName> '(' <CallArgs> ')'
 Expr => <TypePlace>
+TypeDecl => 'type ' <TypeName> 'implements ' {field=Implements} <<TypeClasss>>* {field=LastImplement} <<TypeclassName>> '\n'
 TypeClasss => <TypeclassName> <CommaSep>
 FuncConstraint => {type=Constraint} {field=Name} <<TypeVar>> '<' {field=Tclasses} <<TypeClasss>>* {field=LastTClass} <<TypeclassName>> '>'
 FuncConstraintss => <FuncConstraint> <CommaSep>
@@ -108,7 +111,7 @@ func TestGrammar(t *testing.T) {
     df.RegisterType(Error{})
     df.RegisterType(Typeclass{})
     df.RegisterType(Constraint{})
-    dec := df.NewDecoder(strings.NewReader("func foo constrain A <Zun, Num> (z, A, y) iNT\n=foo\n"))
+    dec := df.NewDecoder(strings.NewReader("type y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n"))
 	out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
