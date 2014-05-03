@@ -13,7 +13,8 @@ var errors = [...]string{
 };
 
 func PrintError(errcode int, f *Function, g *Function) {
-	fmt.Printf("\n===TYPE ERROR %v===\n%v in %v when merged with %v\n\n", errcode, errors[errcode], f.Name, g.Name)
+	fmt.Printf("\n===TYPE ERROR %v===\n%v in %v when merged with %v\n\n",
+		errcode, errors[errcode], f.Name, g.Name)
 }
 
 func ConvertPath(f []*Function) string {
@@ -29,7 +30,8 @@ func ConvertPath(f []*Function) string {
 }
 
 // updates typevar v in g to be typevar w in f
-func (g *Function) updateTypevar(path string, funcarg int, f *Function, w *TypeVariable) {
+func (g *Function) updateTypevar(path string, funcarg int, f *Function,
+	w *TypeVariable) {
 	v := g.Atlas[path][funcarg]
 	if f.TypeMap[w] != nil && g.TypeMap[v] != nil && f.TypeMap[w] != g.TypeMap[v] {
 		// explicit types do not match
@@ -90,12 +92,12 @@ func (f *Function) Update(g *Function) {
 	var pg = ConvertPath([]*Function{g})
 
 	// f is child of g
-	if g.Children[&f.Context] {
+	if g.Children[f] {
 		for funcarg, typevar := range f.Atlas[pf] {
 			g.updateTypevar(pgf, funcarg, f, typevar)
 		}
 
-		f.Parents[&g.Context] = true
+		f.Parents[g] = true
 	}
 
 	for funcarg, typevar := range g.Atlas[pg] {
@@ -107,5 +109,43 @@ func (f *Function) Update(g *Function) {
 	// E_g = E_g union E_f
 	for errorType := range f.Errors {
 		g.Errors[errorType] = true
+	}
+}
+
+func (f *Function) CollectImplementations(g *Function) []map[int]*Type {
+	var implementations []map[int]*Type
+	pf := ConvertPath([]*Function{f})
+
+	implementation := make(map[int]*Type)
+	for funcarg, typevar := range f.Atlas[pf] {
+		if g.TypeMap[typevar] != nil {
+			implementation[funcarg] = g.TypeMap[typevar]
+		} else {
+			break
+		}
+	}
+
+	if len(implementation) == len(f.Atlas[pf]) {
+		implementations = append(implementations, implementation)
+	}
+
+	for fun := range g.Parents {
+		//implementation := make(map[int]*Type)
+		impl := f.CollectImplementations(fun)
+		for _, t := range impl {
+			implementations = append(implementations, t)
+		}
+	}
+	return implementations
+}
+
+func (f *Function) Finish() {
+	impl := f.CollectImplementations(f)
+	for _, typemap := range impl {
+		fmt.Printf("func %v(", f.Name)
+		for _, typ := range typemap {
+			fmt.Printf("%v, ", typ.Name)
+		}
+		fmt.Printf(")\n")
 	}
 }

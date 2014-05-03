@@ -51,8 +51,8 @@ func MakeFunction(name string, numArgs int) *context.Function {
 	g.TypeMap = make(map[*context.TypeVariable]*context.Type)
 	g.TypeVarMap = make(map[*context.TypeVariable]*context.TypeVariable)
 	g.Errors = make(map[*context.Type]bool)
-	g.Parents = make(map[*context.Context]bool)
-	g.Children = make(map[*context.Context]bool)
+	g.Parents = make(map[*context.Function]bool)
+	g.Children = make(map[*context.Function]bool)
 	funcCounter++
 	return g
 }
@@ -113,15 +113,21 @@ func TestMergeDown(t *testing.T) {
 	f.Atlas[pf] = map[int]*context.TypeVariable{0 : &F0}
 	f.Atlas[pfg] = map[int]*context.TypeVariable{0 : &F0, 1 : &F1, 2 : &F2}
 	g.Atlas[pg] = map[int]*context.TypeVariable{0 : &G0, 1 : &G1, 2 : &G2}
-	f.Children[&g.Context] = true
+	f.Children[g] = true
 
-	PrintAll(f)
-	PrintAll(g)
+	//PrintAll(f)
+	//PrintAll(g)
 
 	g.Update(f)
 
-	PrintAll(f)
-	PrintAll(g)
+	//PrintAll(f)
+	//PrintAll(g)
+
+	fmt.Printf("\n\n===implementations===\n\n")
+	f.Finish()
+	g.Finish()
+	fmt.Printf("\n")
+
 }
 
 func TestMergeUp0(t *testing.T) {
@@ -206,13 +212,18 @@ func DownExample(errcode int, t * testing.T) {
 	f.Atlas[pf] = map[int]*context.TypeVariable{0 : &F0, 1 : &F1, 2 : &F2}
 	f.Atlas[pfg] = map[int]*context.TypeVariable{0 : &F0, 1 : &F1, 2 : &F2}
 	g.Atlas[pg] = map[int]*context.TypeVariable{0 : &G0, 1 : &G1, 2 : &G2}
-	f.Children[&g.Context] = true
+	f.Children[g] = true
 
-	PrintAll(f)
-	PrintAll(g)
+	//PrintAll(f)
+	//PrintAll(g)
 
 	g.Update(f)
 
-	PrintAll(f)
-	PrintAll(g)
+	//PrintAll(f)
+	//PrintAll(g)
+
+	fmt.Printf("\n\n===implementations===\n\n")
+	f.Finish()
+	g.Finish()
+	fmt.Printf("\n")
 }

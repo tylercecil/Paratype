@@ -1,5 +1,7 @@
 package context
 
+import "sync"
+
 type TypeClass struct {
 	Name		string
 	Inherits	map[*TypeClass]bool
@@ -21,6 +23,7 @@ type Type struct {
 
 //Representation of a "Function Actor", the main component of Paratype.
 type Function struct {
+	Lock		*sync.RWMutex
 	Name        string
 	Id			int
 	NumArgs		int
@@ -34,7 +37,7 @@ type Context struct {
 	TypeMap		map[*TypeVariable]*Type
 	TypeVarMap	map[*TypeVariable]*TypeVariable
 	Errors		map[*Type]bool
-	Children	map[*Context]bool
-	Parents		map[*Context]bool
+	Children	map[*Function]bool
+	Parents		map[*Function]bool
 }
 
