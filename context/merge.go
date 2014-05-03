@@ -63,16 +63,16 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function, w *TypeV
 		// merging typeclasses brought us no typeclasses.
 		PrintError(1, g, f)
 	} else if w.Constraints[nil] == false {
-		impl := false
+		var impl *TypeClass = nil
 		for typeclass := range w.Constraints {
 			if g.TypeMap[w].Implements[typeclass] {
-				impl = true
+				impl = typeclass
 			}
 		}
 
 		// the explicit type does not implemented any of the allowed merged
 		// TypeClasses
-		if impl == false {
+		if impl == nil {
 			PrintError(2, g, f)
 		}
 	}
