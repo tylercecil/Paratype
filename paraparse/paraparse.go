@@ -122,7 +122,7 @@ func ParseCode() error {
     df.RegisterType(Typeclass{})
     df.RegisterType(Constraint{})
     //dec := df.NewDecoder(strings.NewReader("typeclass Num\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n"))
-	dec := df.NewDecoder(strings.NewReader("typeclass Num\ntypeclass Zin\ntype z\nfunc foo(d, A) iNT\n=x\n"))
+	dec := df.NewDecoder(strings.NewReader("typeclass Num inherits Zin\ntypeclass Zin\ntype z\nfunc foo(d, A) iNT\n=x\n"))
     out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
@@ -146,10 +146,31 @@ func ParseCode() error {
 
 func PrintTypeclassDecls(data *Base) {
     TypeclassList := make([]context.TypeClass, len(data.TypeclassDecls))
+    ReferenceMap := make(map[string]*context.TypeClass)
     for i, elem := range data.TypeclassDecls {
-        TypeclassList[i].name = elem.Name.Name
+        TypeclassList[i].Name = elem.Name.Name
+        ReferenceMap[elem.Name.Name] = &TypeclassList[i]
     }
-    fmt.Printf("%+v\n", TypeclassList)
+    for i, elem := range data.TypeclassDecls {
+        TypeclassList[i].Inherits = make(map[*context.TypeClass]bool)
+        for _, inherited := range elem.Inherits {
+            i_ref, ok := ReferenceMap[inherited.Name]
+            if !ok {
+                fmt.Printf("ERROR: %s does not exist.", inherited.Name)
+                return
+            }
+            TypeclassList[i].Inherits[i_ref] = true
+        }
+        if elem.LastInherit.Name != "" {
+            i_ref, ok := ReferenceMap[elem.LastInherit.Name]
+            if !ok {
+                fmt.Printf("ERROR: %s does not exist.", elem.LastInherit.Name)
+                //return
+            }
+            TypeclassList[i].Inherits[i_ref] = true
+        }
+        TypeclassList[i].Inherits[nil] = true
+    }
 }
 
 func PrintTypeDecls(data *Base) {
