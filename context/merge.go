@@ -14,6 +14,8 @@ var errorMsgs = [...]string{
 	"Missing implementation",
 };
 
+// helper function for printing type errors --- later, we need to account for
+// stopping all threads in case of a type error
 func PrintError(errcode int, f *Function, g *Function) string {
 	switch {
 	case errcode <= 2:
@@ -26,6 +28,7 @@ func PrintError(errcode int, f *Function, g *Function) string {
 	return ""
 }
 
+// convert an array of function pointers to a path to be used as key for atlas
 func ConvertPath(f []*Function) string {
 	var buf bytes.Buffer
 
@@ -38,15 +41,18 @@ func ConvertPath(f []*Function) string {
 	return s
 }
 
-// updates typevar v in g to be typevar w in f
+// updates typevar v in func g to be typevar w in func f
+// really, we are merging v and w to be w in g
 func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 	w *TypeVariable) error {
 	v := g.Atlas[path][funcarg]
+
 	if f.TypeMap[w] != nil && g.TypeMap[v] != nil && f.TypeMap[w] != g.TypeMap[v] {
 		// explicit types do not match
 		return errors.New(PrintError(0, g, f))
 	}
 
+	// make typemap entry for w in g
 	// find explicit type if it exists (nil otherwise)
 	if g.TypeMap[v] != nil {
 		g.TypeMap[w] = g.TypeMap[v]
@@ -59,9 +65,12 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 	}
 
 	// intersection of w.Constraints and v.Constraints
-	if w.Constraints[nil] { // w allows any
+	if w.Constraints[nil] {
+		// w allows any typeclass
 		w.Constraints = v.Constraints
 	} else if v.Constraints[nil] == false {
+		// neither w nor v allow any typeclass, so merge their actual
+		// typeclassses
 		for typeclass := range w.Constraints {
 			if v.Constraints[typeclass] == false {
 				delete(w.Constraints, typeclass)
@@ -69,11 +78,11 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 		}
 	}
 
-	// is new explicit type adhering to type Constraints?
 	if len(w.Constraints) == 0 {
-		// merging typeclasses brought us no typeclasses.
+		// merging typeclasses brought us no typeclasses -- not even nil (any)
 		return errors.New(PrintError(1, g, f))
-	} else if w.Constraints[nil] == false {
+	} else if w.Constraints[nil] == false && g.TypeMap[w] != nil {
+		// is new explicit type of w adhering to merged typeclass constraints?
 		var impl *TypeClass = nil
 		for typeclass := range w.Constraints {
 			if g.TypeMap[w].Implements[typeclass] {
@@ -93,7 +102,8 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 	return nil
 }
 
-
+// takes information from function f and uses it on g
+// to be called when f receives a context C_g
 func (f *Function) Update(g *Function) {
 	// lock both f and g
 
@@ -103,6 +113,7 @@ func (f *Function) Update(g *Function) {
 
 	// f is child of g
 	if g.Children[f] {
+		// match f() with g(f())
 		for funcarg, typevar := range f.Atlas[pf] {
 			err := g.updateTypevar(pgf, funcarg, f, typevar)
 			if err != nil {
@@ -113,6 +124,8 @@ func (f *Function) Update(g *Function) {
 		f.Parents[g] = true
 	}
 
+	// replace any type variables that f has replaced elsewhere before
+	// this way, type variables "trickle up" the call tree
 	for funcarg, typevar := range g.Atlas[pg] {
 		if f.TypeVarMap[typevar] != nil {
 			err := g.updateTypevar(pg, funcarg, f, f.Atlas[pf][funcarg])
@@ -122,7 +135,7 @@ func (f *Function) Update(g *Function) {
 		}
 	}
 
-	// E_g = E_g union E_f
+	// merge error types: E_g = E_g union E_f
 	for errorType := range f.Errors {
 		g.Errors[errorType] = true
 	}
@@ -130,7 +143,6 @@ func (f *Function) Update(g *Function) {
 
 // collects all explicit implementations of f by walking up its call tree
 func (f *Function) CollectImplementations(g *Function) (implementations []map[int]*Type, err error) {
-	//var implementations []map[int]*Type
 	pf := ConvertPath([]*Function{f})
 
 	// search for explicit types of f's typevars in g
