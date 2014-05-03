@@ -122,7 +122,7 @@ func ParseCode() error {
 	df.RegisterType(Typeclass{})
 	df.RegisterType(Constraint{})
 	//dec := df.NewDecoder(strings.NewReader("typeclass Num\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n"))
-	dec := df.NewDecoder(strings.NewReader("typeclass Num inherits Zin\ntypeclass Zin\ntype z\nfunc foo(d, A) iNT\n=x\n"))
+	dec := df.NewDecoder(strings.NewReader("typeclass Num inherits Zin\ntypeclass Zin\ntype z implements Zin\nfunc foo(d, A) iNT\n=x\n"))
 	out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
@@ -133,13 +133,13 @@ func ParseCode() error {
 	fmt.Println(reflect.TypeOf(out.FuncDecls[0].LastError))
 
 	fmt.Printf("\n")
-	tlist, err := ParseTypeClassDecls(out)
+	tclist, tlist, err := ParseTypeClassDecls(out)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
 	fmt.Printf("%+v\n", tlist)
-
+	fmt.Printf("%+v\n", tclist)
 
 	return err
 }
@@ -150,7 +150,7 @@ func ParseCode() error {
 // function will parse that list and place the resulting output into a
 // TypeClass object from the context package. This enables the paratype
 // type checker.
-func ParseTypeClassDecls(data *Base) ([]context.TypeClass, error) {
+func ParseTypeClassDecls(data *Base) ([]context.TypeClass, []context.Type, error) {
 	// The type context.TypeClass consists of two items:
 	// 		1) A Name
 	// 		2) A map of inherited TypeClasses where the key is a pointer to
@@ -177,7 +177,7 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, error) {
 		for _, inherited := range elem.Inherits {
 			i_ref, ok := ReferenceMap[inherited.Name]
 			if !ok {
-				return nil, fmt.Errorf(
+				return nil, nil, fmt.Errorf(
 					"ParseTypeClassDecls: TypeClass %s does not exist.",
 					 inherited.Name)
 			}
@@ -186,7 +186,7 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, error) {
 		if elem.LastInherit.Name != "" {
 			i_ref, ok := ReferenceMap[elem.LastInherit.Name]
 			if !ok {
-				return nil, fmt.Errorf(
+				return nil, nil, fmt.Errorf(
 					"ParseTypeClassDecls: TypeClass %s does not exist.",
 					elem.LastInherit.Name)
 			}
@@ -196,17 +196,32 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, error) {
 		// when parsing types. Nil represents the basetype.
 		TypeClassSlice[i].Inherits[nil] = true
 	}
-	return TypeClassSlice, nil
+
+	TypeSlice := make([]context.Type, len(data.TypeDecls))
+
+	for i, elem := range data.TypeDecls {
+		TypeSlice[i].Name =elem.Name
+		TypeSlice[i].Implements = make(map[*context.TypeClass]bool)
+		for _, implemented := range elem.Implements {
+			i_ref, ok := ReferenceMap[implemented.Name]
+			if !ok {
+				return nil, nil, fmt.Errorf(
+					"ParseTypeDecl: TypeClass %s does not exist.",
+					implemented.Name)
+			}
+			TypeSlice[i].Implements[i_ref] = true
+		}
+		if elem.LastImplement.Name != "" {
+			i_ref, ok := ReferenceMap[elem.LastImplement.Name]
+			if !ok {
+				return nil, nil, fmt.Errorf(
+					"ParseTypeDecl: Typeclass %s does not exist.",
+					elem.LastImplement.Name)
+			}
+			TypeSlice[i].Implements[i_ref] = true
+		}
+		TypeSlice[i].Implements[nil] = true
+	}
+	return TypeClassSlice, TypeSlice, nil
 }
 
-func PrintTypeDecls(data *Base) {
-	for _, elem := range data.TypeDecls {
-		fmt.Printf("%+v\n", elem)
-	}
-}
-
-func PrintFuncDecls(data *Base) {
-	for _, elem := range data.FuncDecls {
-		fmt.Printf("%+v\n", elem)
-	}
-}
