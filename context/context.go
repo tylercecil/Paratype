@@ -2,28 +2,34 @@ package context
 
 type TypeClass struct {
 	name		string
-	inherits	[]*TypeClass
+	inherits	map[*TypeClass]bool
 }
 
-//Representation of a Type-Variable in code.
+var AnyTC TypeClass = TypeClass{name : "ANY"}
+
+// Representation of a Type-Variable in code.
 type TypeVariable struct {
 	// for ease of access, maybe flatten the hierarchy of typeclasses here?
-	constraints []*TypeClass
+	constraints map[*TypeClass]bool
+	resolved	bool
 	name		string
-	//creator		*Function
 };
 
-//Representation of a specific type in code (as in int, float, ect...)
+// Representation of a specific type in code (as in int, float, ect...)
 type Type struct {
 	name		string
-	implements	[]*TypeClass
+	implements	map[*TypeClass]bool
 };
+
+// a Type struct with name "" is the incomplete type -- all incompletes will
+// refer to this
+var Incomplete Type = Type{name: ""}
 
 //Representation of a "Function Actor", the main component of Paratype.
 type Function struct {
 	name        string
-	rootContext Context
 	args        []FunctionArg
+	Context
 }
 
 type Path []struct {
@@ -37,9 +43,9 @@ type Context struct {
 	atlas		map[*Path](map[*FunctionArg]*TypeVariable)
 	typeMap		map[*TypeVariable]*Type
 	typeVarMap	map[*TypeVariable]*TypeVariable
-	errors		[]*Type
-	children	[]*Context
-	parents		[]*Context
+	errors		map[*Type]bool
+	children	map[*Context]bool
+	parents		map[*Context]bool
 }
 
 //FunctionArg structs are used to represent function arguments in an atlas.

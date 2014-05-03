@@ -1,10 +1,10 @@
 //The Main package for Paratype type analysis software.
 package main
 
-import (
+/*import (
 	"fmt"
 	"Paratype/context"
-)
+)*/
 
 //Dummy main function.
 func main() {
