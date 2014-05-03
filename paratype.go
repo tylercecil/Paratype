@@ -24,6 +24,15 @@ type FunctionActor struct {
 	activeGroup	*sync.WaitGroup
 }
 
+
+// Global:
+////////////////////////////////////////////////////////////////
+// I am choosing to declare the slice of functions as global.
+// By doing this, I am providing channels to all functions in
+// their run routines. I am not confident this is the best way
+// as of right now, but it will do.
+var functions [10]FunctionActor
+
 // A Functions main ruitine.
 func (f *FunctionActor) Run() {
 	f.makeActive(true)
@@ -46,6 +55,17 @@ func (f *FunctionActor) makeActive(state bool) {
 	}
 }
 
+// A psuedo constructor for FunctionActors.
+func (f *FunctionActor) Initialize(activeGroup *sync.WaitGroup) {
+	f.activeGroup = activeGroup
+	// Arbitrary buffer size. Note that channels block
+	// only when the buffer is full.
+	f.channel = make(chan *Communication, 128)	
+}
+
+	
+	
+
 // Dummy main function.
 func main() {
 	// Make a set of junk functions
@@ -53,17 +73,20 @@ func main() {
 	// Wait to halt
 
 	readyToFinish := new(sync.WaitGroup)
-	var functions [10]FunctionActor
+
 
 	fmt.Println("Welcome to Paratype!")
 
 	for i, fActor := range functions {
 		fmt.Printf("\tSpawning %d Function Actor\n", i)
-		fActor.activeGroup = readyToFinish
+		fActor.Initialize(readyToFinish)
 		go fActor.Run()
 	}
 
 	fmt.Println("Waiting for halting...")
+	// This is actually a race condition. It WOULD be sufficient
+	// to both make this check AND check if all channels are
+	// empty.
 	readyToFinish.Wait()
 	fmt.Println("Done!")
 
