@@ -47,8 +47,8 @@ type TypeName struct {
 
 type FuncCall struct {
     Name string
-    Parameters []interface{}
-    LastParameter interface{}
+    Arguments []interface{}
+    LastArgument interface{}
 }
 
 
@@ -70,8 +70,10 @@ FuncArgss => <TypePlace> <CommaSep>
 FuncArgs => {field=Arguments} <<FuncArgss>>* [{field=LastArgument} <<TypePlace>>]
 FuncErrorss => {field=Name} <TypePlace> <CommaSep>
 FuncErrors => {field=Errors} <<FuncArgss>>* {field=LastError} <TypePlace>
+CallArgss => <Expr> <CommaSep>
+CallArgs => {field=Arguments} <<CallArgss>>* [{field=LastArgument} <<Expr>>]
+Expr => {type=FuncCall} {field=Name} <<FuncName>>'('<CallArgs> ')'
 Expr => <TypePlace>
-Expr => {type=FuncCall} {field=Name} <FuncName> '(' [(<Expr> <CommaSep>)* <Expr>] ')'
 FuncSig => 'func ' {field=Name} <FuncName> '(' <FuncArgs> ')' {field=ReturnType} <<TypePlace>> ['throws ' <FuncErrors>]
 FuncDecl => {type=Func} <FuncSig> '\n=' {field=Expr} <<Expr>> '\n'
 
@@ -87,14 +89,15 @@ func TestGrammar(t *testing.T) {
 	df.RegisterType(TypeVar{})
 	df.RegisterType(TypeName{})
 	df.RegisterType(Func{})
-    dec := df.NewDecoder(strings.NewReader("func foo(d, g, y) iNT\n=bar\n"))
+    df.RegisterType(FuncCall{})
+    dec := df.NewDecoder(strings.NewReader("func foo(d, g, y) iNT\n=foo(g,x)\n"))
 	out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
 		t.Error(err)
 	}
 	t.Logf("%+v\n", out)
-    t.Logf("%+v\n", reflect.TypeOf(out.FuncDecls[0].LastArgument))
+    t.Logf("%+v\n", reflect.TypeOf(out.FuncDecls[0].Expr))
 }
 
 
