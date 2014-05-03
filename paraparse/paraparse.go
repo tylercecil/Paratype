@@ -177,14 +177,18 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, error) {
 		for _, inherited := range elem.Inherits {
 			i_ref, ok := ReferenceMap[inherited.Name]
 			if !ok {
-				return nil, fmt.Errorf("ParseTypeClassDecls: TypeClass %s does not exist.", inherited.Name)
+				return nil, fmt.Errorf(
+					"ParseTypeClassDecls: TypeClass %s does not exist.",
+					 inherited.Name)
 			}
 			TypeClassSlice[i].Inherits[i_ref] = true
 		}
 		if elem.LastInherit.Name != "" {
 			i_ref, ok := ReferenceMap[elem.LastInherit.Name]
 			if !ok {
-				return nil, fmt.Errorf("ParseTypeClassDecls: TypeClass %s does not exist.", elem.LastInherit.Name)
+				return nil, fmt.Errorf(
+					"ParseTypeClassDecls: TypeClass %s does not exist.",
+					elem.LastInherit.Name)
 			}
 			TypeClassSlice[i].Inherits[i_ref] = true
 		}
