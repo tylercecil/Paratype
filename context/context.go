@@ -21,7 +21,7 @@ type Type struct {
 
 //Representation of a "Function Actor", the main component of Paratype.
 type Function struct {
-	name        string
+	Name        string
 	numArgs		int
 	Context
 }

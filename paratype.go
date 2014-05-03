@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 	"fmt"
+	"math/rand"
 	"Paratype/context"
 )
 
@@ -18,8 +19,12 @@ type Communication struct {
 // This is probably bad design (we have structs everywhere!)
 // but will be fine for now.
 type FunctionActor struct {
-	function	context.Function
-	channel		chan *Communication
+	Function	context.Function
+	Channel		chan *Communication
+
+	// Temporary channel for testing
+	Tmp		chan string
+
 	state		bool
 	activeGroup	*sync.WaitGroup
 }
@@ -31,13 +36,22 @@ type FunctionActor struct {
 // By doing this, I am providing channels to all functions in
 // their run routines. I am not confident this is the best way
 // as of right now, but it will do.
-var functions [10]FunctionActor
+const functionCount = 10
+var functions [functionCount]FunctionActor
 
 // A Functions main ruitine.
 func (f *FunctionActor) Run() {
 	f.makeActive(true)
 	time.Sleep(time.Duration(5)*time.Second)
+	id := rand.Int() % functionCount
+	f.SendMessage("A message!", id)
 	f.makeActive(false)
+	for {
+		message := <-f.Tmp
+		f.makeActive(true)
+		f.HandleMessage(message)
+		f.makeActive(false)
+	}
 }
 
 
@@ -60,10 +74,23 @@ func (f *FunctionActor) Initialize(activeGroup *sync.WaitGroup) {
 	f.activeGroup = activeGroup
 	// Arbitrary buffer size. Note that channels block
 	// only when the buffer is full.
-	f.channel = make(chan *Communication, 128)	
+	f.Channel = make(chan *Communication, 128)
+	f.Tmp = make(chan string, 128)
 }
 
-	
+// The outline of the function that sends messages to other actors.
+// In the future the types of the arguments need to be changed. This 
+// is only a proof of concept.
+func (f *FunctionActor) SendMessage(message string, functionID int) {
+	functions[functionID].Tmp <- message
+}
+
+// Function to handle messages from functions.
+func (f *FunctionActor) HandleMessage(message string) {
+	fmt.Printf("Function %s recieived a message:\n\t%s",
+		f.Function.Name,
+		message)
+}
 	
 
 // Dummy main function.
@@ -73,7 +100,6 @@ func main() {
 	// Wait to halt
 
 	readyToFinish := new(sync.WaitGroup)
-
 
 	fmt.Println("Welcome to Paratype!")
 
