@@ -8,13 +8,19 @@ import (
 )
 
 type Base struct {
-    TypeclassDecls []Typeclass
+    TypeclassDecls []TypeclassImpl
     TypeDecls []Type
     FuncDecls []Func
 }
 
 type Typeclass struct {
     Name string
+}
+
+type TypeclassImpl struct {
+    Name Typeclass
+    Inherits []Typeclass
+    LastInherit Typeclass
 }
 
 type Type struct {
@@ -68,7 +74,7 @@ ignore: /^#.*\n/
 ## ignore whitespace at beginning of line
 ignore: /^(?:[ \t])+/
 
-Start => {type=Base} {field=TypeDecls} <<TypeDecl>>* {field=FuncDecls} <<FuncDecl>>+
+Start => {type=Base} {field=TypeclassDecls} <<TypeclassDecl>>* {field=TypeDecls} <<TypeDecl>>* {field=FuncDecls} <<FuncDecl>>+
 
 CommaSep => ','
 FuncName => <ident>
@@ -88,6 +94,7 @@ Expr => {type=FuncCall} {field=Name} <FuncName> '(' <CallArgs> ')'
 Expr => <TypePlace>
 TypeDecl => 'type ' <TypeName> 'implements ' {field=Implements} <<TypeClasss>>* {field=LastImplement} <<TypeclassName>> '\n'
 TypeClasss => <TypeclassName> <CommaSep>
+TypeclassDecl => 'typeclass ' {field=Name} <<TypeclassName>> 'inherits ' {field=Inherits} <<TypeClasss>>* {field=LastInherit} <<TypeclassName>> '\n'
 FuncConstraint => {type=Constraint} {field=Name} <<TypeVar>> '<' {field=Tclasses} <<TypeClasss>>* {field=LastTClass} <<TypeclassName>> '>'
 FuncConstraintss => <FuncConstraint> <CommaSep>
 FuncConstraints => 'constrain ' {field=Constraints} <<FuncConstraintss>>* {field=LastConstraint} <<FuncConstraint>>
@@ -111,7 +118,7 @@ func TestGrammar(t *testing.T) {
     df.RegisterType(Error{})
     df.RegisterType(Typeclass{})
     df.RegisterType(Constraint{})
-    dec := df.NewDecoder(strings.NewReader("type y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n"))
+    dec := df.NewDecoder(strings.NewReader("typeclass Num inherits Zun, Yin\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n"))
 	out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
