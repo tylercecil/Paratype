@@ -11,7 +11,7 @@ import (
 
 // Object to represent a communication
 type Communication struct {
-	path	context.Path
+	path	string
 	context	*context.Context
 }
 
@@ -108,7 +108,7 @@ func main() {
 		fActor.Initialize(readyToFinish)
 		go fActor.Run()
 	}
-	
+
 	fmt.Println("Waiting for halting...")
 	// This is actually a race condition. It WOULD be sufficient
 	// to both make this check AND check if all channels are

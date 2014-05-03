@@ -1,70 +1,206 @@
 package context
 
+import (
+	"bytes"
+	"strconv"
+	"fmt"
+	"errors"
+)
 
-// updates typevar v in g to be typevar w in f
-func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) {
-	//
-	if f.typeMap[w] != nil && g.typeMap[v] != nil && f.typeMap[w] != g.typeMap[v] {
-		// TYPE ERROR
+var errorMsgs = [...]string{
+	"Explicit type conflict",
+	"Type class conflict",
+	"Explicit type not of merged type class",
+	"Missing implementation",
+};
+
+// helper function for printing type errors --- later, we need to account for
+// stopping all threads in case of a type error
+func PrintError(errcode int, f *Function, g *Function) string {
+	switch {
+	case errcode <= 2:
+		return fmt.Sprintf("\n===TYPE ERROR %v===\n%v in %v when merged with %v\n\n",
+			errcode, errorMsgs[errcode], f.Name, g.Name)
+	case errcode == 3:
+		return fmt.Sprintf("\n===TYPE ERROR %v===\n%v in %v\n\n",
+			errcode, errorMsgs[errcode], f.Name)
 	}
-
-	// find explicit type if it exists (nil otherwise)
-	if g.typeMap[v] != nil {
-		g.typeMap[w] = g.typeMap[v]
-	} else {
-		g.typeMap[w] = f.typeMap[w]
-	}
-
-	// intersection of w.constraints and v.constraints
-	if w.constraints[nil] { // w allows any
-		w.constraints = v.constraints
-	} else if v.constraints[nil] == false {
-		for typeclass := range w.constraints {
-			if v.constraints[typeclass] == false {
-				w.constraints[typeclass] = false
-			}
-		}
-	}
-
-	// is new explicit type adhering to type constraints?
-	if len(w.constraints) == 0 {
-		// TYPE ERROR
-	} else {
-		impl := false
-		for typeclass := range w.constraints {
-			if g.typeMap[w].implements[typeclass] {
-				impl = true
-			}
-		}
-		if impl == false {
-			// TYPE ERROR
-		}
-	}
-
-	f.typeVarMap[v] = w
+	return ""
 }
 
+// convert an array of function pointers to a path to be used as key for atlas
+func ConvertPath(f []*Function) string {
+	var buf bytes.Buffer
 
+	for _, fun := range f {
+		buf.WriteString(strconv.Itoa(fun.Id))
+		buf.WriteString("-")
+	}
+	s := buf.String()
+	s = s[:len(s)-1] // remove last character
+	return s
+}
+
+// updates typevar v in func g to be typevar w in func f
+// really, we are merging v and w to be w in g
+func (g *Function) updateTypevar(path string, funcarg int, f *Function,
+	w *TypeVariable) error {
+	v := g.Atlas[path][funcarg]
+
+	if f.TypeMap[w] != nil && g.TypeMap[v] != nil && f.TypeMap[w] != g.TypeMap[v] {
+		// explicit types do not match
+		return errors.New(PrintError(0, g, f))
+	}
+
+	// make typemap entry for w in g
+	// find explicit type if it exists (nil otherwise)
+	if g.TypeMap[v] != nil {
+		g.TypeMap[w] = g.TypeMap[v]
+	} else {
+		g.TypeMap[w] = f.TypeMap[w]
+	}
+
+	if g.TypeMap[w] != nil {
+		w.Resolved = true
+	}
+
+	// intersection of w.Constraints and v.Constraints
+	if w.Constraints[nil] {
+		// w allows any typeclass
+		w.Constraints = v.Constraints
+	} else if v.Constraints[nil] == false {
+		// neither w nor v allow any typeclass, so merge their actual
+		// typeclassses
+		for typeclass := range w.Constraints {
+			if v.Constraints[typeclass] == false {
+				delete(w.Constraints, typeclass)
+			}
+		}
+	}
+
+	if len(w.Constraints) == 0 {
+		// merging typeclasses brought us no typeclasses -- not even nil (any)
+		return errors.New(PrintError(1, g, f))
+	} else if w.Constraints[nil] == false && g.TypeMap[w] != nil {
+		// is new explicit type of w adhering to merged typeclass constraints?
+		var impl *TypeClass = nil
+		for typeclass := range w.Constraints {
+			if g.TypeMap[w].Implements[typeclass] {
+				impl = typeclass
+			}
+		}
+
+		// the explicit type does not implemented any of the allowed merged
+		// TypeClasses
+		if impl == nil {
+			return errors.New(PrintError(2, g, f))
+		}
+	}
+
+	f.TypeVarMap[v] = w
+	g.Atlas[path][funcarg] = w
+	return nil
+}
+
+// takes information from function f and uses it on g
+// to be called when f receives a context C_g
 func (f *Function) Update(g *Function) {
 	// lock both f and g
 
+	var pf = ConvertPath([]*Function{f})
+	var pgf = ConvertPath([]*Function{g, f})
+	var pg = ConvertPath([]*Function{g})
+
 	// f is child of g
-	/*if g.children[f] {
-		for funcarg, typevar := range f.atlas[f] {
-			g.updateTypevar(g.atlas[g of f][funcarg], f, typevar)
+	if g.Children[f] {
+		// match f() with g(f())
+		for funcarg, typevar := range f.Atlas[pf] {
+			err := g.updateTypevar(pgf, funcarg, f, typevar)
+			if err != nil {
+				fmt.Printf(err.Error())
+			}
 		}
 
-		f.parents[g] = true
+		f.Parents[g] = true
 	}
 
-	for funcarg, typevar := g.atlas[g] {
-		if f.typeVarMap[typevar] != nil {
-			g.updateTypevar(typevar, f, f.atlas[f][funcarg])
+	// replace any type variables that f has replaced elsewhere before
+	// this way, type variables "trickle up" the call tree
+	for funcarg, typevar := range g.Atlas[pg] {
+		if f.TypeVarMap[typevar] != nil {
+			err := g.updateTypevar(pg, funcarg, f, f.Atlas[pf][funcarg])
+			if err != nil {
+				fmt.Printf(err.Error())
+			}
 		}
-	}*/
+	}
 
-	// E_g = E_g union E_f
-	for errorType := range f.errors {
-		g.errors[errorType] = true
+	// merge error types: E_g = E_g union E_f
+	for errorType := range f.Errors {
+		g.Errors[errorType] = true
+	}
+}
+
+// collects all explicit implementations of f by walking up its call tree
+func (f *Function) CollectImplementations(g *Function) (implementations []map[int]*Type, err error) {
+	pf := ConvertPath([]*Function{f})
+
+	// search for explicit types of f's typevars in g
+	implementation := make(map[int]*Type)
+	for funcarg, typevar := range f.Atlas[pf] {
+		if g.TypeMap[typevar] == nil {
+			break
+		}
+		implementation[funcarg] = g.TypeMap[typevar]
+	}
+
+	if len(implementation) == len(f.Atlas[pf]) {
+		implementations = append(implementations, implementation)
+	} else if len(g.Parents) == 0 {
+		// we are at a parent but it has no implementation for us?
+		// type must be unresolved
+		err = errors.New(PrintError(3, f, nil))
+	}
+
+	for fun := range g.Parents {
+		impl, err := f.CollectImplementations(fun)
+		if err != nil {
+			return implementations, err
+		}
+		// append the implementations collected from parents
+		for _, t := range impl {
+			implementations = append(implementations, t)
+		}
+	}
+	return implementations, err
+}
+
+// quickly hacked together print function for one implementation of f
+func (f *Function) PrintImplementation(typemap map[int]*Type) {
+	fmt.Printf("func %v(", f.Name)
+	for i, typ := range typemap {
+		if i >= 1 {
+			fmt.Printf("%v, ", typ.Name)
+		}
+	}
+	fmt.Printf(") %v \n", typemap[0].Name)
+	fmt.Printf("= ")
+	if len(f.Children) == 0 {
+		fmt.Printf("%v\n", typemap[0].Name)
+	} else {
+		fmt.Printf("\n")
+	}
+}
+
+// collect all explicit implementations of f and print to somewhere
+func (f *Function) Finish() {
+	impl, err := f.CollectImplementations(f)
+	if err != nil {
+		fmt.Printf(err.Error())
+		return
+	}
+
+	for _, typemap := range impl {
+		f.PrintImplementation(typemap)
 	}
 }
