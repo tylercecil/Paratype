@@ -82,18 +82,18 @@ FuncErrorss => <ErrorType> <CommaSep>
 FuncErrors => {field=Errors} <<FuncErrorss>>* [{field=LastError} <<ErrorType>>]
 CallArgss => <Expr> <CommaSep>
 CallArgs => {field=Arguments} <<CallArgss>>* [{field=LastArgument} <<Expr>>]
-Expr => {type=FuncCall} {field=Name} <FuncName>'('<CallArgs> ')'
+Expr => {type=FuncCall} {field=Name} <FuncName> '(' <CallArgs> ')'
 Expr => <TypePlace>
 TypeClasss => <TypeclassName> <CommaSep>
-FuncConstraint => {field=Name} <TypeVar> ' <' {field=Tclasses} <<TypeClasss>>* {field=LastTClass} <<TypeclassName>> '>'
+FuncConstraint => {type=Constraint} {field=Name} <<TypeVar>> '<' {field=Tclasses} <<TypeClasss>>* {field=LastTClass} <<TypeclassName>> '>'
 FuncConstraintss => <FuncConstraint> <CommaSep>
-FuncConstraints => ' constrain ' {field=Constraints} <<FuncConstraintss>>* [{field=LastConstraint} <<FuncConstraint>>] ' '
+FuncConstraints => 'constrain ' {field=Constraints} <<FuncConstraintss>>* {field=LastConstraint} <<FuncConstraint>>
 FuncSig => 'func ' {field=Name} <FuncName> [<FuncConstraints>] '(' <FuncArgs> ')' {field=ReturnType} <<TypePlace>> ['throws ' <FuncErrors>]
 FuncDecl => {type=Func} <FuncSig> '\n=' {field=Expr} <<Expr>> '\n'
 
 ident = /([a-z][a-zA-Z]*)/
-typevar = /([A-Z]*)/
-uident = /([A-Z][a-zA-Z]*)/
+uident = /([N-Z][a-zA-Z]*)/
+typevar = /([A-M][a-zA-Z]*)/
 `
 func TestGrammar(t *testing.T) {
     df, err := gopp.NewDecoderFactory(paragopp, "Start")
@@ -108,7 +108,7 @@ func TestGrammar(t *testing.T) {
     df.RegisterType(Error{})
     df.RegisterType(Typeclass{})
     df.RegisterType(Constraint{})
-    dec := df.NewDecoder(strings.NewReader("func foo constrain T <Int> (d, T, y) iNT throws bigError, gError\n=x\nfunc foo(d, g, y) iNT throws bigError, gError\n=x\n"))
+    dec := df.NewDecoder(strings.NewReader("func foo constrain A <Zun, Num> (z, A, y) iNT\n=foo\n"))
 	out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
