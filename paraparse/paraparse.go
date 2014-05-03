@@ -122,7 +122,7 @@ func ParseCode() error {
     df.RegisterType(Typeclass{})
     df.RegisterType(Constraint{})
     //dec := df.NewDecoder(strings.NewReader("typeclass Num\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n"))
-	dec := df.NewDecoder(strings.NewReader("typeclass Num\ntype z\nfunc foo(d, A) iNT\n=x\n"))
+	dec := df.NewDecoder(strings.NewReader("typeclass Num\ntypeclass Zin\ntype z\nfunc foo(d, A) iNT\n=x\n"))
     out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
@@ -138,13 +138,18 @@ func ParseCode() error {
     PrintTypeDecls(out)
     fmt.Printf("\n\n\n")
     PrintFuncDecls(out)
+
+
+
     return err
 }
 
 func PrintTypeclassDecls(data *Base) {
-    for _, elem := range data.TypeclassDecls {
-        fmt.Printf("%+v\n", elem)
+    TypeclassList := make([]context.TypeClass, len(data.TypeclassDecls))
+    for i, elem := range data.TypeclassDecls {
+        TypeclassList[i].name = elem.Name.Name
     }
+    fmt.Printf("%+v\n", TypeclassList)
 }
 
 func PrintTypeDecls(data *Base) {
