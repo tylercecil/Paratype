@@ -3,6 +3,7 @@ package context
 import (
 	"bytes"
 	"strconv"
+	"fmt"
 )
 
 func ConvertPath(f []*Function) string {
@@ -18,10 +19,10 @@ func ConvertPath(f []*Function) string {
 }
 
 // updates typevar v in g to be typevar w in f
-func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) {
-	//
+func (g *Function) updateTypevar(path string, funcarg int, f *Function, w *TypeVariable) {
+	v := g.Atlas[path][funcarg]
 	if f.TypeMap[w] != nil && g.TypeMap[v] != nil && f.TypeMap[w] != g.TypeMap[v] {
-		// TYPE ERROR
+		fmt.Printf("TYPE ERROR1")
 	}
 
 	// find explicit type if it exists (nil otherwise)
@@ -29,6 +30,10 @@ func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) 
 		g.TypeMap[w] = g.TypeMap[v]
 	} else {
 		g.TypeMap[w] = f.TypeMap[w]
+	}
+
+	if g.TypeMap[w] != nil {
+		w.Resolved = true
 	}
 
 	// intersection of w.Constraints and v.Constraints
@@ -44,8 +49,8 @@ func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) 
 
 	// is new explicit type adhering to type Constraints?
 	if len(w.Constraints) == 0 {
-		// TYPE ERROR
-	} else {
+		fmt.Printf("TYPE ERROR 2: TypeClass conflict")
+	} else if g.TypeMap[w].Implements[nil] == false {
 		impl := false
 		for typeclass := range w.Constraints {
 			if g.TypeMap[w].Implements[typeclass] {
@@ -53,11 +58,12 @@ func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) 
 			}
 		}
 		if impl == false {
-			// TYPE ERROR
+			fmt.Printf("TYPE ERROR 3")
 		}
 	}
 
 	f.TypeVarMap[v] = w
+	g.Atlas[path][funcarg] = w
 }
 
 
@@ -71,7 +77,8 @@ func (f *Function) Update(g *Function) {
 	// f is child of g
 	if g.Children[&f.Context] {
 		for funcarg, typevar := range f.Atlas[pf] {
-			g.updateTypevar(g.Atlas[pgf][funcarg], f, typevar)
+			fmt.Printf("%+v\n", typevar)
+			g.updateTypevar(pgf, funcarg, f, typevar)
 		}
 
 		f.Parents[&g.Context] = true
@@ -79,7 +86,7 @@ func (f *Function) Update(g *Function) {
 
 	for funcarg, typevar := range g.Atlas[pg] {
 		if f.TypeVarMap[typevar] != nil {
-			g.updateTypevar(typevar, f, f.Atlas[pf][funcarg])
+			g.updateTypevar(pg, funcarg, f, f.Atlas[pf][funcarg])
 		}
 	}
 
