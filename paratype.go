@@ -47,6 +47,7 @@ func (f *FunctionActor) Run() {
 	f.SendMessage("A message!", id)
 	f.makeActive(false)
 	for {
+		fmt.Println("Waiting for message...")
 		message := <-f.Tmp
 		f.makeActive(true)
 		f.HandleMessage(message)
@@ -76,6 +77,7 @@ func (f *FunctionActor) Initialize(activeGroup *sync.WaitGroup) {
 	// only when the buffer is full.
 	f.Channel = make(chan *Communication, 128)
 	f.Tmp = make(chan string, 128)
+	f.makeActive(true)
 }
 
 // The outline of the function that sends messages to other actors.
