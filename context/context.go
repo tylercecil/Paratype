@@ -1,8 +1,8 @@
 package context
 
 type TypeClass struct {
-	name		string
-	inherits	map[*TypeClass]bool
+	Name		string
+	Inherits	map[*TypeClass]bool
 }
 
 // Representation of a Type-Variable in code.
