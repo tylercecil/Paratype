@@ -9,7 +9,7 @@ func ConvertPath(f []*Function) string {
 	var buf bytes.Buffer
 
 	for _, fun := range f {
-		buf.WriteString(strconv.Itoa(fun.id))
+		buf.WriteString(strconv.Itoa(fun.Id))
 		buf.WriteString("-")
 	}
 	s := buf.String()
@@ -20,35 +20,35 @@ func ConvertPath(f []*Function) string {
 // updates typevar v in g to be typevar w in f
 func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) {
 	//
-	if f.typeMap[w] != nil && g.typeMap[v] != nil && f.typeMap[w] != g.typeMap[v] {
+	if f.TypeMap[w] != nil && g.TypeMap[v] != nil && f.TypeMap[w] != g.TypeMap[v] {
 		// TYPE ERROR
 	}
 
 	// find explicit type if it exists (nil otherwise)
-	if g.typeMap[v] != nil {
-		g.typeMap[w] = g.typeMap[v]
+	if g.TypeMap[v] != nil {
+		g.TypeMap[w] = g.TypeMap[v]
 	} else {
-		g.typeMap[w] = f.typeMap[w]
+		g.TypeMap[w] = f.TypeMap[w]
 	}
 
-	// intersection of w.constraints and v.constraints
-	if w.constraints[nil] { // w allows any
-		w.constraints = v.constraints
-	} else if v.constraints[nil] == false {
-		for typeclass := range w.constraints {
-			if v.constraints[typeclass] == false {
-				w.constraints[typeclass] = false
+	// intersection of w.Constraints and v.Constraints
+	if w.Constraints[nil] { // w allows any
+		w.Constraints = v.Constraints
+	} else if v.Constraints[nil] == false {
+		for typeclass := range w.Constraints {
+			if v.Constraints[typeclass] == false {
+				w.Constraints[typeclass] = false
 			}
 		}
 	}
 
-	// is new explicit type adhering to type constraints?
-	if len(w.constraints) == 0 {
+	// is new explicit type adhering to type Constraints?
+	if len(w.Constraints) == 0 {
 		// TYPE ERROR
 	} else {
 		impl := false
-		for typeclass := range w.constraints {
-			if g.typeMap[w].implements[typeclass] {
+		for typeclass := range w.Constraints {
+			if g.TypeMap[w].Implements[typeclass] {
 				impl = true
 			}
 		}
@@ -57,7 +57,7 @@ func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) 
 		}
 	}
 
-	f.typeVarMap[v] = w
+	f.TypeVarMap[v] = w
 }
 
 
@@ -69,22 +69,22 @@ func (f *Function) Update(g *Function) {
 	var pg = ConvertPath([]*Function{g})
 
 	// f is child of g
-	if g.children[&f.Context] {
-		for funcarg, typevar := range f.atlas[pf] {
-			g.updateTypevar(g.atlas[pgf][funcarg], f, typevar)
+	if g.Children[&f.Context] {
+		for funcarg, typevar := range f.Atlas[pf] {
+			g.updateTypevar(g.Atlas[pgf][funcarg], f, typevar)
 		}
 
-		f.parents[&g.Context] = true
+		f.Parents[&g.Context] = true
 	}
 
-	for funcarg, typevar := range g.atlas[pg] {
-		if f.typeVarMap[typevar] != nil {
-			g.updateTypevar(typevar, f, f.atlas[pf][funcarg])
+	for funcarg, typevar := range g.Atlas[pg] {
+		if f.TypeVarMap[typevar] != nil {
+			g.updateTypevar(typevar, f, f.Atlas[pf][funcarg])
 		}
 	}
 
 	// E_g = E_g union E_f
-	for errorType := range f.errors {
-		g.errors[errorType] = true
+	for errorType := range f.Errors {
+		g.Errors[errorType] = true
 	}
 }
