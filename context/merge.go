@@ -30,7 +30,7 @@ func (g *Function) updateTypevar(v *TypeVariable, f *Function, w *TypeVariable) 
 	if len(w.constraints) == 0 {
 		// TYPE ERROR
 	} else {
-		impl = false
+		impl := false
 		for typeclass := range w.constraints {
 			if g.typeMap[w].implements[typeclass] {
 				impl = true

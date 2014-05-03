@@ -1,11 +1,14 @@
-package paratest
+package paraparse
 
 import (
     "github.com/skelterjohn/gopp"
+    "Paratype/context"
     "strings"
-    "testing"
     "reflect"
+    "fmt"
 )
+
+var _ = context.TypeClass{}
 
 type Base struct {
     TypeclassDecls []TypeclassImpl
@@ -92,7 +95,7 @@ CallArgss => <Expr> <CommaSep>
 CallArgs => {field=Arguments} <<CallArgss>>* [{field=LastArgument} <<Expr>>]
 Expr => {type=FuncCall} {field=Name} <FuncName> '(' <CallArgs> ')'
 Expr => <TypePlace>
-TypeDecl => 'type ' <TypeName> 'implements ' {field=Implements} <<TypeClasss>>* {field=LastImplement} <<TypeclassName>> '\n'
+TypeDecl => 'type ' <TypeName> ['implements ' {field=Implements} <<TypeClasss>>* {field=LastImplement} <<TypeclassName>>] '\n'
 TypeClasss => <TypeclassName> <CommaSep>
 TypeclassDecl => 'typeclass ' {field=Name} <<TypeclassName>> ['inherits ' {field=Inherits} <<TypeClasss>>* {field=LastInherit} <<TypeclassName>>] '\n'
 FuncConstraint => {type=Constraint} {field=Name} <<TypeVar>> '<' {field=Tclasses} <<TypeClasss>>* {field=LastTClass} <<TypeclassName>> '>'
@@ -105,11 +108,11 @@ ident = /([a-z][a-zA-Z]*)/
 uident = /([N-Z][a-zA-Z]*)/
 typevar = /([A-M][a-zA-Z]*)/
 `
-func TestGrammar(t *testing.T) {
+func ParseCode() error {
     df, err := gopp.NewDecoderFactory(paragopp, "Start")
     if err != nil {
-        t.Error(err)
-        return
+        fmt.Println(err)
+        return err
     }
 	df.RegisterType(TypeVar{})
 	df.RegisterType(TypeName{})
@@ -118,14 +121,40 @@ func TestGrammar(t *testing.T) {
     df.RegisterType(Error{})
     df.RegisterType(Typeclass{})
     df.RegisterType(Constraint{})
-    dec := df.NewDecoder(strings.NewReader("typeclass Num inherits Zun, Yin\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n"))
-	out := &Base{}
+    //dec := df.NewDecoder(strings.NewReader("typeclass Num\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n"))
+	dec := df.NewDecoder(strings.NewReader("typeclass Num\ntype z\nfunc foo(d, A) iNT\n=x\n"))
+    out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
-		t.Error(err)
+		fmt.Println(err)
+		return err
 	}
-	t.Logf("%+v\n", out)
-    t.Logf("%+v\n", reflect.TypeOf(out.FuncDecls[0].LastError))
+	fmt.Printf("%#v\n", out)
+    fmt.Println(reflect.TypeOf(out.FuncDecls[0].LastError))
+
+    fmt.Printf("\n\n\n")
+    PrintTypeclassDecls(out)
+    fmt.Printf("\n\n\n")
+    PrintTypeDecls(out)
+    fmt.Printf("\n\n\n")
+    PrintFuncDecls(out)
+    return err
 }
 
+func PrintTypeclassDecls(data *Base) {
+    for _, elem := range data.TypeclassDecls {
+        fmt.Printf("%+v\n", elem)
+    }
+}
 
+func PrintTypeDecls(data *Base) {
+    for _, elem := range data.TypeDecls {
+        fmt.Printf("%+v\n", elem)
+    }
+}
+
+func PrintFuncDecls(data *Base) {
+    for _, elem := range data.FuncDecls {
+        fmt.Printf("%+v\n", elem)
+    }
+}

@@ -1,14 +1,16 @@
 //The Main package for Paratype type analysis software.
 package main
 
-/*import (
-	"fmt"
-	"Paratype/context"
-)*/
+import (
+//	"fmt"
+//	"Paratype/context"
+	"Paratype/paraparse"
+)
 
 //Dummy main function.
 func main() {
 	//Make a set of junk functions
 	//Run all functions
 	//Wait to halt
+	_ = paraparse.ParseCode()
 }
