@@ -26,6 +26,8 @@ type Func struct {
 	Arguments []interface{}
 	LastArgument interface{}
 	ReturnType interface{}
+    Constraints []Constraint
+    LastConstraint Constraint
 	Errors []Error
 	LastError Error
 	Expr
@@ -35,6 +37,12 @@ type Expr interface{}
 
 type Error struct {
 	Name string
+}
+
+type Constraint struct {
+    Name TypeVar
+    Tclasses []Typeclass
+    LastTClass Typeclass
 }
 
 type TypeVar struct {
@@ -62,6 +70,7 @@ Start => {type=Base} {field=FuncDecls} <<FuncDecl>>+
 
 CommaSep => ','
 FuncName => <ident>
+TypeclassName => {type=Typeclass} {field=Name} <uident>
 TypeVar => {type=TypeVar} {field=Name} <typevar>
 TypeName => {type=TypeName} {field=Name} <ident>
 ErrorType => {type=Error} {field=Name} <ident>
@@ -75,11 +84,16 @@ CallArgss => <Expr> <CommaSep>
 CallArgs => {field=Arguments} <<CallArgss>>* [{field=LastArgument} <<Expr>>]
 Expr => {type=FuncCall} {field=Name} <FuncName>'('<CallArgs> ')'
 Expr => <TypePlace>
-FuncSig => 'func ' {field=Name} <FuncName> '(' <FuncArgs> ')' {field=ReturnType} <<TypePlace>> ['throws ' <FuncErrors>]
+TypeClasss => <TypeclassName> <CommaSep>
+FuncConstraint => {field=Name} <TypeVar> ' <' {field=Tclasses} <<TypeClasss>>* {field=LastTClass} <<TypeclassName>> '>'
+FuncConstraintss => <FuncConstraint> <CommaSep>
+FuncConstraints => ' constrain ' {field=Constraints} <<FuncConstraintss>>* [{field=LastConstraint} <<FuncConstraint>>] ' '
+FuncSig => 'func ' {field=Name} <FuncName> [<FuncConstraints>] '(' <FuncArgs> ')' {field=ReturnType} <<TypePlace>> ['throws ' <FuncErrors>]
 FuncDecl => {type=Func} <FuncSig> '\n=' {field=Expr} <<Expr>> '\n'
 
 ident = /([a-z][a-zA-Z]*)/
 typevar = /([A-Z]*)/
+uident = /([A-Z][a-zA-Z]*)/
 `
 func TestGrammar(t *testing.T) {
     df, err := gopp.NewDecoderFactory(paragopp, "Start")
@@ -92,7 +106,9 @@ func TestGrammar(t *testing.T) {
 	df.RegisterType(Func{})
     df.RegisterType(FuncCall{})
     df.RegisterType(Error{})
-    dec := df.NewDecoder(strings.NewReader("func foo(d, g, y) iNT throws bigError, gError\n=x\nfunc foo(d, g, y) iNT throws bigError, gError\n=x\n"))
+    df.RegisterType(Typeclass{})
+    df.RegisterType(Constraint{})
+    dec := df.NewDecoder(strings.NewReader("func foo constrain T <Int> (d, T, y) iNT throws bigError, gError\n=x\nfunc foo(d, g, y) iNT throws bigError, gError\n=x\n"))
 	out := &Base{}
 	err = dec.Decode(out)
 	if err != nil {
