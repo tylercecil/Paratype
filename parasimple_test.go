@@ -94,7 +94,7 @@ Expr => {type=FuncCall} {field=Name} <FuncName> '(' <CallArgs> ')'
 Expr => <TypePlace>
 TypeDecl => 'type ' <TypeName> 'implements ' {field=Implements} <<TypeClasss>>* {field=LastImplement} <<TypeclassName>> '\n'
 TypeClasss => <TypeclassName> <CommaSep>
-TypeclassDecl => 'typeclass ' {field=Name} <<TypeclassName>> 'inherits ' {field=Inherits} <<TypeClasss>>* {field=LastInherit} <<TypeclassName>> '\n'
+TypeclassDecl => 'typeclass ' {field=Name} <<TypeclassName>> ['inherits ' {field=Inherits} <<TypeClasss>>* {field=LastInherit} <<TypeclassName>>] '\n'
 FuncConstraint => {type=Constraint} {field=Name} <<TypeVar>> '<' {field=Tclasses} <<TypeClasss>>* {field=LastTClass} <<TypeclassName>> '>'
 FuncConstraintss => <FuncConstraint> <CommaSep>
 FuncConstraints => 'constrain ' {field=Constraints} <<FuncConstraintss>>* {field=LastConstraint} <<FuncConstraint>>
