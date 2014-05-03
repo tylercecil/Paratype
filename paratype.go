@@ -29,10 +29,12 @@ type Function struct {
 	args        []FunctionArg
 }
 
+type Path string;
+
 //A Context object represents information about the implementation of
 //a function, and its relationship to other functions.
 type Context struct {
-	atlas		map[*FunctionArg]*TypeVariable
+	atlas		map[Path](map[*FunctionArg]*TypeVariable)
 	typeMap		map[*TypeVariable]*Type
 	typeVarMap	map[*TypeVariable]*TypeVariable
 	errors		[]*Type
