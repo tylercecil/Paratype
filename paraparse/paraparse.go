@@ -187,6 +187,7 @@ func HandleFuncComposition(ReferenceMap map[string]*context.Function,
 			// make return typevar, pass to self
 			T := MakeTypeVar(false)
 			f.TypeMap[T] = nil
+			f.Atlas[pfg][pos+1] = T
 			HandleFuncComposition(ReferenceMap, f, T, arg.(FuncCall), typeVarRef, typeMap, level+1)
 
 		case TypeName:
@@ -236,6 +237,21 @@ func ParseFuncDecls(data *Base, typeClassMap map[string]*context.TypeClass, type
 		f.TypeMap = make(map[*context.TypeVariable]*context.Type)
 		f.Atlas[pf] = make(map[int]*context.TypeVariable)
 		typeVarRef := make(map[string]*context.TypeVariable)
+
+		elem.Constraints = append(elem.Constraints, elem.LastConstraint)
+		for _, arg := range elem.Constraints {
+			T := MakeTypeVar(false)
+			typeVarRef[arg.Name.Name] = T
+			arg.Tclasses = append(arg.Tclasses, arg.LastTClass)
+			for _, tc := range arg.Tclasses {
+				typeClassRef, ok := typeClassMap[tc.Name]
+				if !ok {
+					// ERROR
+				}
+				T.Constraints[ typeClassRef ] = true
+				delete(T.Constraints, nil)
+			}
+		}
 
 		ResolveTypeVar(f.Atlas, pf, f.TypeMap, typeVarRef, typeMap, 0, elem.ReturnType)
 

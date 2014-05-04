@@ -29,9 +29,7 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 		// MERGE
 		er := f.Update(message.Context)
 		if er != nil {
-			f.makeActive(false)
 			err <- er
-			return
 		}
 
 		// add myself to path
