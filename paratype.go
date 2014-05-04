@@ -39,6 +39,8 @@ var functionsArray []*context.Function
 func (f *FunctionActor) Run() {
 	f.makeActive(false)
 
+	// handling for function composition?
+
 	for message := range f.channel {
 		f.makeActive(true)
 
@@ -93,14 +95,14 @@ func (f *FunctionActor) Initialize(activeGroup *sync.WaitGroup) {
 	f.makeActive(true)
 }
 
-func (f *FunctionActor) SendToChild() {
+// sends own context to child
+func (f *FunctionActor) InitialSendToChild() {
 	comm := new(Communication)
 	comm.path = context.FunctionsToPath(f.function)
 	comm.context = f.function
-	for _, gfuncs := range f.function.Children {
-		for g := range gfuncs {
-			functions[g].channel <-comm
-		}
+	// for function composition, send to inner most children only
+	for g := range f.function.Children[0] {
+		functions[g].channel <-comm
 	}
 }
 
@@ -132,7 +134,7 @@ func RunThings(f ...interface{}) {
 
 	readyToFinish := new(sync.WaitGroup)
 
-	fmt.Println("Welcome to Paratype!")
+	//fmt.Println("Welcome to Paratype!")
 
 	for _, fActor := range functions {
 		fActor.Initialize(readyToFinish)
@@ -140,14 +142,14 @@ func RunThings(f ...interface{}) {
 	// avoid race conditions by having the first communication in channels
 	// before starting
 	for _, fActor := range functions {
-		fActor.SendToChild()
+		fActor.InitialSendToChild()
 	}
 	for _, fActor := range functions {
-		fmt.Printf("\tSpawning Function Actor for %v\n", fActor.function.Name)
+		//fmt.Printf("\tSpawning Function Actor for %v\n", fActor.function.Name)
 		go fActor.Run()
 	}
 
-	fmt.Println("Waiting for halting...")
+	//fmt.Println("Waiting for halting...")
 
 	// This is actually a race condition. It WOULD be sufficient
 	// to both make this check AND check if all channels are
@@ -158,7 +160,7 @@ func RunThings(f ...interface{}) {
 		close(fActor.channel)
 	}
 
-	fmt.Println("Done!")
+	//fmt.Println("Done!")
 }
 
 // Dummy main function.
