@@ -71,6 +71,21 @@ func TestComposedFuncs(t *testing.T) {
 }
 
 // PASS
+// func foo(d, A) int
+// 		=bar(baz(ban(A)))
+// func bar(int) B
+// 		=int
+// func baz(int) B
+//		=int
+// func ban(int) B
+//		=baq()
+// func baq() B
+//		=B
+func TestParents(t *testing.T) {
+	RunTest("func foo(d, A) int\n=bar(baz(ban(A)))\nfunc bar(int) B\n=int\nfunc baz(int) B\n=int\nfunc ban(int) B\n=baq()\nfunc baq() B\n=B\n", t)
+}
+
+// PASS
 // Tests correct creation of the children map.
 // func foo(A) int
 // 		=bar(baz(A), float)
@@ -90,7 +105,7 @@ func TestChildren(t *testing.T) {
 // 		=int
 // func baz(int) int
 // 		=int
-func TestNonExistantChild(t *testing.T) {
+func TestNonExistentChild(t *testing.T) {
 	RunTest("func foo(A) int\n=bar(bal(A), float)\nfunc bar(int, float) int\n=int\nfunc baz(int) int\n=int\n", t)
 }
 

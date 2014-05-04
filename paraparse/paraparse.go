@@ -84,7 +84,7 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, map[string]*context.T
 
 // Given the implementation and the implementation map will assign
 // the given implementation to the map with the correct reference to the
-// typeclass.
+// typeclass.8
 func AssignImplementation(impl Typeclass, implMap map[*context.TypeClass]bool, ReferenceMap map[string]*context.TypeClass) error {
 	if impl.Name != "" {
 		i_ref, ok := ReferenceMap[impl.Name]
@@ -139,6 +139,7 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 
 		// Reference map is needed later for the FindChildren function.
 		ReferenceMap[elem.Name] = &FuncSlice[i]
+		FuncSlice[i].Parents = make(map[*context.Function]bool)
 		FuncSlice[i].Id = i
 		FuncSlice[i].NumArgs = len(elem.Arguments) + 2
 
@@ -148,12 +149,11 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 		}
 		AssignError(elem.LastError, FuncSlice[i].Errors)
 	}
-
 	// Once the ReferenceMap has been built it is important to go through
 	// the function declarations and enumerate the children and their depth.
 	for i, elem := range data.FuncDecls {
 		FuncSlice[i].Children = make(map[int]map[*context.Function]bool)
-		err := FindChildren(elem.Expr, 0, FuncSlice[i].Children, ReferenceMap)
+		err := FindChildren(&FuncSlice[i], elem.Expr, 0, FuncSlice[i].Children, ReferenceMap)
 		if err != nil {
 			return nil, err
 		}
@@ -166,7 +166,7 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 // children map. If it is a TypeVar or TypeName then it doesn't matter.
 // The parameters of the function are then checked to see if there is any
 // composition.
-func FindChildren(e Expr, depth int, cMap map[int]map[*context.Function]bool, rMap map[string]*context.Function) error {
+func FindChildren(par *context.Function, e Expr, depth int, cMap map[int]map[*context.Function]bool, rMap map[string]*context.Function) error {
 	// Type switch over the expression given.
 	switch e.(type) {
 	// If the expression given is a function call then the function is added
@@ -174,23 +174,24 @@ func FindChildren(e Expr, depth int, cMap map[int]map[*context.Function]bool, rM
 	// it does not.
 	case FuncCall:
 		// Get the pointer to the function object
-		Name, ok := rMap[e.(FuncCall).Name]
+		FuncP, ok := rMap[e.(FuncCall).Name]
 		if !ok {
 			return fmt.Errorf("FindChildren: Function %s does not exist.",
 				e.(FuncCall).Name)
 		}
+		FuncP.Parents[par] = true
 		cMap[depth] = make(map[*context.Function]bool)
-		cMap[depth][Name] = true
+		cMap[depth][FuncP] = true
 		// Go through all of the arguments checking those expressions
 		for _, elem := range e.(FuncCall).Arguments {
-			err := FindChildren(elem, depth+1, cMap, rMap)
+			err := FindChildren(par, elem, depth+1, cMap, rMap)
 			if err != nil {
 				return err
 			}
 		}
 		// Make sure to also check the last argument. This may not exist.
 		if e.(FuncCall).LastArgument != nil {
-			err := FindChildren(e.(FuncCall).LastArgument, depth+1, cMap, rMap)
+			err := FindChildren(par, e.(FuncCall).LastArgument, depth+1, cMap, rMap)
 			if err != nil {
 				return err
 			}
