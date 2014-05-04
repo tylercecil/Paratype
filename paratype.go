@@ -46,6 +46,7 @@ func RunThings(f ...interface{}) []error {
 		fmt.Printf("\tSpawning Function Actor for %v\n", fActor.Name)
 		go fActor.Run(&Functions, err)
 		defer close(fActor.Channel)
+		defer close(fActor.FuncComp)
 	}
 
 	fmt.Println("Waiting for halting...")

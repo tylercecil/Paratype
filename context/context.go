@@ -7,6 +7,7 @@ import "sync"
 type Communication struct {
 	Path		string
 	Context		*Function
+	Depth 		int
 }
 
 type TypeClass struct {
@@ -34,6 +35,7 @@ type Function struct {
 	NumArgs		int
 	Id			int
 	Channel		chan *Communication
+	FuncComp	chan string
 	State		bool
 	ActiveGroup	*sync.WaitGroup
 	Context

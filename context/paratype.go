@@ -8,43 +8,56 @@ import (
 
 func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
-	// handling for function composition?
 	if len(f.Parents) == 0 {
 		f.makeActive(false)
 	}
-
-	// receive messages as long as channel is open
-	for message := range f.Channel {
-		f.makeActive(true)
-
-		// debugging
-		pathfuncs := PathToFunctions(message.Path, *Functions)
-		s := make([]string, len(pathfuncs))
-		for i, g := range pathfuncs {
-			s[i] = g.Name
-		}
-		fmt.Printf("%v received from path %s the of %v\n",
-			f.Name, strings.Join(s, "-"), message.Context.Name)
-
-		// MERGE
-		er := f.Update(message.Context)
-		if er != nil {
-			f.makeActive(false)
-			err <- er
-			return
-		}
-
-		// add myself to path
-		message.Path = AddToPath(message.Path, f)
-
-		// send to all children
-		for _, gfuncs := range f.Children {
-			for g := range gfuncs {
-				g.Channel <- message
+	for {
+		select {
+		case path, ok := <- f.FuncComp:
+			if !ok {
+				f.FuncComp = nil
 			}
-		}
+			_ = path
+		case message, ok := <- f.Channel:
+			if message == nil {
+				continue
+			}
+			if !ok {
+				f.Channel = nil
+				continue
+			}
+			f.makeActive(true)
+			// debugging
+			pathfuncs := PathToFunctions(message.Path, *Functions)
+			s := make([]string, len(pathfuncs))
+			for i, g := range pathfuncs {
+				s[i] = g.Name
+			}
+			fmt.Printf("%v received from path %s the of %v\n",
+				f.Name, strings.Join(s, "-"), message.Context.Name)
 
-		f.makeActive(false)
+			// MERGE
+			er := f.Update(message.Context)
+			if er != nil {
+				f.makeActive(false)
+				err <- er
+				return
+			}
+			// add myself to path
+			message.Path = AddToPath(message.Path, f)
+			for _, gfuncs := range f.Children {
+				for g := range gfuncs {
+					g.Channel <- message
+				}
+			}
+			if message.Depth > 0 && len(f.Children) == 0 {
+				f.FuncComp <- message.Path
+			}
+			f.makeActive(false)
+		}
+		if f.FuncComp == nil && f.Channel == nil {
+			break
+		}
 	}
 
 	return
@@ -72,6 +85,7 @@ func (f *Function) Initialize(activeGroup *sync.WaitGroup) {
 	// Arbitrary buffer size. Note that Channels block
 	// only when the buffer is full.
 	f.Channel = make(chan *Communication, 128)
+	f.FuncComp = make(chan string, 128)
 	f.makeActive(true)
 }
 
@@ -81,7 +95,9 @@ func (f *Function) InitialSendToChild() {
 	comm.Path = FunctionsToPath(f)
 	comm.Context = f
 	// for function composition, send to inner most children only
-	for g := range f.Children[0] {
+	deepest := len(f.Children)
+	comm.Depth = deepest - 1
+	for g := range f.Children[deepest - 1] {
 		g.Channel <-comm
 	}
 }
