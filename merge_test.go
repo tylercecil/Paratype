@@ -34,11 +34,11 @@ func MakeTestTypes() (num *context.TypeClass, mat *context.TypeClass,
 	ma[nil] = true
 
 	in = new(context.Type)
-	in.Name = "Int"
+	in.Name = "int"
 	in.Implements = ma
 
 	fl = new(context.Type)
-	fl.Name = "Float"
+	fl.Name = "float"
 	fl.Implements = ma
 	return
 }
@@ -119,14 +119,7 @@ func TestDown(t *testing.T) {
 	f.Children[0] = make(map[*context.Function]bool)
 	f.Children[0][g] = true
 
-	//PrintAll(f)
-	//PrintAll(g)
-
-	//g.Update(f)
 	main.RunThings(f, g)
-
-	//PrintAll(f)
-	//PrintAll(g)
 
 	fmt.Printf("\n===implementations===\n\n")
 	f.Finish()
@@ -207,15 +200,7 @@ func DownExample(errcode int, t * testing.T) {
 	f.Children[0] = make(map[*context.Function]bool)
 	f.Children[0][g] = true
 
-	//PrintAll(f)
-	//PrintAll(g)
-
-	//g.Update(f)
 	main.RunThings(f, g)
-
-
-	//PrintAll(f)
-	//PrintAll(g)
 
 	fmt.Printf("\n===implementations===\n\n")
 	f.Finish()
@@ -242,26 +227,10 @@ func TwoExample(errcode int, t * testing.T) {
 	// = f(float)
 
 	F0 := MakeTypeVar("F_0", true)
-
-	/*delete(F0.Constraints, nil)
-	if errcode == 2 || errcode == 1 {
-		F0.Constraints[mat] = true
-	} else {
-		F0.Constraints[num] = true
-	}*/
-
 	F1 := MakeTypeVar("F_1", false)
-	//F2 := MakeTypeVar("F_2", false)
-
 	G0 := MakeTypeVar("G_0", false)
-	/*if errcode == 1 {
-		delete(G0.Constraints, nil)
-		G0.Constraints[num] = true
-	}*/
-
 	G1 := MakeTypeVar("G_1", true)
 	G2 := MakeTypeVar("G_2", true)
-
 	H0 := MakeTypeVar("H_0", false)
 	H1 := MakeTypeVar("H_1", true)
 	H2 := MakeTypeVar("H_2", true)
@@ -278,11 +247,7 @@ func TwoExample(errcode int, t * testing.T) {
 
 
 	f := MakeFunction("f", 2)
-	//if errcode == 0 {
 	f.TypeMap[F0] = fl
-	/*} else {
-		f.TypeMap[F0] = nil
-	}*/
 	f.TypeMap[F1] = nil
 
 	pf := context.FunctionsToPath(f)
@@ -301,11 +266,6 @@ func TwoExample(errcode int, t * testing.T) {
 	g.Children[0][f] = true
 	h.Children[0][f] = true
 
-	//PrintAll(f)
-	//PrintAll(g)
-
-	//f.Update(g)
-	//f.Update(h)
 	main.RunThings(f, g, h)
 
 	/*PrintAll(f)
