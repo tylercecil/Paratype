@@ -215,16 +215,27 @@ func (f *Function) CollectImplementations(g *Function) (implementations []map[in
 
 // quickly hacked together print function for one implementation of f
 func (f *Function) PrintImplementation(typemap map[int]*Type) {
-	fmt.Printf("func %v(", f.Name)
 	s := make([]string, len(typemap)-1)
 	for i, typ := range typemap {
 		if i >= 1 {
 			s[i-1] = typ.Name
 		}
 	}
-	fmt.Printf("%s", strings.Join(s, ", "))
-	fmt.Printf(") %v \n", typemap[0].Name)
-	fmt.Printf("= ")
+
+	r := make([]string, len(f.Errors))
+	i := 0
+	for e := range f.Errors {
+		r[i] = e.Name
+		i++
+	}
+
+	fmt.Printf("func %v(%s) %v", f.Name, strings.Join(s, ", "), typemap[0].Name)
+
+	if len(f.Errors) > 0 {
+		fmt.Printf(" throws %v", strings.Join(r, ", "))
+	}
+	fmt.Printf("\n= ")
+
 	if len(f.Children[0]) == 0 {
 		fmt.Printf("%v\n", typemap[0].Name)
 	} else {
