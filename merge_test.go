@@ -109,9 +109,9 @@ func TestDown(t *testing.T) {
 	f.TypeMap[F1] = fl
 	f.TypeMap[F2] = in
 
-	pf := context.ConvertPath(f)
-	pfg := context.ConvertPath(f, g)
-	pg := context.ConvertPath(g)
+	pf := context.FunctionsToPath(f)
+	pfg := context.FunctionsToPath(f, g)
+	pg := context.FunctionsToPath(g)
 
 	f.Atlas[pf] = map[int]*context.TypeVariable{0 : F0}
 	f.Atlas[pfg] = map[int]*context.TypeVariable{0 : F0, 1 : F1, 2 : F2}
@@ -197,9 +197,9 @@ func DownExample(errcode int, t * testing.T) {
 	f.TypeMap[F1] = nil
 	f.TypeMap[F2] = nil
 
-	pf := context.ConvertPath(f)
-	pfg := context.ConvertPath(f, g)
-	pg := context.ConvertPath(g)
+	pf := context.FunctionsToPath(f)
+	pfg := context.FunctionsToPath(f, g)
+	pg := context.FunctionsToPath(g)
 
 	f.Atlas[pf] = map[int]*context.TypeVariable{0 : F0, 1 : F1, 2 : F2}
 	f.Atlas[pfg] = map[int]*context.TypeVariable{0 : F0, 1 : F1, 2 : F2}
@@ -285,11 +285,11 @@ func TwoExample(errcode int, t * testing.T) {
 	}*/
 	f.TypeMap[F1] = nil
 
-	pf := context.ConvertPath(f)
-	pgf := context.ConvertPath(g, f)
-	pg := context.ConvertPath(g)
-	phf := context.ConvertPath(h, f)
-	ph := context.ConvertPath(h)
+	pf := context.FunctionsToPath(f)
+	pgf := context.FunctionsToPath(g, f)
+	pg := context.FunctionsToPath(g)
+	phf := context.FunctionsToPath(h, f)
+	ph := context.FunctionsToPath(h)
 
 	f.Atlas[pf] = map[int]*context.TypeVariable{0 : F0, 1 : F1}
 	g.Atlas[pgf] = map[int]*context.TypeVariable{0 : G0, 1 : G2}

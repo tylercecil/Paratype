@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"fmt"
 	"errors"
+	"strings"
 )
 
 var errorMsgs = [...]string{
@@ -29,7 +30,7 @@ func PrintError(errcode int, f *Function, g *Function) string {
 }
 
 // convert an array of function pointers to a path to be used as key for atlas
-func ConvertPath(f ...interface{}) string {
+func FunctionsToPath(f ...interface{}) string {
 	var buf bytes.Buffer
 
 	for _, fun := range f {
@@ -39,6 +40,32 @@ func ConvertPath(f ...interface{}) string {
 	s := buf.String()
 	s = s[:len(s)-1] // remove last character
 	return s
+}
+
+func PathToFunctions(path string, allfuncs []*Function) []*Function {
+	ids := strings.Split(path, "-")
+	funcs := make([]*Function, len(ids))
+	for i, stringid := range ids {
+		id, err := strconv.Atoi(stringid)
+		if err != nil {
+			// 
+		}
+		for _, fun := range allfuncs {
+			if fun.Id == id {
+				funcs[i] = fun
+			}
+		}
+	}
+	return funcs
+}
+
+// add function f to path
+func AddToPath(path string, f *Function) string {
+	var buf bytes.Buffer
+	buf.WriteString(path)
+	buf.WriteString("-")
+	buf.WriteString(strconv.Itoa(f.Id))
+	return buf.String()
 }
 
 func IsChild(child *Function, parent *Function) int {
@@ -116,9 +143,9 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 func (f *Function) Update(g *Function) {
 	// lock both f and g
 
-	var pf = ConvertPath(f)
-	var pgf = ConvertPath(g, f)
-	var pg = ConvertPath(g)
+	var pf = FunctionsToPath(f)
+	var pgf = FunctionsToPath(g, f)
+	var pg = FunctionsToPath(g)
 
 	// f is child of g
 	if IsChild(f, g) >= 0 {
@@ -152,7 +179,7 @@ func (f *Function) Update(g *Function) {
 
 // collects all explicit implementations of f by walking up its call tree
 func (f *Function) CollectImplementations(g *Function) (implementations []map[int]*Type, err error) {
-	pf := ConvertPath(f)
+	pf := FunctionsToPath(f)
 
 	// search for explicit types of f's typevars in g
 	implementation := make(map[int]*Type)
@@ -187,11 +214,13 @@ func (f *Function) CollectImplementations(g *Function) (implementations []map[in
 // quickly hacked together print function for one implementation of f
 func (f *Function) PrintImplementation(typemap map[int]*Type) {
 	fmt.Printf("func %v(", f.Name)
+	s := make([]string, len(typemap)-1)
 	for i, typ := range typemap {
 		if i >= 1 {
-			fmt.Printf("%v, ", typ.Name)
+			s[i-1] = typ.Name
 		}
 	}
+	fmt.Printf("%s", strings.Join(s, ", "))
 	fmt.Printf(") %v \n", typemap[0].Name)
 	fmt.Printf("= ")
 	if len(f.Children[0]) == 0 {
