@@ -10,47 +10,57 @@ var funcCounter int = 0
 var n int = 4
 
 func TestFlow1(t *testing.T) {
-	f,g,h,q := FlowExample(0, t)
+	f,g,h,q := FlowExample(0)
 
 	main.RunThem(n, f, q, g, h)
 }
 
 func TestFlow2(t *testing.T) {
-	f,g,h,q := FlowExample(0, t)
-	m,p,o := TwoExample(0, t)
+	f,g,h,q := FlowExample(0)
+	m,p,o := TwoExample(0)
 
 	main.RunThem(n, f, q, g, h, m, p, o)
 }
 
 func TestFlow3(t *testing.T) {
-	f,g,h,q := FlowExample(0, t)
-	m,p,o := TwoExample(0, t)
-	w,z := DownExample(0, t)
+	f,g,h,q := FlowExample(0)
+	m,p,o := TwoExample(0)
+	w,z := DownExample(0)
 
 	main.RunThem(n, f, q, g, h, m, p, o, w, z)
 }
 
 func TestFlow4(t *testing.T) {
-	f,g,h,q := FlowExample(0, t)
-	m,p,o := TwoExample(0, t)
-	w,z := DownExample(1, t)
-	v,l := DownExample(3, t)
-	u,a := DownExample(2, t)
+	f,g,h,q := FlowExample(0)
+	m,p,o := TwoExample(0)
+	w,z := DownExample(1)
+	v,l := DownExample(3)
+	u,a := DownExample(2)
 
 	main.RunThem(n, f, q, g, h, m, p, o, w, z, v, l, u, a)
 }
 
+func BenchmarkFlow5(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		f,g,h,q := FlowExample(0)
+		m,p,o := TwoExample(0)
+		v,l := DownExample(3)
+
+		main.RunThem(n, f, q, g, h, m, p, o, v, l)
+	}
+}
+
 func TestFlow5(t *testing.T) {
-	f,g,h,q := FlowExample(0, t)
-	m,p,o := TwoExample(0, t)
-	v,l := DownExample(3, t)
+	f,g,h,q := FlowExample(0)
+	m,p,o := TwoExample(0)
+	v,l := DownExample(3)
 
 	main.RunThem(n, f, q, g, h, m, p, o, v, l)
 }
 
 // g and h call f, mixed explicit types
 func TestTwo(t *testing.T) {
-	f,g,h := TwoExample(0, t)
+	f,g,h := TwoExample(0)
 	main.RunThem(n, f,g,h)
 }
 
@@ -63,22 +73,22 @@ func TestUp0(t *testing.T) {
 	// f : F_0 F_1 F_2
 	// f \circ g : F_0 F_1 F_2
 	// g : G_0 G_1 G_2
-	f, g := DownExample(0, t) // explicit type conflict (F_0 fl, G_0 in)
+	f, g := DownExample(0) // explicit type conflict (F_0 fl, G_0 in)
 	main.RunThem(n, f, g)
 }
 
 func TestUp1(t *testing.T) {
-	f, g := DownExample(1, t) // typeclass conflict
+	f, g := DownExample(1) // typeclass conflict
 	main.RunThem(n, f, g)
 }
 
 func TestUp2(t *testing.T) {
-	f, g := DownExample(2, t) // explicit type not in merged typeclass (in not mat)
+	f, g := DownExample(2) // explicit type not in merged typeclass (in not mat)
 	main.RunThem(n, f, g)
 }
 
 func TestUp3(t *testing.T) {
-	f, g := DownExample(3, t) // no error
+	f, g := DownExample(3) // no error
 	main.RunThem(n, f, g)
 }
 
@@ -184,7 +194,7 @@ func TestDown(t *testing.T) {
 }
 
 
-func DownExample(errcode int, t * testing.T) (f *context.Function, g *context.Function) {
+func DownExample(errcode int) (f *context.Function, g *context.Function) {
 	num, mat, in, fl, _ := MakeTestTypes()
 
 	F0 := MakeTypeVar("F_0", false)
@@ -238,17 +248,8 @@ func DownExample(errcode int, t * testing.T) (f *context.Function, g *context.Fu
 
 
 
-func TwoExample(errcode int, t * testing.T) (f *context.Function, g *context.Function, h *context.Function){
+func TwoExample(errcode int) (f *context.Function, g *context.Function, h *context.Function){
 	_, _, in, fl, _ := MakeTestTypes()
-
-	// f(T) float
-	// = float
-	//
-	// g(int) T
-	// = f(int)
-	//
-	// h(int) T
-	// = f(float)
 
 	F0 := MakeTypeVar("F_0", true)
 	F1 := MakeTypeVar("F_1", false)
@@ -295,20 +296,8 @@ func TwoExample(errcode int, t * testing.T) (f *context.Function, g *context.Fun
 }
 
 
-func FlowExample(errcode int, t * testing.T) (f *context.Function, g *context.Function, h *context.Function, q *context.Function) {
+func FlowExample(errcode int) (f *context.Function, g *context.Function, h *context.Function, q *context.Function) {
 	_, _, in, fl, _ := MakeTestTypes()
-
-	// func f() float
-	// = g(int)
-	//
-	// func q() int
-	// = g(float)
-	//
-	// func g(T) R
-	// = h(T)
-	//
-	// func h(S) U
-	// = U
 
 	F0 := MakeTypeVar("F_0", true)
 	F1 := MakeTypeVar("F_1", true)
