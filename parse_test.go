@@ -3,15 +3,42 @@ package main
 import (
 	"Paratype/paraparse"
 	"Paratype/context"
+	"Paratype"
 	"fmt"
 	"testing"
 )
 
 // This is only for current debugging purposes.
-func PrintData(tclist []context.TypeClass, tlist []context.Type, flist []context.Function) {
+func PrintData(tclist []context.TypeClass, tlist []context.Type, flist []*context.Function) {
 	fmt.Printf("TCLIST: %+v\n", tclist)
 	fmt.Printf("TLIST: %+v\n", tlist)
 	fmt.Printf("FLIST: %+v\n", flist)
+	for _, f := range flist {
+		fmt.Printf("%+v\n", f)
+		PrintAll(f)
+	}
+}
+
+func PrintAll(f *context.Function) {
+	fmt.Printf("\nTypemap of %v\n", f.Name)
+	PrintTypeMap(f)
+	fmt.Printf("\nAtlas of %v\n", f.Name)
+	PrintAtlas(f)
+}
+
+func PrintTypeMap(g *context.Function) {
+	for tv, t := range g.TypeMap {
+		fmt.Printf("%+v : %+v\n", tv, t)
+	}
+}
+
+func PrintAtlas(g *context.Function) {
+	for path, tuple := range g.Atlas {
+		fmt.Printf("%+v\n", path)
+		for _, tv := range tuple {
+			fmt.Printf("%+v\n", tv)
+		}
+	}
 }
 
 // Used to run a test and check the error. The data is then printed.
@@ -22,6 +49,8 @@ func RunTest(code string, t *testing.T) {
 		return
 	}
 	PrintData(tclist, tlist, flist)
+
+	main.RunThem(4, flist)
 }
 
 // PASS
@@ -96,6 +125,11 @@ func TestParents(t *testing.T) {
 
 func TestReallySimple(t *testing.T) {
 	RunTest("func foo(A) A\n=A\n", t)
+}
+
+func TestFavorite(t *testing.T) {
+	RunTest("type float\ntype int\nfunc f() float\n=g(int)\nfunc q() int\n=g(float)\nfunc g(A) B\n=h(A)\nfunc h(A) B\n=B\n", t)
+
 }
 
 // PASS

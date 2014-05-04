@@ -3,9 +3,12 @@ package paraparse
 import (
 	"Paratype/context"
 	"fmt"
+	"strconv"
 )
 
-func Setup(code string) ([]context.TypeClass, []context.Type, []context.Function, error) {
+var tvname int = 0
+
+func Setup(code string) ([]context.TypeClass, []context.Type, []*context.Function, error) {
 	out, err := ParseCode(code)
 	if err != nil {
 		return nil, nil, nil, err
@@ -15,11 +18,11 @@ func Setup(code string) ([]context.TypeClass, []context.Type, []context.Function
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	TypeSlice, err := ParseTypeDecls(out, ReferenceMap)
+	TypeSlice, TypeMap, err := ParseTypeDecls(out, ReferenceMap)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	FuncSlice, err := ParseFuncDecls(out)
+	FuncSlice, err := ParseFuncDecls(out, ReferenceMap, TypeMap)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -100,23 +103,25 @@ func AssignImplementation(impl Typeclass, implMap map[*context.TypeClass]bool, R
 
 // This is responsible for taking the output of the ParseCode function and
 // pulling out the type declarations and filling out a type slice.
-func ParseTypeDecls(data *Base, ReferenceMap map[string]*context.TypeClass) ([]context.Type, error) {
+func ParseTypeDecls(data *Base, ReferenceMap map[string]*context.TypeClass) ([]context.Type, map[string]*context.Type, error) {
 	TypeSlice := make([]context.Type, len(data.TypeDecls))
+	TypeMap := make(map[string]*context.Type)
 
 	for i, elem := range data.TypeDecls {
 		TypeSlice[i].Name = elem.Name
+		TypeMap[elem.Name] = &TypeSlice[i]
 		TypeSlice[i].Implements = make(map[*context.TypeClass]bool)
 		for _, implemented := range elem.Implements {
 			if err := AssignImplementation(implemented, TypeSlice[i].Implements, ReferenceMap); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 		if err := AssignImplementation(elem.LastImplement, TypeSlice[i].Implements, ReferenceMap); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		TypeSlice[i].Implements[nil] = true
 	}
-	return TypeSlice, nil
+	return TypeSlice, TypeMap, nil
 }
 
 // Given an error name and a error map will add the error to the map.
@@ -128,18 +133,88 @@ func AssignError(err Error, errMap map[*context.Type]bool) {
 	}
 }
 
+func ResolveTypeVar(atlas map[string]map[int]*context.TypeVariable,
+	path string,
+	ftypemap map[*context.TypeVariable]*context.Type,
+	typeVarRef map[string]*context.TypeVariable,
+	typeMap map[string]*context.Type,
+	pos int,
+	arg interface{}) {
+
+	if arg != nil {
+		switch arg.(type) {
+		case TypeName:
+			T := MakeTypeVar(true)
+			ftypemap[T] = typeMap[arg.(TypeName).Name]
+			atlas[path][pos] = T
+
+		case TypeVar:
+			name := arg.(TypeVar).Name
+			v, ok := typeVarRef[name]
+			if ok {
+				atlas[path][pos] = v
+			} else {
+				T := MakeTypeVar(false)
+				ftypemap[T] = nil
+				atlas[path][pos] = T
+				typeVarRef[name] = T
+			}
+		}
+	}
+}
+
+func HandleFuncComposition(ReferenceMap map[string]*context.Function,
+	f *context.Function,
+	returnVar *context.TypeVariable,
+	expr FuncCall,
+	typeVarRef map[string]*context.TypeVariable,
+	typeMap map[string]*context.Type,
+	level int,
+) {
+	g := ReferenceMap[expr.Name]
+	if len(f.Children[level]) == 0 {
+		f.Children[level] = make(map[*context.Function]bool)
+	}
+	f.Children[level][g] = true
+	g.Parents[f] = true
+	pfg := context.FunctionsToPath(f, g)
+	f.Atlas[pfg] = make(map[int]*context.TypeVariable)
+	f.Atlas[pfg][0] = returnVar
+	expr.Arguments = append(expr.Arguments, expr.LastArgument)
+
+	for pos, arg := range expr.Arguments {
+		switch arg.(type) {
+		case FuncCall:
+			// make return typevar, pass to self
+			T := MakeTypeVar(false)
+			f.TypeMap[T] = nil
+			HandleFuncComposition(ReferenceMap, f, T, arg.(FuncCall), typeVarRef, typeMap, level+1)
+
+		case TypeName:
+			// make new typevar
+			ResolveTypeVar(f.Atlas, pfg, f.TypeMap, typeVarRef, typeMap, pos+1, arg)
+
+		case TypeVar:
+			// match typeVarRef
+			ResolveTypeVar(f.Atlas, pfg, f.TypeMap, typeVarRef, typeMap, pos+1, arg)
+		}
+	}
+
+}
+
 // Will go through the list and parse the function declarations out and into
 // A slice of function objects.
-func ParseFuncDecls(data *Base) ([]context.Function, error) {
-	FuncSlice := make([]context.Function, len(data.FuncDecls))
+func ParseFuncDecls(data *Base, typeClassMap map[string]*context.TypeClass, typeMap map[string]*context.Type) ([]*context.Function, error) {
+	FuncSlice := make([]*context.Function, len(data.FuncDecls))
 	ReferenceMap := make(map[string]*context.Function)
 
 	for i, elem := range data.FuncDecls {
+		FuncSlice[i] = new(context.Function)
 		FuncSlice[i].Errors = make(map[*context.Type]bool)
 		FuncSlice[i].Name = elem.Name
 
 		// Reference map is needed later for the FindChildren function.
-		ReferenceMap[elem.Name] = &FuncSlice[i]
+		ReferenceMap[elem.Name] = FuncSlice[i]
 		FuncSlice[i].Parents = make(map[*context.Function]bool)
 		FuncSlice[i].Id = i
 		FuncSlice[i].NumArgs = len(elem.Arguments) + 2
@@ -152,15 +227,44 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 	}
 	// Once the ReferenceMap has been built it is important to go through
 	// the function declarations and enumerate the children and their depth.
-	for i, elem := range data.FuncDecls {
-		FuncSlice[i].Children = make(map[int]map[*context.Function]bool)
-		err := FindChildren(&FuncSlice[i], elem.Expr, 0, FuncSlice[i].Children, ReferenceMap)
-		if err != nil {
-			return nil, err
+
+	for _, elem := range data.FuncDecls {
+		f := ReferenceMap[elem.Name]
+		pf := context.FunctionsToPath(f)
+		f.Atlas = make(map[string]map[int]*context.TypeVariable)
+		f.Children = make(map[int]map[*context.Function]bool)
+		f.TypeVarMap = make(map[*context.TypeVariable]*context.TypeVariable)
+		f.TypeMap = make(map[*context.TypeVariable]*context.Type)
+		f.Atlas[pf] = make(map[int]*context.TypeVariable)
+		typeVarRef := make(map[string]*context.TypeVariable)
+
+		ResolveTypeVar(f.Atlas, pf, f.TypeMap, typeVarRef, typeMap, 0, elem.ReturnType)
+
+		elem.Arguments = append(elem.Arguments, elem.LastArgument)
+		for pos, arg := range elem.Arguments {
+			ResolveTypeVar(f.Atlas, pf, f.TypeMap, typeVarRef, typeMap, pos+1, arg)
 		}
-		FillAtlasTypes(&FuncSlice[i], elem)
+
+		switch elem.Expr.(type) {
+		case FuncCall:
+			HandleFuncComposition(ReferenceMap, f, f.Atlas[pf][0], elem.Expr.(FuncCall), typeVarRef, typeMap, 0)
+
+		case TypeName:
+		case TypeVar:
+		}
 	}
+
 	return FuncSlice, nil
+}
+
+func MakeTypeVar(res bool) *context.TypeVariable {
+	s := new(context.TypeVariable)
+	s.Constraints = make(map[*context.TypeClass]bool)
+	s.Constraints[nil] = true
+	s.Resolved = res
+	s.Name = strconv.Itoa(tvname)
+	tvname++
+	return s
 }
 
 func GetName(elem interface{}) string {

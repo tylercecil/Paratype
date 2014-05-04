@@ -8,7 +8,7 @@ import (
 )
 
 var funcCounter int = 0
-var n int = 4
+var n int = 1
 
 func TestFlow1(t *testing.T) {
 	f,g,h,q := FlowExample(0, t)

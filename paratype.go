@@ -57,7 +57,7 @@ ShittyGoto:
 	for fActor := range Functions {
 		// close Channels, otherwise goroutines will hang
 		if len(fActor.Channel) > 0 {
-			break ShittyGoto
+			goto ShittyGoto
 		}
 	}
 
@@ -86,9 +86,19 @@ ShittyGoto:
 func RunThem(n int, f ...interface{}) {
 	runtime.GOMAXPROCS(n)
 	var funcs []*context.Function
-	for _, fun := range f {
-		funcs = append(funcs, fun.(*context.Function))
+
+	switch f[0].(type) {
+	case []*context.Function:
+		for _, fun := range f[0].([]*context.Function) {
+			funcs = append(funcs, fun)
+		}
+
+	case *context.Function:
+		for _, fun := range f {
+			funcs = append(funcs, fun.(*context.Function))
+		}
 	}
+
 	errors := RunThings(funcs)
 	if len(errors) > 0 {
 		for _, e := range errors {
@@ -96,9 +106,18 @@ func RunThem(n int, f ...interface{}) {
 		}
 	} else {
 		fmt.Printf("\n===implementations===\n\n")
-		for _, fun := range f {
-			fun.(*context.Function).Finish()
+		switch f[0].(type) {
+		case []*context.Function:
+			for _, fun := range f[0].([]*context.Function) {
+				fun.Finish()
+			}
+
+		case *context.Function:
+			for _, fun := range f {
+				fun.(*context.Function).Finish()
+			}
 		}
+
 		fmt.Printf("\n")
 	}
 }
