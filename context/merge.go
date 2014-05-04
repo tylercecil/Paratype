@@ -143,6 +143,14 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 func (f *Function) Update(g *Function) {
 	// lock both f and g
 
+	// DEADLOCK POSSIBLE?
+	g.Lock() // write lock
+	defer g.Unlock()
+	f.RLock() // read lock
+	defer f.RUnlock()
+	fmt.Printf("read lock %s write lock %s\n", f.Name, g.Name)
+	defer fmt.Printf("releasing read %s write %s\n", f.Name, g.Name)
+
 	var pf = FunctionsToPath(f)
 	var pgf = FunctionsToPath(g, f)
 

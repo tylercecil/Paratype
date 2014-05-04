@@ -1,5 +1,6 @@
 package context
 
+import "sync"
 
 type TypeClass struct {
 	Name		string
@@ -26,6 +27,7 @@ type Function struct {
 	NumArgs		int
 	Id			int
 	Context
+	sync.RWMutex
 }
 
 //A Context object represents information about the implementation of
