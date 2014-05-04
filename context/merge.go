@@ -29,11 +29,11 @@ func PrintError(errcode int, f *Function, g *Function) string {
 }
 
 // convert an array of function pointers to a path to be used as key for atlas
-func ConvertPath(f []*Function) string {
+func ConvertPath(f ...interface{}) string {
 	var buf bytes.Buffer
 
 	for _, fun := range f {
-		buf.WriteString(strconv.Itoa(fun.Id))
+		buf.WriteString(strconv.Itoa(fun.(*Function).Id))
 		buf.WriteString("-")
 	}
 	s := buf.String()
@@ -107,9 +107,9 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 func (f *Function) Update(g *Function) {
 	// lock both f and g
 
-	var pf = ConvertPath([]*Function{f})
-	var pgf = ConvertPath([]*Function{g, f})
-	var pg = ConvertPath([]*Function{g})
+	var pf = ConvertPath(f)
+	var pgf = ConvertPath(g, f)
+	var pg = ConvertPath(g)
 
 	// f is child of g
 	if g.Children[f] {
@@ -143,7 +143,7 @@ func (f *Function) Update(g *Function) {
 
 // collects all explicit implementations of f by walking up its call tree
 func (f *Function) CollectImplementations(g *Function) (implementations []map[int]*Type, err error) {
-	pf := ConvertPath([]*Function{f})
+	pf := ConvertPath(f)
 
 	// search for explicit types of f's typevars in g
 	implementation := make(map[int]*Type)
@@ -188,7 +188,9 @@ func (f *Function) PrintImplementation(typemap map[int]*Type) {
 	if len(f.Children) == 0 {
 		fmt.Printf("%v\n", typemap[0].Name)
 	} else {
-		fmt.Printf("\n")
+		for g := range f.Children {
+			fmt.Printf("%v(...)\n", g.Name)
+		}
 	}
 }
 
