@@ -2,9 +2,9 @@ package main
 
 import (
 	"Paratype/paraparse"
-	"Paratype/context"
+	//"Paratype/context"
 	"Paratype"
-	"fmt"
+	//"fmt"
 	"testing"
 )
 
@@ -17,12 +17,12 @@ func RunTest(code string, t *testing.T) {
 		return
 	}
 
-	fmt.Printf("FLIST: %+v\n", flist)
+	/*fmt.Printf("FLIST: %+v\n", flist)
 	for _, f := range flist {
 		fmt.Printf("%+v\n", f)
 		context.PrintAll(f)
-	}
-	main.RunThem(4, flist)
+	}*/
+	main.RunThem(1, flist)
 }
 
 // PASS
@@ -92,7 +92,7 @@ func TestComposedFuncs(t *testing.T) {
 // func baq() B
 //		=B
 func TestParents(t *testing.T) {
-	RunTest("func foo(d, A) int\n=bar(baz(ban(A)))\nfunc bar(int) B\n=int\nfunc baz(int) B\n=int\nfunc ban(int) B\n=baq()\nfunc baq() B\n=B\n", t)
+	RunTest("type d\ntype int\nfunc foo(d, A) int\n=bar(baz(ban(A)))\nfunc bar(int) B\n=int\nfunc baz(int) B\n=int\nfunc ban(int) B\n=baq()\nfunc baq() B\n=B\n", t)
 }
 
 func TestReallySimple(t *testing.T) {
@@ -100,7 +100,7 @@ func TestReallySimple(t *testing.T) {
 }
 
 func TestFavorite(t *testing.T) {
-	RunTest("type float\ntype int\nfunc f() float\n=g(int)\nfunc q() int\n=g(float)\nfunc g(A) B\n=h(A)\nfunc h(A) B\n=B\n", t)
+	RunTest("typeclass Zat inherits Num\ntypeclass Num\ntype float implements Num\ntype int implements Num\nfunc f() float\n=g(int)\nfunc q() int\n=g(float)\nfunc g constrain A<Zat> (A) B\n=h(A)\nfunc h(A) B\n=B\n", t)
 
 }
 

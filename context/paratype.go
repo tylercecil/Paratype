@@ -13,12 +13,12 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 	}
 	for {
 		select {
-		case path, ok := <- f.FuncComp:
+		case path, ok := <-f.FuncComp:
 			if !ok {
 				f.FuncComp = nil
 			}
 			_ = path
-		case message, ok := <- f.Channel:
+		case message, ok := <-f.Channel:
 			if message == nil {
 				continue
 			}
@@ -27,6 +27,7 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 				continue
 			}
 			f.makeActive(true)
+
 			// debugging
 			pathfuncs := PathToFunctions(message.Path, *Functions)
 			s := make([]string, len(pathfuncs))
@@ -39,9 +40,7 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 			// MERGE
 			er := f.Update(message.Context)
 			if er != nil {
-				f.makeActive(false)
 				err <- er
-				return
 			}
 			// add myself to path
 			message.Path = AddToPath(message.Path, f)
