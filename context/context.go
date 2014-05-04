@@ -2,6 +2,13 @@ package context
 
 import "sync"
 
+
+// Object to represent a communication
+type Communication struct {
+	Path		string
+	Context		*Function
+}
+
 type TypeClass struct {
 	Name		string
 	Inherits	map[*TypeClass]bool
@@ -21,11 +28,14 @@ type Type struct {
 	Implements	map[*TypeClass]bool
 };
 
-//Representation of a "Function Actor", the main component of Paratype.
+// Representation of a "Function Actor", the main component of Paratype.
 type Function struct {
 	Name        string
 	NumArgs		int
 	Id			int
+	Channel		chan *Communication
+	State		bool
+	ActiveGroup	*sync.WaitGroup
 	Context
 	sync.RWMutex
 }

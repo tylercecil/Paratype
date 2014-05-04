@@ -42,7 +42,7 @@ func FunctionsToPath(f ...interface{}) string {
 	return s
 }
 
-func PathToFunctions(path string, allfuncs []*Function) []*Function {
+func PathToFunctions(path string, allfuncs map[*Function]bool) []*Function {
 	ids := strings.Split(path, "-")
 	funcs := make([]*Function, len(ids))
 	for i, stringid := range ids {
@@ -50,7 +50,7 @@ func PathToFunctions(path string, allfuncs []*Function) []*Function {
 		if err != nil {
 			// 
 		}
-		for _, fun := range allfuncs {
+		for fun := range allfuncs {
 			if fun.Id == id {
 				funcs[i] = fun
 			}
@@ -68,14 +68,6 @@ func AddToPath(path string, f *Function) string {
 	return buf.String()
 }
 
-func IsChild(child *Function, parent *Function) int {
-	for i, fmap := range parent.Children {
-		if fmap[child] {
-			return i
-		}
-	}
-	return -1
-}
 
 // updates typevar v in func g to be typevar w in func f
 // really, we are merging v and w to be w in g
@@ -140,14 +132,15 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 
 // takes information from function f and uses it on g
 // to be called when f receives a context C_g
-func (f *Function) Update(g *Function) {
+func (f *Function) Update(g *Function) error {
 	// lock both f and g
 
-	// DEADLOCK POSSIBLE?
+	// DEADLOCK POSSIBLE FOR CYCLES
 	g.Lock() // write lock
 	defer g.Unlock()
 	f.RLock() // read lock
 	defer f.RUnlock()
+
 	fmt.Printf("read lock %s write lock %s\n", f.Name, g.Name)
 	defer fmt.Printf("releasing read %s write %s\n", f.Name, g.Name)
 
@@ -155,16 +148,14 @@ func (f *Function) Update(g *Function) {
 	var pgf = FunctionsToPath(g, f)
 
 	// f is child of g
-	if IsChild(f, g) >= 0 {
+	if f.Parents[g] {
 		// match f() with g(f())
 		for funcarg, typevar := range f.Atlas[pf] {
 			err := g.updateTypevar(pgf, funcarg, f, typevar)
 			if err != nil {
-				fmt.Printf(err.Error())
+				return err
 			}
 		}
-
-		f.Parents[g] = true
 	}
 
 	// replace any type variables that f has replaced elsewhere before
@@ -174,7 +165,7 @@ func (f *Function) Update(g *Function) {
 			if f.TypeVarMap[typevar] != nil {
 				err := g.updateTypevar(path, funcarg, f, f.Atlas[pf][funcarg])
 				if err != nil {
-					fmt.Printf(err.Error())
+					return err
 				}
 			}
 		}
@@ -184,9 +175,11 @@ func (f *Function) Update(g *Function) {
 	for errorType := range f.Errors {
 		g.Errors[errorType] = true
 	}
+	return nil
 }
 
 // collects all explicit implementations of f by walking up its call tree
+// NEEDS REFACTORING AND PARALLEL
 func (f *Function) CollectImplementations(g *Function) (implementations []map[int]*Type, err error) {
 	pf := FunctionsToPath(f)
 
@@ -236,7 +229,23 @@ func (f *Function) PrintImplementation(typemap map[int]*Type) {
 		fmt.Printf("%v\n", typemap[0].Name)
 	} else {
 		for g := range f.Children[0] {
-			fmt.Printf("%v(...)\n", g.Name)
+			var pf = FunctionsToPath(f)
+			ftmap := make(map[*TypeVariable]*Type)
+			for tv, typ := range f.TypeMap {
+				ftmap[tv] = typ
+			}
+
+			for i, typevar := range f.Atlas[pf] {
+				ftmap[typevar] = typemap[i]
+			}
+			var pfg = FunctionsToPath(f, g)
+			var r []string = make([]string, len(f.Atlas[pfg])-1)
+			for i, typevar := range f.Atlas[pfg] {
+				if i >= 1 {
+					r[i-1] = ftmap[typevar].Name
+				}
+			}
+			fmt.Printf("%v(%v)\n", g.Name, strings.Join(r, ", "))
 		}
 	}
 }

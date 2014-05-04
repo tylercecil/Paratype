@@ -8,6 +8,7 @@ import (
 )
 
 var funcCounter int = 0
+var n int = 4
 
 func PrintAll(f *context.Function) {
 	fmt.Printf("\nTypemap of %v\n", f.Name)
@@ -120,13 +121,7 @@ func TestDown(t *testing.T) {
 	f.Children[0][g] = true
 	g.Parents[f] = true
 
-	main.RunThings(f, g)
-
-	fmt.Printf("\n===implementations===\n\n")
-	f.Finish()
-	g.Finish()
-	fmt.Printf("\n")
-
+	main.RunThem(n, f, g)
 }
 
 // f calls g, g has explicit types
@@ -202,30 +197,14 @@ func DownExample(errcode int, t * testing.T) {
 	f.Children[0][g] = true
 	g.Parents[f] = true
 
-	main.RunThings(f, g)
-
-	fmt.Printf("\n===implementations===\n\n")
-	f.Finish()
-	g.Finish()
-	fmt.Printf("\n")
+	main.RunThem(n, f, g)
 }
 
 
 // g and h call f, mixed explicit types
 func TestTwo(t *testing.T) {
 	f,g,h := TwoExample(0, t)
-
-	main.RunThings(f, g, h)
-
-	/*PrintAll(f)
-	PrintAll(g)
-	PrintAll(h)*/
-
-	fmt.Printf("\n===implementations===\n\n")
-	f.Finish()
-	g.Finish()
-	h.Finish()
-	fmt.Printf("\n")
+	main.RunThem(n, f,g,h)
 }
 
 func TwoExample(errcode int, t * testing.T) (f *context.Function, g *context.Function, h *context.Function){
@@ -287,41 +266,15 @@ func TwoExample(errcode int, t * testing.T) (f *context.Function, g *context.Fun
 func TestFlow1(t *testing.T) {
 	f,g,h,q := FlowExample(0, t)
 
-	main.RunThings(f,g,q,h)
-
-	/*PrintAll(f)
-	PrintAll(g)
-	PrintAll(h)*/
-
-	fmt.Printf("\n===implementations===\n\n")
-	q.Finish()
-	f.Finish()
-	g.Finish()
-	h.Finish()
-	fmt.Printf("\n")
+	main.RunThem(n, f, q, g, h)
 }
 
 
 func TestFlow2(t *testing.T) {
 	f,g,h,q := FlowExample(0, t)
-	m,n,o := TwoExample(0, t)
+	m,p,o := TwoExample(0, t)
 
-	main.RunThings(f,g,q,h,m,n,o)
-
-	/*PrintAll(f)
-	PrintAll(g)
-	PrintAll(h)*/
-
-	fmt.Printf("\n===implementations===\n\n")
-	q.Finish()
-	f.Finish()
-	g.Finish()
-	h.Finish()
-	fmt.Printf("\n")
-	m.Finish()
-	n.Finish()
-	o.Finish()
-	fmt.Printf("\n")
+	main.RunThem(n, f, q, g, h, m, p, o)
 }
 
 
