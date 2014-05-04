@@ -229,7 +229,23 @@ func (f *Function) PrintImplementation(typemap map[int]*Type) {
 		fmt.Printf("%v\n", typemap[0].Name)
 	} else {
 		for g := range f.Children[0] {
-			fmt.Printf("%v(...)\n", g.Name)
+			var pf = FunctionsToPath(f)
+			ftmap := make(map[*TypeVariable]*Type)
+			for tv, typ := range f.TypeMap {
+				ftmap[tv] = typ
+			}
+
+			for i, typevar := range f.Atlas[pf] {
+				ftmap[typevar] = typemap[i]
+			}
+			var pfg = FunctionsToPath(f, g)
+			var r []string = make([]string, len(f.Atlas[pfg])-1)
+			for i, typevar := range f.Atlas[pfg] {
+				if i >= 1 {
+					r[i-1] = ftmap[typevar].Name
+				}
+			}
+			fmt.Printf("%v(%v)\n", g.Name, strings.Join(r, ", "))
 		}
 	}
 }

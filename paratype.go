@@ -10,6 +10,7 @@ import (
 
 var Functions map[*context.Function]bool
 
+// should return implementations -- PARALLEL COMMUNICATION NEEDED
 // given a list of functions, run everything!
 func RunThings(f ...interface{}) []error {
 	Functions = make(map[*context.Function]bool)
@@ -99,6 +100,8 @@ func RunThem(n int, f ...interface{}) {
 		fmt.Printf("\n")
 	}
 }
+
+
 
 // Dummy main function.
 func main() {
