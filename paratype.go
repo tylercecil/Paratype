@@ -72,8 +72,7 @@ ShittyGoto:
 	if len(err) > 0 {
 		s = make([]error, len(err))
 		for i := 0; len(err) > 0; i++ {
-			m := <-err
-			s[i] = m
+			s[i] = <-err
 		}
 	}
 

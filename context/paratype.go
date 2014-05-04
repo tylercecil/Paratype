@@ -63,7 +63,6 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 	return
 }
 
-
 // Change the state of the function actor. This is used
 // for the halting conditions.
 func (f *Function) makeActive(state bool) {
