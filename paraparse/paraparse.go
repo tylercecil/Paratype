@@ -120,13 +120,20 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 		FuncSlice[i].Id = i
 		FuncSlice[i].NumArgs = len(elem.Arguments) + 2
 		for _, errorT := range elem.Errors {
-			v := new(context.Type)
-			v.Name = errorT.Name
-			FuncSlice[i].Errors[v] = true
+			if errorT.Name != "" {
+				v := new(context.Type)
+				v.Name = errorT.Name
+				FuncSlice[i].Errors[v] = true
+				fmt.Printf("\n\nNAME: %s\n\n", v.Name)
+			}
 		}
-		v := new(context.Type)
-		v.Name = elem.LastError.Name
-		FuncSlice[i].Errors[v] = true
+		if elem.LastError.Name != "" {
+			v := new(context.Type)
+			v.Name = elem.LastError.Name
+			FuncSlice[i].Errors[v] = true
+			fmt.Printf("\n\nNAME: %s\n\n", v.Name)
+		}
+
 	}
 
 	return FuncSlice, nil
