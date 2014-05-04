@@ -10,6 +10,79 @@ import (
 var funcCounter int = 0
 var n int = 4
 
+func TestFlow1(t *testing.T) {
+	f,g,h,q := FlowExample(0, t)
+
+	main.RunThem(n, f, q, g, h)
+}
+
+func TestFlow2(t *testing.T) {
+	f,g,h,q := FlowExample(0, t)
+	m,p,o := TwoExample(0, t)
+
+	main.RunThem(n, f, q, g, h, m, p, o)
+}
+
+func TestFlow3(t *testing.T) {
+	f,g,h,q := FlowExample(0, t)
+	m,p,o := TwoExample(0, t)
+	w,z := DownExample(0, t)
+
+	main.RunThem(n, f, q, g, h, m, p, o, w, z)
+}
+
+func TestFlow4(t *testing.T) {
+	f,g,h,q := FlowExample(0, t)
+	m,p,o := TwoExample(0, t)
+	w,z := DownExample(1, t)
+	v,l := DownExample(3, t)
+	u,a := DownExample(2, t)
+
+	main.RunThem(n, f, q, g, h, m, p, o, w, z, v, l, u, a)
+}
+
+func TestFlow5(t *testing.T) {
+	f,g,h,q := FlowExample(0, t)
+	m,p,o := TwoExample(0, t)
+	v,l := DownExample(3, t)
+
+	main.RunThem(n, f, q, g, h, m, p, o, v, l)
+}
+
+// g and h call f, mixed explicit types
+func TestTwo(t *testing.T) {
+	f,g,h := TwoExample(0, t)
+	main.RunThem(n, f,g,h)
+}
+
+// f calls g, g has explicit types
+func TestUp0(t *testing.T) {
+	// func f constraint T<Num> (T R) S
+	//  = g(T R)
+	// func g(int float) int
+	//  = int
+	// f : F_0 F_1 F_2
+	// f \circ g : F_0 F_1 F_2
+	// g : G_0 G_1 G_2
+	f, g := DownExample(0, t) // explicit type conflict (F_0 fl, G_0 in)
+	main.RunThem(n, f, g)
+}
+
+func TestUp1(t *testing.T) {
+	f, g := DownExample(1, t) // typeclass conflict
+	main.RunThem(n, f, g)
+}
+
+func TestUp2(t *testing.T) {
+	f, g := DownExample(2, t) // explicit type not in merged typeclass (in not mat)
+	main.RunThem(n, f, g)
+}
+
+func TestUp3(t *testing.T) {
+	f, g := DownExample(3, t) // no error
+	main.RunThem(n, f, g)
+}
+
 func PrintAll(f *context.Function) {
 	fmt.Printf("\nTypemap of %v\n", f.Name)
 	PrintTypeMap(f)
@@ -131,31 +204,8 @@ func TestDown(t *testing.T) {
 	main.RunThem(n, f, g)
 }
 
-// f calls g, g has explicit types
-func TestUp0(t *testing.T) {
-	// func f constraint T<Num> (T R) S
-	//  = g(T R)
-	// func g(int float) int
-	//  = int
-	// f : F_0 F_1 F_2
-	// f \circ g : F_0 F_1 F_2
-	// g : G_0 G_1 G_2
-	DownExample(0, t) // explicit type conflict (F_0 fl, G_0 in)
-}
 
-func TestUp1(t *testing.T) {
-	DownExample(1, t) // typeclass conflict
-}
-
-func TestUp2(t *testing.T) {
-	DownExample(2, t) // explicit type not in merged typeclass (in not mat)
-}
-
-func TestUp3(t *testing.T) {
-	DownExample(3, t) // no error
-}
-
-func DownExample(errcode int, t * testing.T) {
+func DownExample(errcode int, t * testing.T) (f *context.Function, g *context.Function) {
 	num, mat, in, fl, _ := MakeTestTypes()
 
 	F0 := MakeTypeVar("F_0", false)
@@ -179,12 +229,12 @@ func DownExample(errcode int, t * testing.T) {
 	G1 := MakeTypeVar("G_1", true)
 	G2 := MakeTypeVar("G_2", true)
 
-	g := MakeFunction("g", 3)
+	g = MakeFunction("w", 3)
 	g.TypeMap[G0] = in
 	g.TypeMap[G1] = fl
 	g.TypeMap[G2] = in
 
-	f := MakeFunction("f", 3)
+	f = MakeFunction("z", 3)
 	if errcode == 0 {
 		f.TypeMap[F0] = fl
 	} else {
@@ -204,15 +254,10 @@ func DownExample(errcode int, t * testing.T) {
 	f.Children[0][g] = true
 	g.Parents[f] = true
 
-	main.RunThem(n, f, g)
+	return
 }
 
 
-// g and h call f, mixed explicit types
-func TestTwo(t *testing.T) {
-	f,g,h := TwoExample(0, t)
-	main.RunThem(n, f,g,h)
-}
 
 func TwoExample(errcode int, t * testing.T) (f *context.Function, g *context.Function, h *context.Function){
 	_, _, in, fl, _ := MakeTestTypes()
@@ -268,20 +313,6 @@ func TwoExample(errcode int, t * testing.T) (f *context.Function, g *context.Fun
 	f.Parents[h] = true
 
 	return
-}
-
-func TestFlow1(t *testing.T) {
-	f,g,h,q := FlowExample(0, t)
-
-	main.RunThem(n, f, q, g, h)
-}
-
-
-func TestFlow2(t *testing.T) {
-	f,g,h,q := FlowExample(0, t)
-	m,p,o := TwoExample(0, t)
-
-	main.RunThem(n, f, q, g, h, m, p, o)
 }
 
 

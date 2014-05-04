@@ -59,10 +59,12 @@ ShittyGoto:
 		if len(fActor.Channel) > 0 {
 			break ShittyGoto
 		}
-		close(fActor.Channel)
 	}
 
 	readyToFinish.Wait()
+	for fActor := range Functions {
+		close(fActor.Channel)
+	}
 
 	fmt.Println("Done!", len(err))
 
@@ -72,7 +74,7 @@ ShittyGoto:
 		s = make([]error, len(err))
 		for i := 0; len(err) > 0; i++ {
 			m := <-err
-			s[0] = m
+			s[i] = m
 		}
 	}
 
