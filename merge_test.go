@@ -327,16 +327,16 @@ func TestFlow(t *testing.T) {
 func FlowExample(errcode int, t * testing.T) {
 	_, _, in, fl := MakeTestTypes()
 
-	// f() float
+	// func f() float
 	// = g(int)
 	// 
-	// q() int
+	// func q() int
 	// = g(float)
 	//
-	// g(T) R
+	// func g(T) R
 	// = h(T)
 	//
-	// h(S) U
+	// func h(S) U
 	// = U
 
 	F0 := MakeTypeVar("F_0", true)
