@@ -18,7 +18,7 @@ func PrintAll(f *context.Function) {
 }
 
 func MakeTestTypes() (num *context.TypeClass, mat *context.TypeClass,
-	in *context.Type, fl *context.Type) {
+	in *context.Type, fl *context.Type, err *context.Type) {
 	s := make(map[*context.TypeClass]bool)
 	s[nil] = true
 	num = new(context.TypeClass)
@@ -37,6 +37,12 @@ func MakeTestTypes() (num *context.TypeClass, mat *context.TypeClass,
 	in = new(context.Type)
 	in.Name = "int"
 	in.Implements = ma
+
+	err = new(context.Type)
+	err.Name = "errorType"
+	tcmap := make(map[*context.TypeClass]bool)
+	tcmap[nil] = true
+	err.Implements = tcmap
 
 	fl = new(context.Type)
 	fl.Name = "float"
@@ -87,12 +93,12 @@ func PrintAtlas(g *context.Function) {
 func TestDown(t *testing.T) {
 	// func f() Int
 	//  = g(Int Float)
-	// func g(T R) S
+	// func g(T R) S throws errorType
 	//  = S
 	// f : F_0
 	// f \circ g : F_0 F_1 F_2
 	// g : G_0 G_1 G_2
-	_, _, in, fl := MakeTestTypes()
+	_, _, in, fl, err := MakeTestTypes()
 	F0 := MakeTypeVar("F_0", true)
 	F1 := MakeTypeVar("F_1", true)
 	F2 := MakeTypeVar("F_2", true)
@@ -120,6 +126,7 @@ func TestDown(t *testing.T) {
 	f.Children[0] = make(map[*context.Function]bool)
 	f.Children[0][g] = true
 	g.Parents[f] = true
+	g.Errors[err] = true
 
 	main.RunThem(n, f, g)
 }
@@ -149,7 +156,7 @@ func TestUp3(t *testing.T) {
 }
 
 func DownExample(errcode int, t * testing.T) {
-	num, mat, in, fl := MakeTestTypes()
+	num, mat, in, fl, _ := MakeTestTypes()
 
 	F0 := MakeTypeVar("F_0", false)
 	G0 := MakeTypeVar("G_0", true)
@@ -208,7 +215,7 @@ func TestTwo(t *testing.T) {
 }
 
 func TwoExample(errcode int, t * testing.T) (f *context.Function, g *context.Function, h *context.Function){
-	_, _, in, fl := MakeTestTypes()
+	_, _, in, fl, _ := MakeTestTypes()
 
 	// f(T) float
 	// = float
@@ -279,7 +286,7 @@ func TestFlow2(t *testing.T) {
 
 
 func FlowExample(errcode int, t * testing.T) (f *context.Function, g *context.Function, h *context.Function, q *context.Function) {
-	_, _, in, fl := MakeTestTypes()
+	_, _, in, fl, _ := MakeTestTypes()
 
 	// func f() float
 	// = g(int)
