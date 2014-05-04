@@ -104,7 +104,7 @@ func TestReallySimple(t *testing.T) {
 // 		=bar(baz(A), float)
 // func bar(int, float) int
 // 		=int
-// func baz(int) int
+// func baz(int) A
 // 		=int
 func TestChildren(t *testing.T) {
 	RunTest("func foo(A) int\n=bar(baz(A), float)\nfunc bar(int, float) int\n=int\nfunc baz(int) int\n=int\n", t)

@@ -207,17 +207,15 @@ func FillAtlasTypes(fun *context.Function, elem Func) {
 		PerformFill(TypeVarRef, elem.LastArgument, &TypeCount, &ArgCount, Name, fun)
 	}
 
-	// for k, _ := range fun.Children[0] {
-	// 	Name := context.FunctionsToPath(fun, k)
-	// 	fun.Atlas[Name] = make(map[int]*context.TypeVariable)
-
-	// 	TypeCount = 0
-	// 	ArgCount = 0
-
-	// 	PerformFill(TypeVarRef, k.ReturnType, &TypeCount, &ArgCount, Name, fun)
-	// 	for _, arg := r
+	// SOMETHING WAS EVENTUALLY GOING TO HAPPEN HERE
+	// for depth, childmap := range fun.Children {
+	// 	for child, _ := range childmap {
+	// 		Name := context.FunctionsToPath(fun, child)
+	// 		if depth == 0 {
+	// 			PerformFill(TypeVarRef, elem.ReturnType, &TypeCount, &ArgCount, Name, fun)
+	// 		}
+	// 	}
 	// }
-
 }
 
 // Given the expression for each function call will traverse down the
