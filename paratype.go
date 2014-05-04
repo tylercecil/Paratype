@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"Paratype/context"
 	"strings"
+	"runtime"
 )
 
 // Object to represent a communication
@@ -37,21 +38,23 @@ var functionsArray []*context.Function
 
 // Runtime of a function
 func (f *FunctionActor) Run() {
-	f.makeActive(false)
 
 	// handling for function composition?
+	if len(f.function.Parents) == 0 {
+		f.makeActive(false)
+	}
 
 	for message := range f.channel {
 		f.makeActive(true)
 
 		// debugging
-		fmt.Printf("%v received from path ", f.function.Name)
 		pathfuncs := context.PathToFunctions(message.path, functionsArray)
 		s := make([]string, len(pathfuncs))
 		for i, g := range pathfuncs {
 			s[i] = g.Name
 		}
-		fmt.Printf("%s the context of %v\n", strings.Join(s, "-"), message.context.Name)
+		fmt.Printf("%v received from path %s the context of %v\n",
+			f.function.Name, strings.Join(s, "-"), message.context.Name)
 
 		// MERGE
 		f.function.Update(message.context)
@@ -110,6 +113,7 @@ func (f *FunctionActor) InitialSendToChild() {
 // given a list of functions, run everything!
 func RunThings(f ...interface{}) {
 
+	runtime.GOMAXPROCS(4)
 	functions = make(map[*context.Function]*FunctionActor)
 
 	// one can pass in multiple Function pointers or a slice of them
@@ -157,6 +161,9 @@ func RunThings(f ...interface{}) {
 	readyToFinish.Wait()
 	for _, fActor := range functions {
 		// close channels, otherwise goroutines will hang
+		if len(fActor.channel) != 0 {
+			break
+		}
 		close(fActor.channel)
 	}
 

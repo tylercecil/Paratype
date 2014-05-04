@@ -118,6 +118,7 @@ func TestDown(t *testing.T) {
 	g.Atlas[pg] = map[int]*context.TypeVariable{0 : G0, 1 : G1, 2 : G2}
 	f.Children[0] = make(map[*context.Function]bool)
 	f.Children[0][g] = true
+	g.Parents[f] = true
 
 	main.RunThings(f, g)
 
@@ -199,6 +200,7 @@ func DownExample(errcode int, t * testing.T) {
 	g.Atlas[pg] = map[int]*context.TypeVariable{0 : G0, 1 : G1, 2 : G2}
 	f.Children[0] = make(map[*context.Function]bool)
 	f.Children[0][g] = true
+	g.Parents[f] = true
 
 	main.RunThings(f, g)
 
@@ -276,6 +278,8 @@ func TwoExample(errcode int, t * testing.T) (f *context.Function, g *context.Fun
 	g.Children[0] = make(map[*context.Function]bool)
 	g.Children[0][f] = true
 	h.Children[0][f] = true
+	f.Parents[g] = true
+	f.Parents[h] = true
 
 	return
 }
@@ -382,6 +386,9 @@ func FlowExample(errcode int, t * testing.T) (f *context.Function, g *context.Fu
 	f.Children[0][g] = true
 	q.Children[0][g] = true
 	g.Children[0][h] = true
+	h.Parents[g] = true
+	g.Parents[f] = true
+	g.Parents[q] = true
 
 	return
 }
