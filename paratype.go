@@ -32,7 +32,7 @@ type FunctionActor struct {
 // their run routines. I am not confident this is the best way
 // as of right now, but it will do.
 var functions map[*context.Function]*FunctionActor
-// hackish.
+// hackish. merge Function and FunctionActor?
 var functionsArray []*context.Function
 
 // Runtime of a function
