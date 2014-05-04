@@ -13,8 +13,6 @@
 % ---------------------------------------------------------------------------------------------------------------
 
 \documentclass{acm_proc_article-sp}
-\usepackage{listings,color,xcolor}
-\usepackage{pgf,tikz,pgfgantt}
 \usepackage{lmodern} % font problem fix
 
 \usepackage{subcaption}
@@ -22,12 +20,24 @@
 \usepackage{float,dblfloatfix,fixltx2e}
 \usepackage[format=plain,font=small,labelfont=bf]{caption}
 \usepackage[utf8]{inputenc}
+% noitemsep option for enumerate and itemize
+\usepackage{enumitem}
+
+% typesetting algorithms
+\usepackage{algorithmicx}
+\usepackage[noend]{algpseudocode}
+\usepackage[section]{algorithm}
+
+% grammar?
 \usepackage{syntax, etoolbox}
-\usepackage{lstlang0}
-
-\definecolor{dkgreen}{rgb}{0,0.6,0}
 \AtBeginEnvironment{grammar}{\small}
+\setlength{\grammarparsep}{8pt plus 1pt minus 1pt}
+\setlength{\grammarindent}{12em}
 
+% real code
+\usepackage{listings,color,xcolor}
+\usepackage{lstlang0} % go
+\definecolor{dkgreen}{rgb}{0,0.6,0}
 \usepackage{MnSymbol}
 \lstset{
 	prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rhookswarrow}},
@@ -37,7 +47,7 @@
 	numberstyle=\scriptsize,
 	breakatwhitespace=true,
 	frame=single,
-	frameround=tttt,
+%	frameround=tttt,
 	tabsize=4,
 	showstringspaces=false,
 	aboveskip=1.8em,
@@ -55,40 +65,6 @@
 \lstdefinelanguage{Paratype}{
 	morekeywords={func,inherits,implements,throws,type,typeclass,constrain,to},
 }
-
-\newganttchartelement{chris}{
-	chris/.style={
-		color=black,
-		fill=red,
-		shape=ganttbar,
-		inner sep=0pt,
-		draw
-	},
-	chris height=0.5
-}
-\newganttchartelement{tyler}{
-	tyler/.style={
-		color=black,
-		fill=green,
-		shape=ganttbar,
-		inner sep=0pt,
-		draw
-	},
-	tyler height=.5
-}
-\newganttchartelement{ben}{
-	ben/.style={
-		color=black,
-		fill=blue,
-		shape=ganttbar,
-		inner sep=0pt,
-		draw
-	},
-	ben height=.5
-}
-
-\setlength{\grammarparsep}{8pt plus 1pt minus 1pt}
-\setlength{\grammarindent}{12em}
 
 \begin{document}
 
@@ -339,6 +315,39 @@ func bar(T a) T throws weirdError
 % ADD EXAMPLE OF NESTED FUNCTIONS
 
 \section{Parallelization}
+
+This is what each function $f$ does during its runtime:
+\begin{enumerate}[noitemsep]
+	\item Receive path-context object $(P, C_h)$ from parent $g$
+	\item Set to running state
+	\item Merge type information from $C_f$ into $C_h$
+	\item Add $f$ to path $P$ and send $(P, C_h)$ to $f$'s child
+	\item Waiting state
+\end{enumerate}
+
+Merging type information from $C_f$ into $C_h$ is a tricky task. There are two
+cases:
+\begin{enumerate}
+	\item If $h$ is a direct parent of $f$, the function call from $h$ to $f$
+		can be matched to $f$'s declaration. 
+		
+		$f$ will override the type
+		variables of that function call with the ones generated through its
+		declaration and remember which ones it replaced by storing them in a
+		map (called the type variable map).
+
+		It will then override the type variables of $h$ that were used in the
+		call to $f$ as well. $f$ knows which ones to replace: if a type
+		variable in the declaration of $h$ is a key in its type variable map,
+		it will replace it with the corresponding value.
+	\item If $h$ is not a direct parent of $f$, we will simply use the type
+		variable map created through direct parents of $f$ as detailed
+		previously to replace any type variables in $h$.
+\end{enumerate}
+
+Ultimately, this allows type variables from the leaf nodes of the call graph to
+``trickle up'' through the nodes until finally, the roots of the call graph and
+every node in between is related to a leaf. 
 
 \section{Methods}
 
