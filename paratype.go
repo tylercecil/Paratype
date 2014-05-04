@@ -45,6 +45,8 @@ func RunThings(f ...interface{}) []error {
 	for fActor := range Functions {
 		fmt.Printf("\tSpawning Function Actor for %v\n", fActor.Name)
 		go fActor.Run(&Functions, err)
+		defer close(fActor.Channel)
+		defer close(fActor.FuncComp)
 	}
 
 	fmt.Println("Waiting for halting...")
@@ -62,9 +64,6 @@ ShittyGoto:
 	}
 
 	readyToFinish.Wait()
-	for fActor := range Functions {
-		close(fActor.Channel)
-	}
 
 	fmt.Println("Done!", len(err))
 
@@ -73,8 +72,7 @@ ShittyGoto:
 	if len(err) > 0 {
 		s = make([]error, len(err))
 		for i := 0; len(err) > 0; i++ {
-			m := <-err
-			s[i] = m
+			s[i] = <-err
 		}
 	}
 

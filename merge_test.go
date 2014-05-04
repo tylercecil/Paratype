@@ -7,7 +7,7 @@ import (
 )
 
 var funcCounter int = 0
-var n int = 1
+var n int = 4
 
 func TestFlow1(t *testing.T) {
 	f,g,h,q := FlowExample(0, t)
@@ -300,7 +300,7 @@ func FlowExample(errcode int, t * testing.T) (f *context.Function, g *context.Fu
 
 	// func f() float
 	// = g(int)
-	// 
+	//
 	// func q() int
 	// = g(float)
 	//
