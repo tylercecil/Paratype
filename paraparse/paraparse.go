@@ -10,6 +10,7 @@ func Setup(code string) ([]context.TypeClass, []context.Type, []context.Function
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	fmt.Printf("BASE: %+v\n\n", out)
 	TypeClassSlice, ReferenceMap, err := ParseTypeClassDecls(out)
 	if err != nil {
 		return nil, nil, nil, err
@@ -114,9 +115,18 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 	FuncSlice := make([]context.Function, len(data.FuncDecls))
 
 	for i, elem := range data.FuncDecls {
+		FuncSlice[i].Errors = make(map[*context.Type]bool)
 		FuncSlice[i].Name = elem.Name
 		FuncSlice[i].Id = i
 		FuncSlice[i].NumArgs = len(elem.Arguments) + 2
+		for _, errorT := range elem.Errors {
+			v := new(context.Type)
+			v.Name = errorT.Name
+			FuncSlice[i].Errors[v] = true
+		}
+		v := new(context.Type)
+		v.Name = elem.LastError.Name
+		FuncSlice[i].Errors[v] = true
 	}
 
 	return FuncSlice, nil
