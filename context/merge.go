@@ -145,7 +145,6 @@ func (f *Function) Update(g *Function) {
 
 	var pf = FunctionsToPath(f)
 	var pgf = FunctionsToPath(g, f)
-	var pg = FunctionsToPath(g)
 
 	// f is child of g
 	if IsChild(f, g) >= 0 {
@@ -162,11 +161,13 @@ func (f *Function) Update(g *Function) {
 
 	// replace any type variables that f has replaced elsewhere before
 	// this way, type variables "trickle up" the call tree
-	for funcarg, typevar := range g.Atlas[pg] {
-		if f.TypeVarMap[typevar] != nil {
-			err := g.updateTypevar(pg, funcarg, f, f.Atlas[pf][funcarg])
-			if err != nil {
-				fmt.Printf(err.Error())
+	for path, atlasentry := range g.Atlas {
+		for funcarg, typevar := range atlasentry {
+			if f.TypeVarMap[typevar] != nil {
+				err := g.updateTypevar(path, funcarg, f, f.Atlas[pf][funcarg])
+				if err != nil {
+					fmt.Printf(err.Error())
+				}
 			}
 		}
 	}
