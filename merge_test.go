@@ -211,10 +211,22 @@ func DownExample(errcode int, t * testing.T) {
 
 // g and h call f, mixed explicit types
 func TestTwo(t *testing.T) {
-	TwoExample(0, t)
+	f,g,h := TwoExample(0, t)
+
+	main.RunThings(f, g, h)
+
+	/*PrintAll(f)
+	PrintAll(g)
+	PrintAll(h)*/
+
+	fmt.Printf("\n===implementations===\n\n")
+	f.Finish()
+	g.Finish()
+	h.Finish()
+	fmt.Printf("\n")
 }
 
-func TwoExample(errcode int, t * testing.T) {
+func TwoExample(errcode int, t * testing.T) (f *context.Function, g *context.Function, h *context.Function){
 	_, _, in, fl := MakeTestTypes()
 
 	// f(T) float
@@ -235,18 +247,17 @@ func TwoExample(errcode int, t * testing.T) {
 	H1 := MakeTypeVar("H_1", true)
 	H2 := MakeTypeVar("H_2", true)
 
-	g := MakeFunction("g", 2)
+	g = MakeFunction("m", 2)
 	g.TypeMap[G0] = nil
 	g.TypeMap[G1] = in
 	g.TypeMap[G2] = in
 
-	h := MakeFunction("h", 2)
+	h = MakeFunction("n", 2)
 	h.TypeMap[H0] = nil
 	h.TypeMap[H1] = fl
 	h.TypeMap[H2] = fl
 
-
-	f := MakeFunction("f", 2)
+	f = MakeFunction("o", 2)
 	f.TypeMap[F0] = fl
 	f.TypeMap[F1] = nil
 
@@ -266,25 +277,51 @@ func TwoExample(errcode int, t * testing.T) {
 	g.Children[0][f] = true
 	h.Children[0][f] = true
 
-	main.RunThings(f, g, h)
+	return
+}
+
+func TestFlow1(t *testing.T) {
+	f,g,h,q := FlowExample(0, t)
+
+	main.RunThings(f,g,q,h)
 
 	/*PrintAll(f)
 	PrintAll(g)
 	PrintAll(h)*/
 
 	fmt.Printf("\n===implementations===\n\n")
+	q.Finish()
 	f.Finish()
 	g.Finish()
 	h.Finish()
 	fmt.Printf("\n")
 }
 
-func TestFlow(t *testing.T) {
-	FlowExample(0, t)
+
+func TestFlow2(t *testing.T) {
+	f,g,h,q := FlowExample(0, t)
+	m,n,o := TwoExample(0, t)
+
+	main.RunThings(f,g,q,h,m,n,o)
+
+	/*PrintAll(f)
+	PrintAll(g)
+	PrintAll(h)*/
+
+	fmt.Printf("\n===implementations===\n\n")
+	q.Finish()
+	f.Finish()
+	g.Finish()
+	h.Finish()
+	fmt.Printf("\n")
+	m.Finish()
+	n.Finish()
+	o.Finish()
+	fmt.Printf("\n")
 }
 
 
-func FlowExample(errcode int, t * testing.T) {
+func FlowExample(errcode int, t * testing.T) (f *context.Function, g *context.Function, h *context.Function, q *context.Function) {
 	_, _, in, fl := MakeTestTypes()
 
 	// func f() float
@@ -308,19 +345,19 @@ func FlowExample(errcode int, t * testing.T) {
 	H0 := MakeTypeVar("H_0", false)
 	H1 := MakeTypeVar("H_1", false)
 
-	g := MakeFunction("g", 1)
+	g = MakeFunction("g", 1)
 	g.TypeMap[G0] = nil
 	g.TypeMap[G1] = nil
 
-	h := MakeFunction("h", 1)
+	h = MakeFunction("h", 1)
 	h.TypeMap[H0] = nil
 	h.TypeMap[H1] = nil
 
-	f := MakeFunction("f", 1)
+	f = MakeFunction("f", 1)
 	f.TypeMap[F0] = fl
 	f.TypeMap[F1] = in
 
-	q := MakeFunction("q", 1)
+	q = MakeFunction("q", 1)
 	q.TypeMap[Q0] = in
 	q.TypeMap[Q1] = fl
 
@@ -346,16 +383,5 @@ func FlowExample(errcode int, t * testing.T) {
 	q.Children[0][g] = true
 	g.Children[0][h] = true
 
-	main.RunThings(f, q, g, h)
-
-	/*PrintAll(f)
-	PrintAll(g)
-	PrintAll(h)*/
-
-	fmt.Printf("\n===implementations===\n\n")
-	q.Finish()
-	f.Finish()
-	g.Finish()
-	h.Finish()
-	fmt.Printf("\n")
+	return
 }

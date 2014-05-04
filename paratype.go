@@ -145,11 +145,11 @@ func RunThings(f ...interface{}) {
 		fActor.InitialSendToChild()
 	}
 	for _, fActor := range functions {
-		//fmt.Printf("\tSpawning Function Actor for %v\n", fActor.function.Name)
+		fmt.Printf("\tSpawning Function Actor for %v\n", fActor.function.Name)
 		go fActor.Run()
 	}
 
-	//fmt.Println("Waiting for halting...")
+	fmt.Println("Waiting for halting...")
 
 	// This is actually a race condition. It WOULD be sufficient
 	// to both make this check AND check if all channels are
@@ -160,7 +160,7 @@ func RunThings(f ...interface{}) {
 		close(fActor.channel)
 	}
 
-	//fmt.Println("Done!")
+	fmt.Println("Done!")
 }
 
 // Dummy main function.
