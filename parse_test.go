@@ -62,6 +62,15 @@ func TestMultFuncs(t *testing.T) {
 
 // PASS
 // typeclass Num
+// type y implements Num
+// func foo constrain A <Num> (y) int
+// 		= y
+func TestSimpleConstraint(t *testing.T) {
+	RunTest("typeclass Num\ntype y implements Num\nfunc foo constrain A <Num> (y) int\n=y\n", t)
+}
+
+// PASS
+// typeclass Num
 // func foo(d, A) int
 // 		=bar(A)
 // func bar(int) B

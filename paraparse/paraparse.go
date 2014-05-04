@@ -23,6 +23,7 @@ func Setup(code string) ([]context.TypeClass, []context.Type, []context.Function
 	if err != nil {
 		return nil, nil, nil, err
 	}
+
 	return TypeClassSlice, TypeSlice, FuncSlice, nil
 }
 
@@ -148,6 +149,7 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 			AssignError(errorT, FuncSlice[i].Errors)
 		}
 		AssignError(elem.LastError, FuncSlice[i].Errors)
+		FillAtlasTypes(&FuncSlice[i], elem)
 	}
 	// Once the ReferenceMap has been built it is important to go through
 	// the function declarations and enumerate the children and their depth.
@@ -161,11 +163,58 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 	return FuncSlice, nil
 }
 
+func GetName(elem interface{}) string {
+	switch elem.(type) {
+	case TypeVar:
+		return elem.(TypeVar).Name
+	case TypeName:
+		return elem.(TypeName).Name
+	}
+	return ""
+}
+
+func GetNewTypeVar(Ref map[string]*context.TypeVariable, elem interface{}, TypeCount int) *context.TypeVariable {
+	v, ok := Ref[GetName(elem)]
+	if !ok {
+		v = new(context.TypeVariable)
+		v.Name = fmt.Sprintf("A%d", TypeCount)
+		Ref[GetName(elem)] = v
+	}
+	return v
+}
+
+func FillAtlasTypes(fun *context.Function, elem Func) {
+	TypeVarRef := make(map[string]*context.TypeVariable)
+	fun.Atlas = make(map[string]map[int]*context.TypeVariable)
+	Name := context.FunctionsToPath(fun)
+	fun.Atlas[Name] = make(map[int]*context.TypeVariable)
+	TypeCount := 0
+	ArgCount := 0
+
+	v := GetNewTypeVar(TypeVarRef, elem.ReturnType, TypeCount)
+	TypeCount++
+
+	fun.Atlas[Name][ArgCount] = v
+	ArgCount++
+	for _, arg := range elem.Arguments {
+		v := GetNewTypeVar(TypeVarRef, arg, TypeCount)
+		fun.Atlas[Name][ArgCount] = v
+		ArgCount++
+		TypeCount++
+	}
+	if n := GetName(elem.LastArgument); n != "" {
+		v := GetNewTypeVar(TypeVarRef, elem.LastArgument, TypeCount)
+		fun.Atlas[Name][ArgCount] = v
+		ArgCount++
+		TypeCount++
+	}
+}
+
 // Given the expression for each function call will traverse down the
 // function call tree. If expression is a FuncCall then it assigns it to the
 // children map. If it is a TypeVar or TypeName then it doesn't matter.
 // The parameters of the function are then checked to see if there is any
-// composition.
+// composition. Also adds the childs parent to its parents list.
 func FindChildren(par *context.Function, e Expr, depth int, cMap map[int]map[*context.Function]bool, rMap map[string]*context.Function) error {
 	// Type switch over the expression given.
 	switch e.(type) {
