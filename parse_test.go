@@ -94,6 +94,10 @@ func TestParents(t *testing.T) {
 	RunTest("func foo(d, A) int\n=bar(baz(ban(A)))\nfunc bar(int) B\n=int\nfunc baz(int) B\n=int\nfunc ban(int) B\n=baq()\nfunc baq() B\n=B\n", t)
 }
 
+func TestReallySimple(t *testing.T) {
+	RunTest("func foo(A) A\n=A\n", t)
+}
+
 // PASS
 // Tests correct creation of the children map.
 // func foo(A) int

@@ -149,7 +149,6 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 			AssignError(errorT, FuncSlice[i].Errors)
 		}
 		AssignError(elem.LastError, FuncSlice[i].Errors)
-		FillAtlasTypes(&FuncSlice[i], elem)
 	}
 	// Once the ReferenceMap has been built it is important to go through
 	// the function declarations and enumerate the children and their depth.
@@ -159,6 +158,7 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 		if err != nil {
 			return nil, err
 		}
+		FillAtlasTypes(&FuncSlice[i], elem)
 	}
 	return FuncSlice, nil
 }
@@ -173,14 +173,21 @@ func GetName(elem interface{}) string {
 	return ""
 }
 
-func GetNewTypeVar(Ref map[string]*context.TypeVariable, elem interface{}, TypeCount int) *context.TypeVariable {
+func GetNewTypeVar(Ref map[string]*context.TypeVariable, elem interface{}, TypeCount *int) *context.TypeVariable {
 	v, ok := Ref[GetName(elem)]
 	if !ok {
 		v = new(context.TypeVariable)
-		v.Name = fmt.Sprintf("A%d", TypeCount)
+		v.Name = fmt.Sprintf("A%d", *TypeCount)
+		*(TypeCount)++
 		Ref[GetName(elem)] = v
 	}
 	return v
+}
+
+func PerformFill(Ref map[string]*context.TypeVariable, elem interface{}, TypeCount *int, ArgCount *int, Name string, fun *context.Function) {
+	v := GetNewTypeVar(Ref, elem, TypeCount)
+	fun.Atlas[Name][*ArgCount] = v
+	(*ArgCount)++
 }
 
 func FillAtlasTypes(fun *context.Function, elem Func) {
@@ -188,26 +195,29 @@ func FillAtlasTypes(fun *context.Function, elem Func) {
 	fun.Atlas = make(map[string]map[int]*context.TypeVariable)
 	Name := context.FunctionsToPath(fun)
 	fun.Atlas[Name] = make(map[int]*context.TypeVariable)
+
 	TypeCount := 0
 	ArgCount := 0
 
-	v := GetNewTypeVar(TypeVarRef, elem.ReturnType, TypeCount)
-	TypeCount++
-
-	fun.Atlas[Name][ArgCount] = v
-	ArgCount++
+	PerformFill(TypeVarRef, elem.ReturnType, &TypeCount, &ArgCount, Name, fun)
 	for _, arg := range elem.Arguments {
-		v := GetNewTypeVar(TypeVarRef, arg, TypeCount)
-		fun.Atlas[Name][ArgCount] = v
-		ArgCount++
-		TypeCount++
+		PerformFill(TypeVarRef, arg, &TypeCount, &ArgCount, Name, fun)
 	}
 	if n := GetName(elem.LastArgument); n != "" {
-		v := GetNewTypeVar(TypeVarRef, elem.LastArgument, TypeCount)
-		fun.Atlas[Name][ArgCount] = v
-		ArgCount++
-		TypeCount++
+		PerformFill(TypeVarRef, elem.LastArgument, &TypeCount, &ArgCount, Name, fun)
 	}
+
+	// for k, _ := range fun.Children[0] {
+	// 	Name := context.FunctionsToPath(fun, k)
+	// 	fun.Atlas[Name] = make(map[int]*context.TypeVariable)
+
+	// 	TypeCount = 0
+	// 	ArgCount = 0
+
+	// 	PerformFill(TypeVarRef, k.ReturnType, &TypeCount, &ArgCount, Name, fun)
+	// 	for _, arg := r
+	// }
+
 }
 
 // Given the expression for each function call will traverse down the
