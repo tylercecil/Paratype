@@ -8,48 +8,20 @@ import (
 	"testing"
 )
 
-// This is only for current debugging purposes.
-func PrintData(tclist []context.TypeClass, tlist []context.Type, flist []*context.Function) {
-	fmt.Printf("TCLIST: %+v\n", tclist)
-	fmt.Printf("TLIST: %+v\n", tlist)
-	fmt.Printf("FLIST: %+v\n", flist)
-	for _, f := range flist {
-		fmt.Printf("%+v\n", f)
-		PrintAll(f)
-	}
-}
-
-func PrintAll(f *context.Function) {
-	fmt.Printf("\nTypemap of %v\n", f.Name)
-	PrintTypeMap(f)
-	fmt.Printf("\nAtlas of %v\n", f.Name)
-	PrintAtlas(f)
-}
-
-func PrintTypeMap(g *context.Function) {
-	for tv, t := range g.TypeMap {
-		fmt.Printf("%+v : %+v\n", tv, t)
-	}
-}
-
-func PrintAtlas(g *context.Function) {
-	for path, tuple := range g.Atlas {
-		fmt.Printf("%+v\n", path)
-		for _, tv := range tuple {
-			fmt.Printf("%+v\n", tv)
-		}
-	}
-}
 
 // Used to run a test and check the error. The data is then printed.
 func RunTest(code string, t *testing.T) {
-	tclist, tlist, flist, err := paraparse.Setup(code)
+	flist, err := paraparse.Setup(code)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	PrintData(tclist, tlist, flist)
 
+	fmt.Printf("FLIST: %+v\n", flist)
+	for _, f := range flist {
+		fmt.Printf("%+v\n", f)
+		context.PrintAll(f)
+	}
 	main.RunThem(4, flist)
 }
 
@@ -105,7 +77,7 @@ func TestSimpleConstraint(t *testing.T) {
 // func bar(int) B
 // 		=int
 func TestComposedFuncs(t *testing.T) {
-	RunTest("typeclass Num\nfunc foo(d, A) int\n=bar(A)\nfunc bar(int) B\n=int\n", t)
+	RunTest("typeclass Num\ntype int\ntype d\nfunc foo(d, A) int\n=bar(A)\nfunc bar(int) B\n=int\n", t)
 }
 
 // PASS

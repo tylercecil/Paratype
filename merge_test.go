@@ -2,7 +2,6 @@ package main
 
 import (
 	"testing"
-	"fmt"
 	"Paratype/context"
 	"Paratype"
 )
@@ -83,12 +82,6 @@ func TestUp3(t *testing.T) {
 	main.RunThem(n, f, g)
 }
 
-func PrintAll(f *context.Function) {
-	fmt.Printf("\nTypemap of %v\n", f.Name)
-	PrintTypeMap(f)
-	fmt.Printf("\nAtlas of %v\n", f.Name)
-	PrintAtlas(f)
-}
 
 func MakeTestTypes() (num *context.TypeClass, mat *context.TypeClass,
 	in *context.Type, fl *context.Type, err *context.Type) {
@@ -147,20 +140,6 @@ func MakeTypeVar(name string, res bool) *context.TypeVariable {
 	return s
 }
 
-func PrintTypeMap(g *context.Function) {
-	for tv, t := range g.TypeMap {
-		fmt.Printf("%+v : %+v\n", tv, t)
-	}
-}
-
-func PrintAtlas(g *context.Function) {
-	for path, tuple := range g.Atlas {
-		fmt.Printf("%+v\n", path)
-		for _, tv := range tuple {
-			fmt.Printf("%+v\n", tv)
-		}
-	}
-}
 
 // Test of: f calls g, f has explicit types
 func TestDown(t *testing.T) {

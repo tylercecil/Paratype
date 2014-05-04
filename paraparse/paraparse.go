@@ -8,26 +8,25 @@ import (
 
 var tvname int = 0
 
-func Setup(code string) ([]context.TypeClass, []context.Type, []*context.Function, error) {
+func Setup(code string) ([]*context.Function, error) {
 	out, err := ParseCode(code)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
-	fmt.Printf("BASE: %+v\n\n", out)
-	TypeClassSlice, ReferenceMap, err := ParseTypeClassDecls(out)
+	ReferenceMap, err := ParseTypeClassDecls(out)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
-	TypeSlice, TypeMap, err := ParseTypeDecls(out, ReferenceMap)
+	TypeMap, err := ParseTypeDecls(out, ReferenceMap)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
 	FuncSlice, err := ParseFuncDecls(out, ReferenceMap, TypeMap)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
 
-	return TypeClassSlice, TypeSlice, FuncSlice, nil
+	return FuncSlice, nil
 }
 
 // Once a paratype source file has been parsed it is contained in an object
@@ -36,7 +35,7 @@ func Setup(code string) ([]context.TypeClass, []context.Type, []*context.Functio
 // function will parse that list and place the resulting output into a
 // TypeClass object from the context package. This enables the paratype
 // type checker.
-func ParseTypeClassDecls(data *Base) ([]context.TypeClass, map[string]*context.TypeClass, error) {
+func ParseTypeClassDecls(data *Base) (map[string]*context.TypeClass, error) {
 	// The type context.TypeClass consists of two items:
 	// 		1) A Name
 	// 		2) A map of inherited TypeClasses where the key is a pointer to
@@ -63,7 +62,7 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, map[string]*context.T
 		for _, inherited := range elem.Inherits {
 			i_ref, ok := ReferenceMap[inherited.Name]
 			if !ok {
-				return nil, nil, fmt.Errorf(
+				return nil, fmt.Errorf(
 					"ParseTypeClassDecls: TypeClass %s does not exist.",
 					 inherited.Name)
 			}
@@ -72,7 +71,7 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, map[string]*context.T
 		if elem.LastInherit.Name != "" {
 			i_ref, ok := ReferenceMap[elem.LastInherit.Name]
 			if !ok {
-				return nil, nil, fmt.Errorf(
+				return nil, fmt.Errorf(
 					"ParseTypeClassDecls: TypeClass %s does not exist.",
 					elem.LastInherit.Name)
 			}
@@ -83,7 +82,7 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, map[string]*context.T
 		TypeClassSlice[i].Inherits[nil] = true
 	}
 
-	return TypeClassSlice, ReferenceMap, nil
+	return ReferenceMap, nil
 }
 
 // Given the implementation and the implementation map will assign
@@ -103,7 +102,7 @@ func AssignImplementation(impl Typeclass, implMap map[*context.TypeClass]bool, R
 
 // This is responsible for taking the output of the ParseCode function and
 // pulling out the type declarations and filling out a type slice.
-func ParseTypeDecls(data *Base, ReferenceMap map[string]*context.TypeClass) ([]context.Type, map[string]*context.Type, error) {
+func ParseTypeDecls(data *Base, ReferenceMap map[string]*context.TypeClass) (map[string]*context.Type, error) {
 	TypeSlice := make([]context.Type, len(data.TypeDecls))
 	TypeMap := make(map[string]*context.Type)
 
@@ -113,15 +112,15 @@ func ParseTypeDecls(data *Base, ReferenceMap map[string]*context.TypeClass) ([]c
 		TypeSlice[i].Implements = make(map[*context.TypeClass]bool)
 		for _, implemented := range elem.Implements {
 			if err := AssignImplementation(implemented, TypeSlice[i].Implements, ReferenceMap); err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 		}
 		if err := AssignImplementation(elem.LastImplement, TypeSlice[i].Implements, ReferenceMap); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		TypeSlice[i].Implements[nil] = true
 	}
-	return TypeSlice, TypeMap, nil
+	return TypeMap, nil
 }
 
 // Given an error name and a error map will add the error to the map.

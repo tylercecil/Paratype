@@ -15,6 +15,27 @@ var errorMsgs = [...]string{
 	"Missing implementation",
 };
 
+func PrintAll(f *Function) {
+	fmt.Printf("\nTypemap of %v\n", f.Name)
+	PrintTypeMap(f)
+	fmt.Printf("\nAtlas of %v\n", f.Name)
+	PrintAtlas(f)
+}
+
+func PrintTypeMap(g *Function) {
+	for tv, t := range g.TypeMap {
+		fmt.Printf("%+v : %+v\n", tv, t)
+	}
+}
+
+func PrintAtlas(g *Function) {
+	for path, tuple := range g.Atlas {
+		fmt.Printf("%+v\n", path)
+		for _, tv := range tuple {
+			fmt.Printf("%+v\n", tv)
+		}
+	}
+}
 // helper function for printing type errors --- later, we need to account for
 // stopping all threads in case of a type error
 func PrintError(errcode int, f *Function, g *Function) string {
@@ -163,7 +184,7 @@ func (f *Function) Update(g *Function) error {
 	for path, atlasentry := range g.Atlas {
 		for funcarg, typevar := range atlasentry {
 			if f.TypeVarMap[typevar] != nil {
-				err := g.updateTypevar(path, funcarg, f, f.Atlas[pf][funcarg])
+				err := g.updateTypevar(path, funcarg, f, f.TypeVarMap[typevar])
 				if err != nil {
 					return err
 				}
