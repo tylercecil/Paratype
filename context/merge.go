@@ -42,7 +42,7 @@ func FunctionsToPath(f ...interface{}) string {
 	return s
 }
 
-func PathToFunctions(path string, allfuncs []*Function) []*Function {
+func PathToFunctions(path string, allfuncs map[*Function]bool) []*Function {
 	ids := strings.Split(path, "-")
 	funcs := make([]*Function, len(ids))
 	for i, stringid := range ids {
@@ -50,7 +50,7 @@ func PathToFunctions(path string, allfuncs []*Function) []*Function {
 		if err != nil {
 			// 
 		}
-		for _, fun := range allfuncs {
+		for fun := range allfuncs {
 			if fun.Id == id {
 				funcs[i] = fun
 			}
