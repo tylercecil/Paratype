@@ -124,14 +124,12 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 				v := new(context.Type)
 				v.Name = errorT.Name
 				FuncSlice[i].Errors[v] = true
-				fmt.Printf("\n\nNAME: %s\n\n", v.Name)
 			}
 		}
 		if elem.LastError.Name != "" {
 			v := new(context.Type)
 			v.Name = elem.LastError.Name
 			FuncSlice[i].Errors[v] = true
-			fmt.Printf("\n\nNAME: %s\n\n", v.Name)
 		}
 
 	}
