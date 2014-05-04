@@ -79,6 +79,18 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, map[string]*context.T
 	return TypeClassSlice, ReferenceMap, nil
 }
 
+func AssignImplementation(impl Typeclass, implMap map[*context.TypeClass]bool, ReferenceMap map[string]*context.TypeClass) error {
+	if impl.Name != "" {
+		i_ref, ok := ReferenceMap[impl.Name]
+		if !ok {
+			return fmt.Errorf("ParseTypeDecl: TypeClass %s does not exist.",
+				impl.Name)
+		}
+		implMap[i_ref] = true
+	}
+	return nil
+}
+
 // This is responsible for taking the output of the ParseCode function and
 // pulling out the type declarations and filling out a type slice.
 func ParseTypeDecls(data *Base, ReferenceMap map[string]*context.TypeClass) ([]context.Type, error) {
@@ -88,27 +100,24 @@ func ParseTypeDecls(data *Base, ReferenceMap map[string]*context.TypeClass) ([]c
 		TypeSlice[i].Name = elem.Name
 		TypeSlice[i].Implements = make(map[*context.TypeClass]bool)
 		for _, implemented := range elem.Implements {
-			i_ref, ok := ReferenceMap[implemented.Name]
-			if !ok {
-				return nil, fmt.Errorf(
-					"ParseTypeDecl: TypeClass %s does not exist.",
-					implemented.Name)
+			if err := AssignImplementation(implemented, TypeSlice[i].Implements, ReferenceMap); err != nil {
+				return nil, err
 			}
-			TypeSlice[i].Implements[i_ref] = true
 		}
-		if elem.LastImplement.Name != "" {
-			i_ref, ok := ReferenceMap[elem.LastImplement.Name]
-			if !ok {
-				return nil, fmt.Errorf(
-					"ParseTypeDecl: Typeclass %s does not exist.",
-					elem.LastImplement.Name)
-			}
-			TypeSlice[i].Implements[i_ref] = true
+		if err := AssignImplementation(elem.LastImplement, TypeSlice[i].Implements, ReferenceMap); err != nil {
+			return nil, err
 		}
 		TypeSlice[i].Implements[nil] = true
 	}
-
 	return TypeSlice, nil
+}
+
+func AssignError(err Error, errMap map[*context.Type]bool) {
+	if err.Name != "" {
+		v := new(context.Type)
+		v.Name = err.Name
+		errMap[v] = true
+	}
 }
 
 func ParseFuncDecls(data *Base) ([]context.Function, error) {
@@ -120,17 +129,9 @@ func ParseFuncDecls(data *Base) ([]context.Function, error) {
 		FuncSlice[i].Id = i
 		FuncSlice[i].NumArgs = len(elem.Arguments) + 2
 		for _, errorT := range elem.Errors {
-			if errorT.Name != "" {
-				v := new(context.Type)
-				v.Name = errorT.Name
-				FuncSlice[i].Errors[v] = true
-			}
+			AssignError(errorT, FuncSlice[i].Errors)
 		}
-		if elem.LastError.Name != "" {
-			v := new(context.Type)
-			v.Name = elem.LastError.Name
-			FuncSlice[i].Errors[v] = true
-		}
+		AssignError(elem.LastError, FuncSlice[i].Errors)
 
 	}
 

@@ -8,6 +8,7 @@ Testing
 
 ### Merge Unit Tests
 To be found in merge_test.go, run with
+
 	go test -v -run Name merge_test.go
 
 * Type by parent (works, see unit test named Down)
@@ -16,4 +17,5 @@ To be found in merge_test.go, run with
 * Our favorite example (see unit test named Flow)
 
 To run our favorite example:
+
 	go test -v -run Flow merge_test.go
