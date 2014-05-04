@@ -140,14 +140,15 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 
 // takes information from function f and uses it on g
 // to be called when f receives a context C_g
-func (f *Function) Update(g *Function) {
+func (f *Function) Update(g *Function) error {
 	// lock both f and g
 
-	// DEADLOCK POSSIBLE?
+	// DEADLOCK POSSIBLE FOR CYCLES
 	g.Lock() // write lock
 	defer g.Unlock()
 	f.RLock() // read lock
 	defer f.RUnlock()
+
 	fmt.Printf("read lock %s write lock %s\n", f.Name, g.Name)
 	defer fmt.Printf("releasing read %s write %s\n", f.Name, g.Name)
 
@@ -160,7 +161,7 @@ func (f *Function) Update(g *Function) {
 		for funcarg, typevar := range f.Atlas[pf] {
 			err := g.updateTypevar(pgf, funcarg, f, typevar)
 			if err != nil {
-				fmt.Printf(err.Error())
+				return err
 			}
 		}
 
@@ -174,7 +175,7 @@ func (f *Function) Update(g *Function) {
 			if f.TypeVarMap[typevar] != nil {
 				err := g.updateTypevar(path, funcarg, f, f.Atlas[pf][funcarg])
 				if err != nil {
-					fmt.Printf(err.Error())
+					return err
 				}
 			}
 		}
@@ -184,9 +185,11 @@ func (f *Function) Update(g *Function) {
 	for errorType := range f.Errors {
 		g.Errors[errorType] = true
 	}
+	return nil
 }
 
 // collects all explicit implementations of f by walking up its call tree
+// NEEDS REFACTORING AND PARALLEL
 func (f *Function) CollectImplementations(g *Function) (implementations []map[int]*Type, err error) {
 	pf := FunctionsToPath(f)
 

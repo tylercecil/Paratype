@@ -6,13 +6,14 @@ import (
 	"strings"
 )
 
-func (f *Function) Run(Functions *map[*Function]bool) {
+func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
 	// handling for function composition?
 	if len(f.Parents) == 0 {
 		f.makeActive(false)
 	}
 
+	// receive messages as long as channel is open
 	for message := range f.Channel {
 		f.makeActive(true)
 
@@ -26,7 +27,12 @@ func (f *Function) Run(Functions *map[*Function]bool) {
 			f.Name, strings.Join(s, "-"), message.Context.Name)
 
 		// MERGE
-		f.Update(message.Context)
+		er := f.Update(message.Context)
+		if er != nil {
+			f.makeActive(false)
+			err <- er
+			return
+		}
 
 		// add myself to path
 		message.Path = AddToPath(message.Path, f)
@@ -40,6 +46,8 @@ func (f *Function) Run(Functions *map[*Function]bool) {
 
 		f.makeActive(false)
 	}
+
+	return
 }
 
 

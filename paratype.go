@@ -11,8 +11,7 @@ import (
 var Functions map[*context.Function]bool
 
 // given a list of functions, run everything!
-func RunThings(f ...interface{}) {
-	runtime.GOMAXPROCS(2)
+func RunThings(f ...interface{}) []error {
 	Functions = make(map[*context.Function]bool)
 
 	// one can pass in multiple Function pointers or a slice of them
@@ -30,6 +29,7 @@ func RunThings(f ...interface{}) {
 	}
 
 	readyToFinish := new(sync.WaitGroup)
+	err := make(chan error, len(Functions))
 
 	fmt.Println("Welcome to Paratype!")
 
@@ -43,26 +43,62 @@ func RunThings(f ...interface{}) {
 	}
 	for fActor := range Functions {
 		fmt.Printf("\tSpawning Function Actor for %v\n", fActor.Name)
-		go fActor.Run(&Functions)
+		go fActor.Run(&Functions, err)
 	}
 
 	fmt.Println("Waiting for halting...")
 
+	// RACE CONDITION
 	// This is actually a race condition. It WOULD be sufficient
 	// to both make this check AND check if all Channels are
 	// empty.
-	readyToFinish.Wait()
+ShittyGoto:
 	for fActor := range Functions {
 		// close Channels, otherwise goroutines will hang
-		if len(fActor.Channel) != 0 {
-			break
+		if len(fActor.Channel) > 0 {
+			break ShittyGoto
 		}
 		close(fActor.Channel)
 	}
 
-	fmt.Println("Done!")
+	readyToFinish.Wait()
+
+	fmt.Println("Done!", len(err))
+
+	// collect error messages
+	var s []error
+	if len(err) > 0 {
+		s = make([]error, len(err))
+		for i := 0; len(err) > 0; i++ {
+			m := <-err
+			s[0] = m
+		}
+	}
+
+	close(err)
+	return s
 }
 
+
+func RunThem(n int, f ...interface{}) {
+	runtime.GOMAXPROCS(n)
+	var funcs []*context.Function
+	for _, fun := range f {
+		funcs = append(funcs, fun.(*context.Function))
+	}
+	errors := RunThings(funcs)
+	if len(errors) > 0 {
+		for _, e := range errors {
+			fmt.Println(e.Error())
+		}
+	} else {
+		fmt.Printf("\n===implementations===\n\n")
+		for _, fun := range f {
+			fun.(*context.Function).Finish()
+		}
+		fmt.Printf("\n")
+	}
+}
 
 // Dummy main function.
 func main() {
