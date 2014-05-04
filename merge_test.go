@@ -57,12 +57,13 @@ func MakeFunction(name string, numArgs int) *context.Function {
 	return g
 }
 
-func MakeTypeVar(name string, res bool) context.TypeVariable {
-	return context.TypeVariable{
-		Constraints : map[*context.TypeClass]bool{nil : true},
-		Resolved	: res,
-		Name		: name,
-	}
+func MakeTypeVar(name string, res bool) *context.TypeVariable {
+	s := new(context.TypeVariable)
+	s.Constraints = make(map[*context.TypeClass]bool)
+	s.Constraints[nil] = true
+	s.Resolved = res
+	s.Name = name
+	return s
 }
 
 func PrintTypeMap(g *context.Function) {
@@ -80,7 +81,8 @@ func PrintAtlas(g *context.Function) {
 	}
 }
 
-func TestMergeDown(t *testing.T) {
+// Test of: f calls g, f has explicit types
+func TestDown(t *testing.T) {
 	// func f() Int
 	//  = g(Int Float)
 	// func g(T R) S
@@ -97,22 +99,22 @@ func TestMergeDown(t *testing.T) {
 	G2 := MakeTypeVar("G_2", false)
 
 	g := MakeFunction("g", 3)
-	g.TypeMap[&G0] = nil
-	g.TypeMap[&G1] = nil
-	g.TypeMap[&G2] = nil
+	g.TypeMap[G0] = nil
+	g.TypeMap[G1] = nil
+	g.TypeMap[G2] = nil
 
 	f := MakeFunction("f", 1)
-	f.TypeMap[&F0] = in
-	f.TypeMap[&F1] = fl
-	f.TypeMap[&F2] = in
+	f.TypeMap[F0] = in
+	f.TypeMap[F1] = fl
+	f.TypeMap[F2] = in
 
-	pf := context.ConvertPath([]*context.Function{f})
-	pfg := context.ConvertPath([]*context.Function{f, g})
-	pg := context.ConvertPath([]*context.Function{g})
+	pf := context.ConvertPath(f)
+	pfg := context.ConvertPath(f, g)
+	pg := context.ConvertPath(g)
 
-	f.Atlas[pf] = map[int]*context.TypeVariable{0 : &F0}
-	f.Atlas[pfg] = map[int]*context.TypeVariable{0 : &F0, 1 : &F1, 2 : &F2}
-	g.Atlas[pg] = map[int]*context.TypeVariable{0 : &G0, 1 : &G1, 2 : &G2}
+	f.Atlas[pf] = map[int]*context.TypeVariable{0 : F0}
+	f.Atlas[pfg] = map[int]*context.TypeVariable{0 : F0, 1 : F1, 2 : F2}
+	g.Atlas[pg] = map[int]*context.TypeVariable{0 : G0, 1 : G1, 2 : G2}
 	f.Children[g] = true
 
 	//PrintAll(f)
@@ -123,14 +125,15 @@ func TestMergeDown(t *testing.T) {
 	//PrintAll(f)
 	//PrintAll(g)
 
-	fmt.Printf("\n\n===implementations===\n\n")
+	fmt.Printf("\n===implementations===\n\n")
 	f.Finish()
 	g.Finish()
 	fmt.Printf("\n")
 
 }
 
-func TestMergeUp0(t *testing.T) {
+// f calls g, g has explicit types
+func TestUp0(t *testing.T) {
 	// func f constraint T<Num> (T R) S
 	//  = g(T R)
 	// func g(int float) int
@@ -141,77 +144,63 @@ func TestMergeUp0(t *testing.T) {
 	DownExample(0, t) // explicit type conflict (F_0 fl, G_0 in)
 }
 
-func TestMergeUp1(t *testing.T) {
+func TestUp1(t *testing.T) {
 	DownExample(1, t) // typeclass conflict
 }
 
-func TestMergeUp2(t *testing.T) {
+func TestUp2(t *testing.T) {
 	DownExample(2, t) // explicit type not in merged typeclass (in not mat)
 }
 
-func TestMergeUp3(t *testing.T) {
+func TestUp3(t *testing.T) {
 	DownExample(3, t) // no error
 }
-
-
 
 func DownExample(errcode int, t * testing.T) {
 	num, mat, in, fl := MakeTestTypes()
 
-	var F0 context.TypeVariable
-	var G0 context.TypeVariable
+	F0 := MakeTypeVar("F_0", false)
+	G0 := MakeTypeVar("G_0", true)
 
+	delete(F0.Constraints, nil)
 	if errcode == 2 || errcode == 1 {
-		F0 = context.TypeVariable{
-			Constraints	: map[*context.TypeClass]bool{mat : true},
-			Resolved	: false,
-			Name		: "F_0",
-		}
+		F0.Constraints[mat] = true
 	} else {
-		F0 = context.TypeVariable{
-			Constraints	: map[*context.TypeClass]bool{num : true},
-			Resolved	: false,
-			Name		: "F_0",
-		}
+		F0.Constraints[num] = true
 	}
 
 	F1 := MakeTypeVar("F_1", false)
 	F2 := MakeTypeVar("F_2", false)
 
 	if errcode == 1 {
-		G0 = context.TypeVariable{
-			Constraints : map[*context.TypeClass]bool{num : true},
-			Resolved	: true,
-			Name		: "G_0",
-		}
-	} else {
-		G0 = MakeTypeVar("G_0", true)
+		delete(G0.Constraints, nil)
+		G0.Constraints[num] = true
 	}
 
 	G1 := MakeTypeVar("G_1", true)
 	G2 := MakeTypeVar("G_2", true)
 
 	g := MakeFunction("g", 3)
-	g.TypeMap[&G0] = in
-	g.TypeMap[&G1] = fl
-	g.TypeMap[&G2] = in
+	g.TypeMap[G0] = in
+	g.TypeMap[G1] = fl
+	g.TypeMap[G2] = in
 
 	f := MakeFunction("f", 3)
 	if errcode == 0 {
-		f.TypeMap[&F0] = fl
+		f.TypeMap[F0] = fl
 	} else {
-		f.TypeMap[&F0] = nil
+		f.TypeMap[F0] = nil
 	}
-	f.TypeMap[&F1] = nil
-	f.TypeMap[&F2] = nil
+	f.TypeMap[F1] = nil
+	f.TypeMap[F2] = nil
 
-	pf := context.ConvertPath([]*context.Function{f})
-	pfg := context.ConvertPath([]*context.Function{f, g})
-	pg := context.ConvertPath([]*context.Function{g})
+	pf := context.ConvertPath(f)
+	pfg := context.ConvertPath(f, g)
+	pg := context.ConvertPath(g)
 
-	f.Atlas[pf] = map[int]*context.TypeVariable{0 : &F0, 1 : &F1, 2 : &F2}
-	f.Atlas[pfg] = map[int]*context.TypeVariable{0 : &F0, 1 : &F1, 2 : &F2}
-	g.Atlas[pg] = map[int]*context.TypeVariable{0 : &G0, 1 : &G1, 2 : &G2}
+	f.Atlas[pf] = map[int]*context.TypeVariable{0 : F0, 1 : F1, 2 : F2}
+	f.Atlas[pfg] = map[int]*context.TypeVariable{0 : F0, 1 : F1, 2 : F2}
+	g.Atlas[pg] = map[int]*context.TypeVariable{0 : G0, 1 : G1, 2 : G2}
 	f.Children[g] = true
 
 	//PrintAll(f)
@@ -222,8 +211,102 @@ func DownExample(errcode int, t * testing.T) {
 	//PrintAll(f)
 	//PrintAll(g)
 
-	fmt.Printf("\n\n===implementations===\n\n")
+	fmt.Printf("\n===implementations===\n\n")
 	f.Finish()
 	g.Finish()
+	fmt.Printf("\n")
+}
+
+
+// g and h call f, mixed explicit types
+func TestTwo(t *testing.T) {
+	TwoExample(0, t)
+}
+
+func TwoExample(errcode int, t * testing.T) {
+	_, _, in, fl := MakeTestTypes()
+
+	// f(T) float
+	// = float
+	//
+	// g(int) T
+	// = f(int)
+	//
+	// h(int) T
+	// = f(float)
+
+	F0 := MakeTypeVar("F_0", true)
+
+	/*delete(F0.Constraints, nil)
+	if errcode == 2 || errcode == 1 {
+		F0.Constraints[mat] = true
+	} else {
+		F0.Constraints[num] = true
+	}*/
+
+	F1 := MakeTypeVar("F_1", false)
+	//F2 := MakeTypeVar("F_2", false)
+
+	G0 := MakeTypeVar("G_0", false)
+	/*if errcode == 1 {
+		delete(G0.Constraints, nil)
+		G0.Constraints[num] = true
+	}*/
+
+	G1 := MakeTypeVar("G_1", true)
+	G2 := MakeTypeVar("G_2", true)
+
+	H0 := MakeTypeVar("H_0", false)
+	H1 := MakeTypeVar("H_1", true)
+	H2 := MakeTypeVar("H_2", true)
+
+	g := MakeFunction("g", 2)
+	g.TypeMap[G0] = nil
+	g.TypeMap[G1] = in
+	g.TypeMap[G2] = in
+
+	h := MakeFunction("h", 2)
+	h.TypeMap[H0] = nil
+	h.TypeMap[H1] = fl
+	h.TypeMap[H2] = fl
+
+
+	f := MakeFunction("f", 2)
+	//if errcode == 0 {
+	f.TypeMap[F0] = fl
+	/*} else {
+		f.TypeMap[F0] = nil
+	}*/
+	f.TypeMap[F1] = nil
+
+	pf := context.ConvertPath(f)
+	pgf := context.ConvertPath(g, f)
+	pg := context.ConvertPath(g)
+	phf := context.ConvertPath(h, f)
+	ph := context.ConvertPath(h)
+
+	f.Atlas[pf] = map[int]*context.TypeVariable{0 : F0, 1 : F1}
+	g.Atlas[pgf] = map[int]*context.TypeVariable{0 : G0, 1 : G2}
+	g.Atlas[pg] = map[int]*context.TypeVariable{0 : G0, 1 : G1}
+	h.Atlas[phf] = map[int]*context.TypeVariable{0 : H0, 1 : H2}
+	h.Atlas[ph] = map[int]*context.TypeVariable{0 : H0, 1 : H1}
+
+	g.Children[f] = true
+	h.Children[f] = true
+
+	//PrintAll(f)
+	//PrintAll(g)
+
+	f.Update(g)
+	f.Update(h)
+
+	/*PrintAll(f)
+	PrintAll(g)
+	PrintAll(h)*/
+
+	fmt.Printf("\n===implementations===\n\n")
+	f.Finish()
+	g.Finish()
+	h.Finish()
 	fmt.Printf("\n")
 }
