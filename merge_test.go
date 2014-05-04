@@ -4,6 +4,7 @@ import (
 	"testing"
 	"fmt"
 	"Paratype/context"
+	"Paratype"
 )
 
 var funcCounter int = 0
@@ -52,7 +53,7 @@ func MakeFunction(name string, numArgs int) *context.Function {
 	g.TypeVarMap = make(map[*context.TypeVariable]*context.TypeVariable)
 	g.Errors = make(map[*context.Type]bool)
 	g.Parents = make(map[*context.Function]bool)
-	g.Children = make(map[*context.Function]bool)
+	g.Children = make(map[int]map[*context.Function]bool)
 	funcCounter++
 	return g
 }
@@ -115,12 +116,14 @@ func TestDown(t *testing.T) {
 	f.Atlas[pf] = map[int]*context.TypeVariable{0 : F0}
 	f.Atlas[pfg] = map[int]*context.TypeVariable{0 : F0, 1 : F1, 2 : F2}
 	g.Atlas[pg] = map[int]*context.TypeVariable{0 : G0, 1 : G1, 2 : G2}
-	f.Children[g] = true
+	f.Children[0] = make(map[*context.Function]bool)
+	f.Children[0][g] = true
 
 	//PrintAll(f)
 	//PrintAll(g)
 
-	g.Update(f)
+	//g.Update(f)
+	main.RunThings(f, g)
 
 	//PrintAll(f)
 	//PrintAll(g)
@@ -201,12 +204,15 @@ func DownExample(errcode int, t * testing.T) {
 	f.Atlas[pf] = map[int]*context.TypeVariable{0 : F0, 1 : F1, 2 : F2}
 	f.Atlas[pfg] = map[int]*context.TypeVariable{0 : F0, 1 : F1, 2 : F2}
 	g.Atlas[pg] = map[int]*context.TypeVariable{0 : G0, 1 : G1, 2 : G2}
-	f.Children[g] = true
+	f.Children[0] = make(map[*context.Function]bool)
+	f.Children[0][g] = true
 
 	//PrintAll(f)
 	//PrintAll(g)
 
-	g.Update(f)
+	//g.Update(f)
+	main.RunThings(f, g)
+
 
 	//PrintAll(f)
 	//PrintAll(g)
@@ -290,15 +296,17 @@ func TwoExample(errcode int, t * testing.T) {
 	g.Atlas[pg] = map[int]*context.TypeVariable{0 : G0, 1 : G1}
 	h.Atlas[phf] = map[int]*context.TypeVariable{0 : H0, 1 : H2}
 	h.Atlas[ph] = map[int]*context.TypeVariable{0 : H0, 1 : H1}
-
-	g.Children[f] = true
-	h.Children[f] = true
+	h.Children[0] = make(map[*context.Function]bool)
+	g.Children[0] = make(map[*context.Function]bool)
+	g.Children[0][f] = true
+	h.Children[0][f] = true
 
 	//PrintAll(f)
 	//PrintAll(g)
 
-	f.Update(g)
-	f.Update(h)
+	//f.Update(g)
+	//f.Update(h)
+	main.RunThings(f, g, h)
 
 	/*PrintAll(f)
 	PrintAll(g)

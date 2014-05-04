@@ -35,7 +35,7 @@ type Context struct {
 	TypeMap		map[*TypeVariable]*Type
 	TypeVarMap	map[*TypeVariable]*TypeVariable
 	Errors		map[*Type]bool
-	Children	map[*Function]bool
+	Children	map[int]map[*Function]bool
 	Parents		map[*Function]bool
 }
 

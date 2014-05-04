@@ -41,6 +41,15 @@ func ConvertPath(f ...interface{}) string {
 	return s
 }
 
+func IsChild(child *Function, parent *Function) int {
+	for i, fmap := range parent.Children {
+		if fmap[child] {
+			return i
+		}
+	}
+	return -1
+}
+
 // updates typevar v in func g to be typevar w in func f
 // really, we are merging v and w to be w in g
 func (g *Function) updateTypevar(path string, funcarg int, f *Function,
@@ -112,7 +121,7 @@ func (f *Function) Update(g *Function) {
 	var pg = ConvertPath(g)
 
 	// f is child of g
-	if g.Children[f] {
+	if IsChild(f, g) >= 0 {
 		// match f() with g(f())
 		for funcarg, typevar := range f.Atlas[pf] {
 			err := g.updateTypevar(pgf, funcarg, f, typevar)
@@ -185,10 +194,10 @@ func (f *Function) PrintImplementation(typemap map[int]*Type) {
 	}
 	fmt.Printf(") %v \n", typemap[0].Name)
 	fmt.Printf("= ")
-	if len(f.Children) == 0 {
+	if len(f.Children[0]) == 0 {
 		fmt.Printf("%v\n", typemap[0].Name)
 	} else {
-		for g := range f.Children {
+		for g := range f.Children[0] {
 			fmt.Printf("%v(...)\n", g.Name)
 		}
 	}

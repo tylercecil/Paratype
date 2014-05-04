@@ -3,27 +3,27 @@ package main
 
 import (
 	"sync"
-	"time"
+	//"time"
 	"fmt"
-	"math/rand"
+	//"math/rand"
 	"Paratype/context"
 )
 
 // Object to represent a communication
 type Communication struct {
-	path	string
-	context	*context.Context
+	Path	string
+	Context	*context.Function
 }
 
 // Object to represent the Function as an actor.
 // This is probably bad design (we have structs everywhere!)
 // but will be fine for now.
 type FunctionActor struct {
-	Function	context.Function
+	Function	*context.Function
 	Channel		chan *Communication
 
 	// Temporary channel for testing
-	Tmp		chan string
+	Tmp			chan string
 
 	state		bool
 	activeGroup	*sync.WaitGroup
@@ -36,21 +36,22 @@ type FunctionActor struct {
 // By doing this, I am providing channels to all functions in
 // their run routines. I am not confident this is the best way
 // as of right now, but it will do.
-const functionCount = 10
-var functions [functionCount]FunctionActor
+//const functionCount = 10
+var functions map[*context.Function]*FunctionActor
 
 // A Functions main ruitine.
 func (f *FunctionActor) Run() {
-	f.makeActive(true)
-	time.Sleep(time.Duration(5)*time.Second)
-	id := rand.Int() % functionCount
-	f.SendMessage("A message!", id)
 	f.makeActive(false)
-	for {
-		fmt.Println("Waiting for message...")
-		message := <-f.Tmp
+	for message := range f.Channel {
+
 		f.makeActive(true)
-		f.HandleMessage(message)
+		f.Function.Update(message.Context)
+
+		for _, gfuncs := range f.Function.Children {
+			for g := range gfuncs {
+				functions[g].Channel <- message
+			}
+		}
 		f.makeActive(false)
 	}
 }
@@ -59,10 +60,12 @@ func (f *FunctionActor) Run() {
 // Change the state of the function actor. This is used
 // for the halting conditions.
 func (f *FunctionActor) makeActive(state bool) {
+
 	if state == f.state {
 		return
 	}
 
+	f.state = state
 	if state {
 		f.activeGroup.Add(1)
 	} else {
@@ -80,20 +83,56 @@ func (f *FunctionActor) Initialize(activeGroup *sync.WaitGroup) {
 	f.makeActive(true)
 }
 
-// The outline of the function that sends messages to other actors.
-// In the future the types of the arguments need to be changed. This 
-// is only a proof of concept.
-func (f *FunctionActor) SendMessage(message string, functionID int) {
-	functions[functionID].Tmp <- message
+func (f *FunctionActor) SendToChild() {
+	comm := new(Communication)
+	comm.Path = context.ConvertPath(f.Function)
+	comm.Context = f.Function
+	for _, gfuncs := range f.Function.Children {
+		for g := range gfuncs {
+			functions[g].Channel <-comm
+		}
+	}
 }
 
-// Function to handle messages from functions.
-func (f *FunctionActor) HandleMessage(message string) {
-	fmt.Printf("Function %s recieived a message:\n\t%s",
-		f.Function.Name,
-		message)
+// not ready
+func RunThings(f ...interface{}) {
+
+	functions = make(map[*context.Function]*FunctionActor)
+	for _, fun := range f {
+		fActor := new(FunctionActor)
+		fActor.Function = fun.(*context.Function)
+		functions[fun.(*context.Function)] = fActor
+	}
+
+	readyToFinish := new(sync.WaitGroup)
+
+	fmt.Println("Welcome to Paratype!")
+
+	for _, fActor := range functions {
+		fmt.Printf("\tSpawning Function Actor for %v\n", fActor.Function.Name)
+		fActor.Initialize(readyToFinish)
+	}
+	for _, fActor := range functions {
+		fActor.SendToChild()
+	}
+	for _, fActor := range functions {
+		go fActor.Run()
+	}
+
+	fmt.Println("Waiting for halting...")
+	// This is actually a race condition. It WOULD be sufficient
+	// to both make this check AND check if all channels are
+	// empty.
+
+	readyToFinish.Wait()
+	for _, fActor := range functions {
+		close(fActor.Channel)
+		close(fActor.Tmp)
+	}
+
+	fmt.Println("Done!")
+
 }
-	
 
 // Dummy main function.
 func main() {
@@ -101,7 +140,9 @@ func main() {
 	// Run all functions
 	// Wait to halt
 
-	readyToFinish := new(sync.WaitGroup)
+	//RunThings()
+
+	/*readyToFinish := new(sync.WaitGroup)
 
 	fmt.Println("Welcome to Paratype!")
 
@@ -116,6 +157,6 @@ func main() {
 	// to both make this check AND check if all channels are
 	// empty.
 	readyToFinish.Wait()
-	fmt.Println("Done!")
+	fmt.Println("Done!")*/
 
 }
