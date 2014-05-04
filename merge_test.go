@@ -318,3 +318,84 @@ func TwoExample(errcode int, t * testing.T) {
 	h.Finish()
 	fmt.Printf("\n")
 }
+
+func TestFlow(t *testing.T) {
+	FlowExample(0, t)
+}
+
+
+func FlowExample(errcode int, t * testing.T) {
+	_, _, in, fl := MakeTestTypes()
+
+	// f() float
+	// = g(int)
+	// 
+	// q() int
+	// = g(float)
+	//
+	// g(T) R
+	// = h(T)
+	//
+	// h(S) U
+	// = U
+
+	F0 := MakeTypeVar("F_0", true)
+	F1 := MakeTypeVar("F_1", true)
+	Q0 := MakeTypeVar("Q_0", true)
+	Q1 := MakeTypeVar("Q_1", true)
+	G0 := MakeTypeVar("G_0", false)
+	G1 := MakeTypeVar("G_1", false)
+	H0 := MakeTypeVar("H_0", false)
+	H1 := MakeTypeVar("H_1", false)
+
+	g := MakeFunction("g", 1)
+	g.TypeMap[G0] = nil
+	g.TypeMap[G1] = nil
+
+	h := MakeFunction("h", 1)
+	h.TypeMap[H0] = nil
+	h.TypeMap[H1] = nil
+
+	f := MakeFunction("f", 1)
+	f.TypeMap[F0] = fl
+	f.TypeMap[F1] = in
+
+	q := MakeFunction("q", 1)
+	q.TypeMap[Q0] = in
+	q.TypeMap[Q1] = fl
+
+	pf := context.FunctionsToPath(f)
+	pfg := context.FunctionsToPath(f, g)
+	pq := context.FunctionsToPath(q)
+	pqg := context.FunctionsToPath(q, g)
+	pg := context.FunctionsToPath(g)
+	pgh := context.FunctionsToPath(g, h)
+	ph := context.FunctionsToPath(h)
+
+	f.Atlas[pf] = map[int]*context.TypeVariable{0 : F0}
+	f.Atlas[pfg] = map[int]*context.TypeVariable{0 : F0, 1 : F1}
+	q.Atlas[pq] = map[int]*context.TypeVariable{0 : Q0}
+	q.Atlas[pqg] = map[int]*context.TypeVariable{0 : Q0, 1 : Q1}
+	g.Atlas[pg] = map[int]*context.TypeVariable{0 : G0, 1 : G1}
+	g.Atlas[pgh] = map[int]*context.TypeVariable{0 : G0, 1 : G1}
+	h.Atlas[ph] = map[int]*context.TypeVariable{0 : H0, 1 : H1}
+	f.Children[0] = make(map[*context.Function]bool)
+	q.Children[0] = make(map[*context.Function]bool)
+	g.Children[0] = make(map[*context.Function]bool)
+	f.Children[0][g] = true
+	q.Children[0][g] = true
+	g.Children[0][h] = true
+
+	main.RunThings(f, q, g, h)
+
+	/*PrintAll(f)
+	PrintAll(g)
+	PrintAll(h)*/
+
+	fmt.Printf("\n===implementations===\n\n")
+	q.Finish()
+	f.Finish()
+	g.Finish()
+	h.Finish()
+	fmt.Printf("\n")
+}

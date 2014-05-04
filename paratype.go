@@ -35,12 +35,14 @@ var functions map[*context.Function]*FunctionActor
 // hackish.
 var functionsArray []*context.Function
 
-// A Functions main ruitine.
+// Runtime of a function
 func (f *FunctionActor) Run() {
 	f.makeActive(false)
-	for message := range f.channel {
 
+	for message := range f.channel {
 		f.makeActive(true)
+
+		// debugging
 		fmt.Printf("%v received from path ", f.function.Name)
 		pathfuncs := context.PathToFunctions(message.path, functionsArray)
 		s := make([]string, len(pathfuncs))
@@ -48,14 +50,20 @@ func (f *FunctionActor) Run() {
 			s[i] = g.Name
 		}
 		fmt.Printf("%s the context of %v\n", strings.Join(s, "-"), message.context.Name)
+
+		// MERGE
 		f.function.Update(message.context)
 
+		// add myself to path
 		message.path = context.AddToPath(message.path, f.function)
+
+		// send to all children
 		for _, gfuncs := range f.function.Children {
 			for g := range gfuncs {
 				functions[g].channel <- message
 			}
 		}
+
 		f.makeActive(false)
 	}
 }
@@ -76,7 +84,7 @@ func (f *FunctionActor) makeActive(state bool) {
 	}
 }
 
-// A psuedo constructor for FunctionActors.
+// A pseudo constructor for FunctionActors.
 func (f *FunctionActor) Initialize(activeGroup *sync.WaitGroup) {
 	f.activeGroup = activeGroup
 	// Arbitrary buffer size. Note that channels block
