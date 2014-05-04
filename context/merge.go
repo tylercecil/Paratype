@@ -68,14 +68,6 @@ func AddToPath(path string, f *Function) string {
 	return buf.String()
 }
 
-func IsChild(child *Function, parent *Function) int {
-	for i, fmap := range parent.Children {
-		if fmap[child] {
-			return i
-		}
-	}
-	return -1
-}
 
 // updates typevar v in func g to be typevar w in func f
 // really, we are merging v and w to be w in g
@@ -156,7 +148,7 @@ func (f *Function) Update(g *Function) error {
 	var pgf = FunctionsToPath(g, f)
 
 	// f is child of g
-	if IsChild(f, g) >= 0 {
+	if f.Parents[g] {
 		// match f() with g(f())
 		for funcarg, typevar := range f.Atlas[pf] {
 			err := g.updateTypevar(pgf, funcarg, f, typevar)
@@ -164,8 +156,6 @@ func (f *Function) Update(g *Function) error {
 				return err
 			}
 		}
-
-		f.Parents[g] = true
 	}
 
 	// replace any type variables that f has replaced elsewhere before
