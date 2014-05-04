@@ -8,17 +8,14 @@ import (
 func Setup(code string) ([]context.TypeClass, []context.Type, []context.Function, error) {
 	out, err := ParseCode(code)
 	if err != nil {
-		fmt.Println(err)
 		return nil, nil, nil, err
 	}
 	TypeClassSlice, ReferenceMap, err := ParseTypeClassDecls(out)
 	if err != nil {
-		fmt.Println(err)
 		return nil, nil, nil, err
 	}
 	TypeSlice, err := ParseTypeDecls(out, ReferenceMap)
 	if err != nil {
-		fmt.Println(err)
 		return nil, nil, nil, err
 	}
 	FuncSlice, err := ParseFuncDecls(out)
@@ -81,6 +78,8 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, map[string]*context.T
 	return TypeClassSlice, ReferenceMap, nil
 }
 
+// This is responsible for taking the output of the ParseCode function and
+// pulling out the type declarations and filling out a type slice.
 func ParseTypeDecls(data *Base, ReferenceMap map[string]*context.TypeClass) ([]context.Type, error) {
 	TypeSlice := make([]context.Type, len(data.TypeDecls))
 
