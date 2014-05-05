@@ -7,8 +7,9 @@
 %\usepackage{lstlang0}
 
 
-\usetheme{Berkeley}
-\usecolortheme{beetle}
+%\usetheme{Berkeley}
+%\usecolortheme{beetle}
+\usetheme{Hannover}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 
@@ -24,10 +25,10 @@
 	frameround=tttt,
 	tabsize=4,
 	showstringspaces=false,
-	aboveskip=1.8em,
+	aboveskip=0.5em,
 	belowskip=0em,
 	captionpos=b,
-	xleftmargin=0.4em,
+	xleftmargin=0.6em,
 	xrightmargin=0em,
 	keywordstyle=\bfseries\color{dkgreen},
 	commentstyle=\itshape\color{purple},
@@ -69,7 +70,7 @@
 \begin{document}
 
 \title[Paratype]{Paratype \\ An Actor Model of Type Evaluation}
-\author{Tyler Cecil \\ Christopher Koch \\ Ben Turribiates}
+\author[Cecil\\Koch\\Turrubiates]{Tyler Cecil \\ Christopher Koch \\ Ben Turrubiates}
 \date{\today}
 \institute{New Mexico Tech}
 
@@ -79,16 +80,34 @@
 
 \frame {
   \frametitle{What Is Paratype}
+
+  Parallel type evaluation
+
+  Just-In-Time compilation, code analysis, \ldots
 }
 
-\frame {
+\begin{frame}[fragile]
   \frametitle{What is Type Evaluation}
-  %Probably need more than one slide here
-}
 
+  By example:
+  \begin{lstlisting}[language=Paratype]
+func q() int
+= f(int, int)
+
+func h() float
+= f(float, float)
+
+func f(A, A) A
+= A
+  \end{lstlisting}
+
+  What is the type \texttt{A}? For \texttt{q}, we need an implementation of
+  \texttt{f} that uses \texttt{int} and for \texttt{h} we need an
+  implementation of \texttt{f} that uses \texttt{float}.
+\end{frame}
 
 \frame {
-  \frametitle{Why do we Need Parallel}
+  \frametitle{Why Do We Need Parallel}
 }
 
 \section{Definitions}
@@ -111,7 +130,7 @@
   \frametitle{Go Routines}
 
   Parallelism in \emph{Go} is based on \emph{Go Routines}. They work
-  as lightweight threads. A compiled in scheduler handles the
+  as lightweight threads. A compiled-in scheduler handles the
   concurrency.
 
   \begin{lstlisting}[language=Go]
@@ -198,13 +217,17 @@ ch2 := make(chan chan int)
 
   Consider the following function in the \emph{Paratype} grammar.
   \begin{lstlisting}[language=Paratype]
-func f
+func f() T
+= g(int)
 
-func q
+func q() T
+= g(float)
 
-func g
+func g(T) T
+= h(T)
 
-func h
+func h(T) T
+= T
   \end{lstlisting}
 \end{frame}
 
@@ -230,7 +253,7 @@ func h
 \begin{frame}[fragile]
   \frametitle{Actor Communication --- Hybrid}
 
-  The communication is more complicated than this, however, as data
+  The communication is more complicated than this; however, as data
   needs to be able to \emph{trickle up}.
 
   \begin{multicols}{2}
@@ -256,13 +279,14 @@ func h
       \item Start every function actor.
       \item Function actors build their \emph{context}.
       \item Function actors send their context to their children.
-      \item Function actors merge with received contexts.
+      \item Function actors receive context from parents.
+	  \item Function actors merge with received contexts.
       \item Function actors send updated messages to their children.
-      \item Repeat the last two steps, until a condition is met.
+      \item Repeat the last three steps, until a condition is met.
     \end{enumerate}
   \end{multicols}
 
-  Step 4 is a shared memory action, where 3 and 5 are messaging
+  Step 5 is a shared memory action, where 3, 4 and 6 are messaging
   actions.
 \end{frame}
 
@@ -271,6 +295,39 @@ func h
 %Talk about how merging actually works
 %Shared memory, and mutexes!
 %For mutexes, mention the Go scheduler.
+
+\begin{frame}
+	\frametitle{Merging}
+
+	When a function actor receives a context, what actually happens?
+
+	If context received is from direct parent:
+	\begin{itemize}
+		\item Read-write lock on function actor and the received context.
+		\item Match function call from parent to declaration
+		\item Declaration's type variables supersede and overwrite the function
+			call's
+		\item Keep track of what type variables in parent were replaced -- also
+			replace them in parent's declaration and other function calls
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Merging -- Not Parent}
+
+	\begin{itemize}
+		\item What if context received not from parent?
+		\item Simply replace type variables that I (the function actor) have
+			replaced before
+	\end{itemize}
+
+	Type errors?
+	\begin{itemize}
+		\item Conflicting explicit types
+		\item Conflicting type class constraints
+		\item Merged explicit type not in merged type class
+	\end{itemize}
+\end{frame}
 
 \subsection{Function Composition}
 
@@ -292,7 +349,7 @@ func h
 
     \begin{lstlisting}[language=Paratype]
 q = 
-  f(h(g()),h(h(g)),g())
+  f(h(g()),h(h(g())),g())
     \end{lstlisting}
 
     \vspace{2em}
@@ -318,15 +375,13 @@ q =
   If composition is present, the following actions MUST occur:
   \begin{multicols}{2}
     \begin{enumerate}
-      \item Send the context to the inner most functions.
+      \item Send the context to the innermost functions.
       \item Provide a means for those functions to signal when they
         are done.
       \item Repeat with the next layer of functions using more
         up-to-date contexts.
     \end{enumerate}
   \end{multicols}
-  We only need to do this once, to gather the relationship between the
-  various functions.
 \end{frame}
 
 \begin{frame}
@@ -357,7 +412,7 @@ func (wg *WaitGroup) Wait()
   \end{lstlisting}
 
   \vspace{2em}
-  Every child is given a copy of the \texttt{WaitGroup}, and
+  Every child is given a copy of the \texttt{WaitGroup} and
   decrements it when they are finished. This acts as a barrier for \texttt{f}.
 \end{frame}
 
@@ -365,12 +420,47 @@ func (wg *WaitGroup) Wait()
 \subsection{Halting}
 
 %Both normal halting and short circuit halting.
+\begin{frame}
+	\frametitle{Halting}
+	\begin{itemize}
+		\item No parents? Done sending after creating own context and sending
+			to child
+		\item All parents done and done sending messages? Done
+		\item ``Trickle down'' effect of being done sending messages
+		\item Each function actor sends \texttt{nil} back through error channel
+			when done sending
+		\item Main thread keeps count
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Halting --- Type Errors}
+
+	\begin{itemize}
+		\item That's normal execution -- what about type errors?
+		\item Function actor sends error through a special error channel back
+			to main thread
+		\item Main thread increments a special wait group (kill semaphore)
+		\item Function actors wait on that semaphore: if it is taken, it cannot
+			use any channels and will terminate
+	\end{itemize}
+\end{frame}
 
 \subsection{Parallel Optimization}
 
 %Lazy Aristocrats
 %Catching error types early, by only looking up ONE context treee
 %Closing channels as a form of communication
+\begin{frame}
+	\begin{itemize}
+		\item Type errors are caught early
+		\item Closing channels are a form of communication!
+		
+			Function actors wait for their channels to be closed to
+			collect their explicit implementations
+		\item GO scheduler
+	\end{itemize}
+\end{frame}
 
 \section{Performance and Analysis}
 
