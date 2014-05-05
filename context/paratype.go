@@ -33,6 +33,10 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 						comm.Wait = f.WaitChildren
 						f.WaitChildren.Add(1)
 					}
+					f.KillFlag.Wait()
+					if f.Dead == true {
+						return
+					}
 					g.Channel <-comm
 				}
 			}
@@ -104,6 +108,11 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 				//fmt.Printf("adding %v %v\n", g, WaitChildren)
 				WaitChildren.Add(1)
 			}
+			f.KillFlag.Wait()
+			if f.Dead == true {
+				return
+			}
+
 			g.Channel <-comm
 		}
 
@@ -131,6 +140,10 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 						if depth >= 1 {
 							comm.Wait = WaitChildren
 							WaitChildren.Add(1)
+						}
+						f.KillFlag.Wait()
+						if f.Dead == true {
+							return
 						}
 						g.Channel <-comm
 					}

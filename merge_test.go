@@ -12,14 +12,14 @@ var n int = 4
 func TestFlow1(t *testing.T) {
 	f,g,h,q := FlowExample(0)
 
-	main.RunParatype(n, f, q, g, h)
+	main.RunParatype(n, "out", true, f, q, g, h)
 }
 
 func TestFlow2(t *testing.T) {
 	f,g,h,q := FlowExample(0)
 	m,p,o := TwoExample(0)
 
-	main.RunParatype(n, f, q, g, h, m, p, o)
+	main.RunParatype(n, "out", true, f, q, g, h, m, p, o)
 }
 
 func TestFlow3(t *testing.T) {
@@ -27,7 +27,7 @@ func TestFlow3(t *testing.T) {
 	m,p,o := TwoExample(0)
 	w,z := DownExample(0)
 
-	main.RunParatype(n, f, q, g, h, m, p, o, w, z)
+	main.RunParatype(n, "out", true, f, q, g, h, m, p, o, w, z)
 }
 
 func TestFlow4(t *testing.T) {
@@ -37,7 +37,7 @@ func TestFlow4(t *testing.T) {
 	v,l := DownExample(3)
 	u,a := DownExample(2)
 
-	main.RunParatype(n, f, q, g, h, m, p, o, w, z, v, l, u, a)
+	main.RunParatype(n, "out", true, f, q, g, h, m, p, o, w, z, v, l, u, a)
 }
 
 func BenchmarkFlow5(b *testing.B) {
@@ -46,7 +46,7 @@ func BenchmarkFlow5(b *testing.B) {
 		m,p,o := TwoExample(0)
 		v,l := DownExample(3)
 
-		main.RunParatype(n, f, q, g, h, m, p, o, v, l)
+		main.RunParatype(n, "out", true, f, q, g, h, m, p, o, v, l)
 	}
 }
 
@@ -55,13 +55,13 @@ func TestFlow5(t *testing.T) {
 	m,p,o := TwoExample(0)
 	v,l := DownExample(3)
 
-	main.RunParatype(n, f, q, g, h, m, p, o, v, l)
+	main.RunParatype(n, "out", true, f, q, g, h, m, p, o, v, l)
 }
 
 // g and h call f, mixed explicit types
 func TestTwo(t *testing.T) {
 	f,g,h := TwoExample(0)
-	main.RunParatype(n, f,g,h)
+	main.RunParatype(n, "out", true, f,g,h)
 }
 
 // f calls g, g has explicit types
@@ -74,22 +74,22 @@ func TestUp0(t *testing.T) {
 	// f \circ g : F_0 F_1 F_2
 	// g : G_0 G_1 G_2
 	f, g := DownExample(0) // explicit type conflict (F_0 fl, G_0 in)
-	main.RunParatype(n, f, g)
+	main.RunParatype(n, "out", true, f, g)
 }
 
 func TestUp1(t *testing.T) {
 	f, g := DownExample(1) // typeclass conflict
-	main.RunParatype(n, f, g)
+	main.RunParatype(n, "out", true, f, g)
 }
 
 func TestUp2(t *testing.T) {
 	f, g := DownExample(2) // explicit type not in merged typeclass (in not mat)
-	main.RunParatype(n, f, g)
+	main.RunParatype(n, "out", true, f, g)
 }
 
 func TestUp3(t *testing.T) {
 	f, g := DownExample(3) // no error
-	main.RunParatype(n, f, g)
+	main.RunParatype(n, "out", true, f, g)
 }
 
 
@@ -189,7 +189,7 @@ func TestDown(t *testing.T) {
 	g.Parents[f] = true
 	g.Errors[err] = true
 
-	main.RunParatype(n, f, g)
+	main.RunParatype(n, "out", true, f, g)
 }
 
 

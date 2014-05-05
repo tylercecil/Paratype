@@ -117,6 +117,10 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 	w *TypeVariable) error {
 	v := g.Atlas[path][funcarg]
 
+	if v == w {
+		return nil
+	}
+
 	// 1) merging explicit types if possible
 	if (f.TypeMap[w] != nil && g.TypeMap[w] != nil &&
 			f.TypeMap[w] != g.TypeMap[w]) ||
@@ -237,6 +241,12 @@ func (f *Function) Update(g *Function) error {
 		}
 	}
 
+	for tv, typ := range f.TypeMap {
+		if g.TypeMap[tv] == nil && typ != nil{
+			g.TypeMap[tv] = typ
+		}
+	}
+
 	// merge error types: E_g = E_g union E_f
 	for errorType := range f.Errors {
 		g.Errors[errorType] = true
@@ -261,6 +271,9 @@ func (f *Function) CollectImplementations(g *Function) (implementations []map[*T
 	// search for explicit types of f's typevars in g
 	implementation := make(map[*TypeVariable]*Type)
 	noimpl := false
+	/*fmt.Println(g.Name)
+	PrintTypeVarMap(g)*/
+
 	for _, typevar := range f.Atlas[pf] {
 		tt, ok := FindFinalTypeVar(typevar, g)
 		if ok == -1 {

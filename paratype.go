@@ -198,21 +198,21 @@ func main() {
 		fmt.Println("ERROR: OH NO! Provide a file to write results to!")
 		return
 	}
-	begin := time.Now().UnixNano()
+	begin := time.Now()
 	flist, err := paraparse.Setup(*inFilePtr, true)
-	end := time.Now().UnixNano()
+	end := time.Now()
 
 	if *timePtr == true {
-		fmt.Printf("SETUP: %d ", end - begin)
+		fmt.Printf("SETUP: %d ", end.Sub(begin).Nanoseconds())
 	}
 	if err != nil {
 		fmt.Printf("%+v", err)
 		return
 	}
-	begin = time.Now().UnixNano()
+	begin = time.Now()
 	RunParatype(*procsPtr, *outFilePtr, *printPtr, flist)
-	end = time.Now().UnixNano()
+	end = time.Now()
 	if *timePtr == true {
-		fmt.Printf("COMPLETION: %d\n", end - begin)
+		fmt.Printf("COMPLETION: %d\n", end.Sub(begin).Nanoseconds())
 	}
 }
