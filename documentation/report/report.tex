@@ -448,34 +448,35 @@ func h(A) float
 		\end{lstlisting}
 		In the initial implementation of Paratype a function with no parents did not need to have a thread spawned for itself. Instead it would seed the children with its initial context. This became problematic when the implementation of function composition began. With this implementation the children would all evaluate their own contexts and replace values in the parents typevar map. This would cause the evaluation to be unresolvable due to inability to correctly map type variables. This was solved using a technique we refer to as ``in-out evaluation''.
 
+\section{Verification}
+	When testing Paratype it is useful to know what the correct output should be. All of our testing was performed with curated examples that were picked to intentionally pose a problem and ensure that each of the subsystems were working correctly. When the completion is performed the output is written to a file. These files can then be checked for correctness. Go provides a useful testing package that allows for executing all tests or select tests. It launches the threads and gives details about execution and gives the state of the goroutines during an error. This is incredibly useful and was used often to test the hand made examples. It was not uncommon to also repeatedly run these tests to ensure they were deterministic in halting and not causing exceptional situations.
 \section{Analysis and Model}
+%  variables: number of functions, function calls, contexts, partial contexts,
+%  undecidability, number of physical cores available, number of types and
+%  type classes, etc
 
- variables: number of functions, function calls, contexts, partial contexts,
- undecidability, number of physical cores available, number of types and
- type classes, etc
+%  gopp parser hangs in some cases (not our focus, so we don't care)
 
- gopp parser hangs in some cases (not our focus, so we don't care)
+% just some notes to use for empirical analysis later
 
-just some notes to use for empirical analysis later
+%  Complexity of f.Update(g) algorithm if g is parent of f:
+%  \[ U(f, g) = \sum_{\textrm{v in args of g and w replaces v}} V(v, w))
+%  \leq O(|\textrm{num args of g}| \times |\textrm{num typeclasses}|) \]
 
- Complexity of f.Update(g) algorithm if g is parent of f:
- \[ U(f, g) = \sum_{\textrm{v in args of g and w replaces v}} V(v, w))
- \leq O(|\textrm{num args of g}| \times |\textrm{num typeclasses}|) \]
+%  UpdateTypevar (v and w merge to w):
+%  \[ V(v, w) = O(|\textrm{num of typeclasses on w}|) \]
 
- UpdateTypevar (v and w merge to w):
- \[ V(v, w) = O(|\textrm{num of typeclasses on w}|) \]
+%  Complexity of f.Update(g) if g is parent of f:
+%  \[ \leq O(|\textrm{num atlas entries of g}| \times |\textrm{num typeclasses}|) \]
 
- Complexity of f.Update(g) if g is parent of f:
- \[ \leq O(|\textrm{num atlas entries of g}| \times |\textrm{num typeclasses}|) \]
+%  All of these multiplied by hashmap access time at worst $O(\textrm{size of
+%  map})$ each
 
- All of these multiplied by hashmap access time at worst $O(\textrm{size of
- map})$ each
+%  how often is f.Update(g) called?
 
- how often is f.Update(g) called?
+%  -> context path object travels down every path!
 
- -> context path object travels down every path!
-
- -> number of paths times number of nodes in each path
+%  -> number of paths times number of nodes in each path
 
 \section{Conclusion}
 
