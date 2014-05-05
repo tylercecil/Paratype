@@ -9,6 +9,17 @@ import (
 func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
 	for message := range f.Channel {
+		// halting
+		if message.LastComm {
+			f.NumParentsDone++
+		}
+
+		if f.NumParentsDone < len(f.Parents) {
+			message.LastComm = false
+		} else {
+			message.LastComm = true
+		}
+
 		// debugging
 		pathfuncs := PathToFunctions(message.Path, *Functions)
 		s := make([]string, len(pathfuncs))
@@ -24,41 +35,39 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 			err <- er
 			return
 		}
+
 		// add myself to path
 		message.Path = AddToPath(message.Path, f)
 		for _, gfuncs := range f.Children {
+			msgCopy := new(Communication)
+			msgCopy = message
 			for g := range gfuncs {
-				g.Channel <- message
+				g.Channel <- msgCopy
 			}
 		}
+
+		// did I just send my last communication?
+		if message.LastComm {
+			err <- nil
+		}
+	}
+
+	// implicit barrier through channel closing
+	if f.Implement {
+		f.Finish()
+		f.ImplementationWait.Done()
 	}
 
 	return
 }
 
-// Change the state of the function actor. This is used
-// for the halting conditions.
-/*func (f *Function) makeActive(state bool) {
-	if state == f.State {
-		return
-	}
-
-	f.State = state
-	if state {
-		f.ActiveGroup.Add(1)
-	} else {
-		f.ActiveGroup.Done()
-	}
-}*/
-
 // A pseudo constructor for Functions.
-func (f *Function) Initialize() {
-	//f.ActiveGroup = activeGroup
+func (f *Function) Initialize(implWait *sync.WaitGroup) {
 	// Arbitrary buffer size. Note that Channels block
 	// only when the buffer is full.
 	f.Channel = make(chan *Communication, 128)
-	f.FuncComp = make(chan string, 128)
-	f.makeActive(true)
+	f.ImplementationWait = implWait
+	//implWait.Add(1)
 }
 
 // sends own to child

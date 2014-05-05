@@ -1,7 +1,8 @@
 package context
 
-import "sync"
-
+import (
+	"sync"
+)
 
 // Object to represent a communication
 type Communication struct {
@@ -35,9 +36,10 @@ type Function struct {
 	Name        string
 	Id			int
 	Channel		chan *Communication
-	State		bool
-	Children	map[int]*sync.WaitGroup // function composition waitgroup
-	//ActiveGroup	*sync.WaitGroup
+	Implement	bool
+	NumParentsDone	int
+	WaitChildren	map[int]*sync.WaitGroup // function composition waitgroup
+	ImplementationWait	*sync.WaitGroup
 	Context
 	sync.RWMutex
 }

@@ -130,7 +130,6 @@ func MakeFunction(name string, numArgs int) *context.Function {
 	g := new(context.Function)
 	g.Name = name
 	g.Id = funcCounter
-	g.NumArgs = numArgs
 	g.Atlas = make(map[string]map[int]*context.TypeVariable)
 	g.TypeMap = make(map[*context.TypeVariable]*context.Type)
 	g.TypeVarMap = make(map[*context.TypeVariable]*context.TypeVariable)

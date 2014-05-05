@@ -31,62 +31,55 @@ func RunThings(f ...interface{}) []error {
 		}
 	}
 
-	//readyToFinish := new(sync.WaitGroup)
+	implementationWait := new(sync.WaitGroup)
 	err := make(chan error, len(Functions))
 
 	fmt.Println("Welcome to Paratype!")
 
 	for fActor := range Functions {
-		fActor.Initialize()
+		fActor.Initialize(implementationWait)
 	}
 	// avoid race conditions by having the first communication in Channels
 	// before starting
 	for fActor := range Functions {
 		fActor.InitialSendToChild()
 	}
+
 	for fActor := range Functions {
 		fmt.Printf("\tSpawning Function Actor for %v\n", fActor.Name)
 		if len(fActor.Parents) > 0 {
+			implementationWait.Add(1)
 			go fActor.Run(&Functions, err)
 			NumThreadsActive++
 		}
-		//defer close(fActor.Channel)
-		//defer close(fActor.FuncComp)
 	}
 
-	fmt.Println("Waiting for halting...")
-
+	var s []error
 	// errors
 	for er := range err {
+		NumThreadsActive--
+		if er != nil {
+			fmt.Printf("%v\n", er.Error())
+			s = append(s, er)
+		}
 
-	}
+		if NumThreadsActive == 0 || er != nil {
+			// close all channels
+			for f := range Functions {
+				f.Implement = (er == nil)
+				close(f.Channel)
+			}
 
-	// RACE CONDITION
-	// This is actually a race condition. It WOULD be sufficient
-	// to both make this check AND check if all Channels are
-	// empty.
-/*ShittyGoto:
-	for fActor := range Functions {
-		// close Channels, otherwise goroutines will hang
-		if len(fActor.Channel) > 0 {
-			goto ShittyGoto
+			if er == nil {
+				implementationWait.Wait()
+			}
+
+			close(err)
+
+			return s
 		}
 	}
 
-	readyToFinish.Wait()*/
-
-	fmt.Println("Done!", len(err))
-
-	// collect error messages
-	/*var s []error
-	if len(err) > 0 {
-		s = make([]error, len(err))
-		for i := 0; len(err) > 0; i++ {
-			s[i] = <-err
-		}
-	}*/
-
-	close(err)
 	return s
 }
 
@@ -110,21 +103,21 @@ func RunThem(n int, f ...interface{}) {
 	errors := RunThings(funcs)
 	if len(errors) > 0 {
 		for _, e := range errors {
-			fmt.Println(e.Error())
+			fmt.Printf("%+v\n", e)
 		}
 	} else {
 		fmt.Printf("\n===implementations===\n\n")
-		switch f[0].(type) {
+		/*switch f[0].(type) {
 		case []*context.Function:
 			for _, fun := range f[0].([]*context.Function) {
-				fun.Finish()
+				//fun.Finish()
 			}
 
 		case *context.Function:
 			for _, fun := range f {
-				fun.(*context.Function).Finish()
+				//fun.(*context.Function).Finish()
 			}
-		}
+		}*/
 
 		fmt.Printf("\n")
 	}
