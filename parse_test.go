@@ -17,17 +17,7 @@ func RunTest(code string, t *testing.T) {
 		return
 	}
 
-	/*fmt.Printf("FLIST: %+v\n", flist)
-	for _, f := range flist {
-		fmt.Printf("%+v\n", f)
-		context.PrintAll(f)
-	}*/
-	main.RunThem(3, flist)
-	/*fmt.Printf("FLIST: %+v\n", flist)
-	for _, f := range flist {
-		fmt.Printf("%+v\n", f)
-		context.PrintAll(f)
-	}*/
+	main.RunThem(1, flist)
 }
 
 // PASS

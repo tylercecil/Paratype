@@ -6,6 +6,8 @@ import (
 //	"strings"
 )
 
+// Runtime for each function actor
+// to be used as a goroutine
 func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
 	if f.WaitChildren != nil {
