@@ -17,7 +17,7 @@ func RunTest(code string, t *testing.T) {
 		return
 	}
 
-	main.RunThem(1, flist)
+	main.RunParatype(1, flist)
 }
 
 // PASS
