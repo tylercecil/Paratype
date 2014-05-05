@@ -1,5 +1,15 @@
 package context
 
+import "sync"
+
+
+// Object to represent a communication
+type Communication struct {
+	Path		string
+	Context		*Function
+	Depth		int
+	LastComm	bool // is this the last communication?
+}
 
 type TypeClass struct {
 	Name		string
@@ -20,12 +30,16 @@ type Type struct {
 	Implements	map[*TypeClass]bool
 };
 
-//Representation of a "Function Actor", the main component of Paratype.
+// Representation of a "Function Actor", the main component of Paratype.
 type Function struct {
 	Name        string
-	NumArgs		int
 	Id			int
+	Channel		chan *Communication
+	State		bool
+	Children	map[int]*sync.WaitGroup // function composition waitgroup
+	//ActiveGroup	*sync.WaitGroup
 	Context
+	sync.RWMutex
 }
 
 //A Context object represents information about the implementation of
@@ -35,7 +49,7 @@ type Context struct {
 	TypeMap		map[*TypeVariable]*Type
 	TypeVarMap	map[*TypeVariable]*TypeVariable
 	Errors		map[*Type]bool
-	Children	map[*Function]bool
+	Children	map[int]map[*Function]bool
 	Parents		map[*Function]bool
 }
 

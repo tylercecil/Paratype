@@ -1,148 +1,32 @@
 package paraparse
 
 import (
-	"github.com/skelterjohn/gopp"
 	"Paratype/context"
-	"strings"
-	"reflect"
 	"fmt"
+	"strconv"
 )
 
-var _ = context.TypeClass{}
+var tvname int = 0
 
-type Base struct {
-	TypeclassDecls []TypeclassImpl
-	TypeDecls []Type
-	FuncDecls []Func
-}
-
-type Typeclass struct {
-	Name string
-}
-
-type TypeclassImpl struct {
-	Name Typeclass
-	Inherits []Typeclass
-	LastInherit Typeclass
-}
-
-type Type struct {
-	Name string
-	Implements []Typeclass
-	LastImplement Typeclass
-}
-
-type Func struct {
-	Name string
-	Arguments []interface{}
-	LastArgument interface{}
-	ReturnType interface{}
-	Constraints []Constraint
-	LastConstraint Constraint
-	Errors []Error
-	LastError Error
-	Expr
-}
-
-type Expr interface{}
-
-type Error struct {
-	Name string
-}
-
-type Constraint struct {
-	Name TypeVar
-	Tclasses []Typeclass
-	LastTClass Typeclass
-}
-
-type TypeVar struct {
-	Name string
-}
-
-type TypeName struct {
-	Name string
-}
-
-type FuncCall struct {
-	Name string
-	Arguments []interface{}
-	LastArgument interface{}
-}
-
-
-const paragopp = `
-## ignore comments that begin at beginning of line
-ignore: /^#.*\n/
-## ignore whitespace at beginning of line
-ignore: /^(?:[ \t])+/
-
-Start => {type=Base} {field=TypeclassDecls} <<TypeclassDecl>>* {field=TypeDecls} <<TypeDecl>>* {field=FuncDecls} <<FuncDecl>>+
-
-CommaSep => ','
-FuncName => <ident>
-TypeclassName => {type=Typeclass} {field=Name} <uident>
-TypeVar => {type=TypeVar} {field=Name} <typevar>
-TypeName => {type=TypeName} {field=Name} <ident>
-ErrorType => {type=Error} {field=Name} <ident>
-TypePlace => <TypeVar>
-TypePlace => <TypeName>
-FuncArgss => <TypePlace> <CommaSep>
-FuncArgs => {field=Arguments} <<FuncArgss>>* [{field=LastArgument} <<TypePlace>>]
-FuncErrorss => <ErrorType> <CommaSep>
-FuncErrors => {field=Errors} <<FuncErrorss>>* [{field=LastError} <<ErrorType>>]
-CallArgss => <Expr> <CommaSep>
-CallArgs => {field=Arguments} <<CallArgss>>* [{field=LastArgument} <<Expr>>]
-Expr => {type=FuncCall} {field=Name} <FuncName> '(' <CallArgs> ')'
-Expr => <TypePlace>
-TypeDecl => 'type ' <TypeName> ['implements ' {field=Implements} <<TypeClasss>>* {field=LastImplement} <<TypeclassName>>] '\n'
-TypeClasss => <TypeclassName> <CommaSep>
-TypeclassDecl => 'typeclass ' {field=Name} <<TypeclassName>> ['inherits ' {field=Inherits} <<TypeClasss>>* {field=LastInherit} <<TypeclassName>>] '\n'
-FuncConstraint => {type=Constraint} {field=Name} <<TypeVar>> '<' {field=Tclasses} <<TypeClasss>>* {field=LastTClass} <<TypeclassName>> '>'
-FuncConstraintss => <FuncConstraint> <CommaSep>
-FuncConstraints => 'constrain ' {field=Constraints} <<FuncConstraintss>>* {field=LastConstraint} <<FuncConstraint>>
-FuncSig => 'func ' {field=Name} <FuncName> [<FuncConstraints>] '(' <FuncArgs> ')' {field=ReturnType} <<TypePlace>> ['throws ' <FuncErrors>]
-FuncDecl => {type=Func} <FuncSig> '\n=' {field=Expr} <<Expr>> '\n'
-
-ident = /([a-z][a-zA-Z]*)/
-uident = /([N-Z][a-zA-Z]*)/
-typevar = /([A-M][a-zA-Z]*)/
-`
-func ParseCode() error {
-	df, err := gopp.NewDecoderFactory(paragopp, "Start")
+func Setup(code string) ([]*context.Function, error) {
+	out, err := ParseCode(code)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		return nil, err
 	}
-	df.RegisterType(TypeVar{})
-	df.RegisterType(TypeName{})
-	df.RegisterType(Func{})
-	df.RegisterType(FuncCall{})
-	df.RegisterType(Error{})
-	df.RegisterType(Typeclass{})
-	df.RegisterType(Constraint{})
-	//dec := df.NewDecoder(strings.NewReader("typeclass Num\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n"))
-	dec := df.NewDecoder(strings.NewReader("typeclass Num inherits Zin\ntypeclass Zin\ntype z implements Zin\nfunc foo(d, A) iNT\n=x\n"))
-	out := &Base{}
-	err = dec.Decode(out)
+	ReferenceMap, err := ParseTypeClassDecls(out)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		return nil, err
 	}
-	fmt.Printf("%#v\n", out)
-	fmt.Println(reflect.TypeOf(out.FuncDecls[0].LastError))
-
-	fmt.Printf("\n")
-	tclist, tlist, flist, err := ParseTypeClassDecls(out)
+	TypeMap, err := ParseTypeDecls(out, ReferenceMap)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		return nil, err
 	}
-	fmt.Printf("%+v\n", tlist)
-	fmt.Printf("%+v\n", tclist)
-	fmt.Printf("%+v\n", flist)
+	FuncSlice, err := ParseFuncDecls(out, ReferenceMap, TypeMap)
+	if err != nil {
+		return nil, err
+	}
 
-	return err
+	return FuncSlice, nil
 }
 
 // Once a paratype source file has been parsed it is contained in an object
@@ -151,7 +35,7 @@ func ParseCode() error {
 // function will parse that list and place the resulting output into a
 // TypeClass object from the context package. This enables the paratype
 // type checker.
-func ParseTypeClassDecls(data *Base) ([]context.TypeClass, []context.Type, []context.Function, error) {
+func ParseTypeClassDecls(data *Base) (map[string]*context.TypeClass, error) {
 	// The type context.TypeClass consists of two items:
 	// 		1) A Name
 	// 		2) A map of inherited TypeClasses where the key is a pointer to
@@ -178,7 +62,7 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, []context.Type, []con
 		for _, inherited := range elem.Inherits {
 			i_ref, ok := ReferenceMap[inherited.Name]
 			if !ok {
-				return nil, nil, nil, fmt.Errorf(
+				return nil, fmt.Errorf(
 					"ParseTypeClassDecls: TypeClass %s does not exist.",
 					 inherited.Name)
 			}
@@ -187,7 +71,7 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, []context.Type, []con
 		if elem.LastInherit.Name != "" {
 			i_ref, ok := ReferenceMap[elem.LastInherit.Name]
 			if !ok {
-				return nil, nil, nil, fmt.Errorf(
+				return nil, fmt.Errorf(
 					"ParseTypeClassDecls: TypeClass %s does not exist.",
 					elem.LastInherit.Name)
 			}
@@ -198,40 +82,202 @@ func ParseTypeClassDecls(data *Base) ([]context.TypeClass, []context.Type, []con
 		TypeClassSlice[i].Inherits[nil] = true
 	}
 
+	return ReferenceMap, nil
+}
+
+// Given the implementation and the implementation map will assign
+// the given implementation to the map with the correct reference to the
+// typeclass.8
+func AssignImplementation(impl Typeclass, implMap map[*context.TypeClass]bool, ReferenceMap map[string]*context.TypeClass) error {
+	if impl.Name != "" {
+		i_ref, ok := ReferenceMap[impl.Name]
+		if !ok {
+			return fmt.Errorf("ParseTypeDecl: TypeClass %s does not exist.",
+				impl.Name)
+		}
+		implMap[i_ref] = true
+	}
+	return nil
+}
+
+// This is responsible for taking the output of the ParseCode function and
+// pulling out the type declarations and filling out a type slice.
+func ParseTypeDecls(data *Base, ReferenceMap map[string]*context.TypeClass) (map[string]*context.Type, error) {
 	TypeSlice := make([]context.Type, len(data.TypeDecls))
+	TypeMap := make(map[string]*context.Type)
 
 	for i, elem := range data.TypeDecls {
 		TypeSlice[i].Name = elem.Name
+		TypeMap[elem.Name] = &TypeSlice[i]
 		TypeSlice[i].Implements = make(map[*context.TypeClass]bool)
 		for _, implemented := range elem.Implements {
-			i_ref, ok := ReferenceMap[implemented.Name]
-			if !ok {
-				return nil, nil, nil, fmt.Errorf(
-					"ParseTypeDecl: TypeClass %s does not exist.",
-					implemented.Name)
+			if err := AssignImplementation(implemented, TypeSlice[i].Implements, ReferenceMap); err != nil {
+				return nil, err
 			}
-			TypeSlice[i].Implements[i_ref] = true
 		}
-		if elem.LastImplement.Name != "" {
-			i_ref, ok := ReferenceMap[elem.LastImplement.Name]
-			if !ok {
-				return nil, nil, nil, fmt.Errorf(
-					"ParseTypeDecl: Typeclass %s does not exist.",
-					elem.LastImplement.Name)
-			}
-			TypeSlice[i].Implements[i_ref] = true
+		if err := AssignImplementation(elem.LastImplement, TypeSlice[i].Implements, ReferenceMap); err != nil {
+			return nil, err
 		}
 		TypeSlice[i].Implements[nil] = true
 	}
-
-	FuncSlice := make([]context.Function, len(data.FuncDecls))
-
-	for i, elem := range data.FuncDecls {
-		FuncSlice[i].Name = elem.Name
-		FuncSlice[i].Id = i
-		FuncSlice[i].NumArgs = len(elem.Arguments) + 2
-	}
-
-	return TypeClassSlice, TypeSlice, FuncSlice, nil
+	return TypeMap, nil
 }
 
+// Given an error name and a error map will add the error to the map.
+func AssignError(err Error, errMap map[*context.Type]bool) {
+	if err.Name != "" {
+		v := new(context.Type)
+		v.Name = err.Name
+		errMap[v] = true
+	}
+}
+
+func ResolveTypeVar(atlas map[string]map[int]*context.TypeVariable,
+	path string,
+	ftypemap map[*context.TypeVariable]*context.Type,
+	typeVarRef map[string]*context.TypeVariable,
+	typeMap map[string]*context.Type,
+	pos int,
+	arg interface{}) {
+
+	if arg != nil {
+		switch arg.(type) {
+		case TypeName:
+			T := MakeTypeVar(true)
+			ftypemap[T] = typeMap[arg.(TypeName).Name]
+			atlas[path][pos] = T
+
+		case TypeVar:
+			name := arg.(TypeVar).Name
+			v, ok := typeVarRef[name]
+			if ok {
+				atlas[path][pos] = v
+			} else {
+				T := MakeTypeVar(false)
+				ftypemap[T] = nil
+				atlas[path][pos] = T
+				typeVarRef[name] = T
+			}
+		}
+	}
+}
+
+func HandleFuncComposition(ReferenceMap map[string]*context.Function,
+	f *context.Function,
+	returnVar *context.TypeVariable,
+	expr FuncCall,
+	typeVarRef map[string]*context.TypeVariable,
+	typeMap map[string]*context.Type,
+	level int,
+) {
+	g := ReferenceMap[expr.Name]
+	if len(f.Children[level]) == 0 {
+		f.Children[level] = make(map[*context.Function]bool)
+	}
+	f.Children[level][g] = true
+	g.Parents[f] = true
+	pfg := context.FunctionsToPath(f, g)
+	f.Atlas[pfg] = make(map[int]*context.TypeVariable)
+	f.Atlas[pfg][0] = returnVar
+	expr.Arguments = append(expr.Arguments, expr.LastArgument)
+
+	for pos, arg := range expr.Arguments {
+		switch arg.(type) {
+		case FuncCall:
+			// make return typevar, pass to self
+			T := MakeTypeVar(false)
+			f.TypeMap[T] = nil
+			f.Atlas[pfg][pos+1] = T
+			HandleFuncComposition(ReferenceMap, f, T, arg.(FuncCall), typeVarRef, typeMap, level+1)
+
+		case TypeName:
+			// make new typevar
+			ResolveTypeVar(f.Atlas, pfg, f.TypeMap, typeVarRef, typeMap, pos+1, arg)
+
+		case TypeVar:
+			// match typeVarRef
+			ResolveTypeVar(f.Atlas, pfg, f.TypeMap, typeVarRef, typeMap, pos+1, arg)
+		}
+	}
+
+}
+
+// Will go through the list and parse the function declarations out and into
+// A slice of function objects.
+func ParseFuncDecls(data *Base, typeClassMap map[string]*context.TypeClass, typeMap map[string]*context.Type) ([]*context.Function, error) {
+	FuncSlice := make([]*context.Function, len(data.FuncDecls))
+	ReferenceMap := make(map[string]*context.Function)
+
+	for i, elem := range data.FuncDecls {
+		FuncSlice[i] = new(context.Function)
+		FuncSlice[i].Errors = make(map[*context.Type]bool)
+		FuncSlice[i].Name = elem.Name
+
+		// Reference map is needed later for the FindChildren function.
+		ReferenceMap[elem.Name] = FuncSlice[i]
+		FuncSlice[i].Parents = make(map[*context.Function]bool)
+		FuncSlice[i].Id = i
+		FuncSlice[i].NumArgs = len(elem.Arguments) + 2
+
+		// AssignError will fill out the Errors field
+		for _, errorT := range elem.Errors {
+			AssignError(errorT, FuncSlice[i].Errors)
+		}
+		AssignError(elem.LastError, FuncSlice[i].Errors)
+	}
+	// Once the ReferenceMap has been built it is important to go through
+	// the function declarations and enumerate the children and their depth.
+
+	for _, elem := range data.FuncDecls {
+		f := ReferenceMap[elem.Name]
+		pf := context.FunctionsToPath(f)
+		f.Atlas = make(map[string]map[int]*context.TypeVariable)
+		f.Children = make(map[int]map[*context.Function]bool)
+		f.TypeVarMap = make(map[*context.TypeVariable]*context.TypeVariable)
+		f.TypeMap = make(map[*context.TypeVariable]*context.Type)
+		f.Atlas[pf] = make(map[int]*context.TypeVariable)
+		typeVarRef := make(map[string]*context.TypeVariable)
+
+		elem.Constraints = append(elem.Constraints, elem.LastConstraint)
+		for _, arg := range elem.Constraints {
+			T := MakeTypeVar(false)
+			typeVarRef[arg.Name.Name] = T
+			arg.Tclasses = append(arg.Tclasses, arg.LastTClass)
+			for _, tc := range arg.Tclasses {
+				typeClassRef, ok := typeClassMap[tc.Name]
+				if !ok {
+					// ERROR
+				}
+				T.Constraints[ typeClassRef ] = true
+				delete(T.Constraints, nil)
+			}
+		}
+
+		ResolveTypeVar(f.Atlas, pf, f.TypeMap, typeVarRef, typeMap, 0, elem.ReturnType)
+
+		elem.Arguments = append(elem.Arguments, elem.LastArgument)
+		for pos, arg := range elem.Arguments {
+			ResolveTypeVar(f.Atlas, pf, f.TypeMap, typeVarRef, typeMap, pos+1, arg)
+		}
+
+		switch elem.Expr.(type) {
+		case FuncCall:
+			HandleFuncComposition(ReferenceMap, f, f.Atlas[pf][0], elem.Expr.(FuncCall), typeVarRef, typeMap, 0)
+
+		case TypeName:
+		case TypeVar:
+		}
+	}
+
+	return FuncSlice, nil
+}
+
+func MakeTypeVar(res bool) *context.TypeVariable {
+	s := new(context.TypeVariable)
+	s.Constraints = make(map[*context.TypeClass]bool)
+	s.Constraints[nil] = true
+	s.Resolved = res
+	s.Name = strconv.Itoa(tvname)
+	tvname++
+	return s
+}

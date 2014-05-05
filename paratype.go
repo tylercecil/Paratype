@@ -3,119 +3,135 @@ package main
 
 import (
 	"sync"
-	"time"
 	"fmt"
-	"math/rand"
 	"Paratype/context"
+	"runtime"
 )
 
-// Object to represent a communication
-type Communication struct {
-	path	string
-	context	*context.Context
-}
+var Functions map[*context.Function]bool
 
-// Object to represent the Function as an actor.
-// This is probably bad design (we have structs everywhere!)
-// but will be fine for now.
-type FunctionActor struct {
-	Function	context.Function
-	Channel		chan *Communication
+var NumThreadsActive int
 
-	// Temporary channel for testing
-	Tmp		chan string
+// should return implementations -- PARALLEL COMMUNICATION NEEDED
+// given a list of functions, run everything!
+func RunThings(f ...interface{}) []error {
+	Functions = make(map[*context.Function]bool)
 
-	state		bool
-	activeGroup	*sync.WaitGroup
-}
+	// one can pass in multiple Function pointers or a slice of them
+	// tests are usually multiple while the parser will generate a slice
+	switch f[0].(type) {
+	case []*context.Function:
+		for _, fun := range f[0].([]*context.Function) {
+			Functions[fun] = true
+		}
 
-
-// Global:
-////////////////////////////////////////////////////////////////
-// I am choosing to declare the slice of functions as global.
-// By doing this, I am providing channels to all functions in
-// their run routines. I am not confident this is the best way
-// as of right now, but it will do.
-const functionCount = 10
-var functions [functionCount]FunctionActor
-
-// A Functions main ruitine.
-func (f *FunctionActor) Run() {
-	f.makeActive(true)
-	time.Sleep(time.Duration(5)*time.Second)
-	id := rand.Int() % functionCount
-	f.SendMessage("A message!", id)
-	f.makeActive(false)
-	for {
-		fmt.Println("Waiting for message...")
-		message := <-f.Tmp
-		f.makeActive(true)
-		f.HandleMessage(message)
-		f.makeActive(false)
-	}
-}
-
-
-// Change the state of the function actor. This is used
-// for the halting conditions.
-func (f *FunctionActor) makeActive(state bool) {
-	if state == f.state {
-		return
+	case *context.Function:
+		for _, fun := range f {
+			Functions[fun.(*context.Function)] = true
+		}
 	}
 
-	if state {
-		f.activeGroup.Add(1)
-	} else {
-		f.activeGroup.Done()
-	}
-}
-
-// A psuedo constructor for FunctionActors.
-func (f *FunctionActor) Initialize(activeGroup *sync.WaitGroup) {
-	f.activeGroup = activeGroup
-	// Arbitrary buffer size. Note that channels block
-	// only when the buffer is full.
-	f.Channel = make(chan *Communication, 128)
-	f.Tmp = make(chan string, 128)
-	f.makeActive(true)
-}
-
-// The outline of the function that sends messages to other actors.
-// In the future the types of the arguments need to be changed. This 
-// is only a proof of concept.
-func (f *FunctionActor) SendMessage(message string, functionID int) {
-	functions[functionID].Tmp <- message
-}
-
-// Function to handle messages from functions.
-func (f *FunctionActor) HandleMessage(message string) {
-	fmt.Printf("Function %s recieived a message:\n\t%s",
-		f.Function.Name,
-		message)
-}
-	
-
-// Dummy main function.
-func main() {
-	// Make a set of junk functions
-	// Run all functions
-	// Wait to halt
-
-	readyToFinish := new(sync.WaitGroup)
+	//readyToFinish := new(sync.WaitGroup)
+	err := make(chan error, len(Functions))
 
 	fmt.Println("Welcome to Paratype!")
 
-	for i, fActor := range functions {
-		fmt.Printf("\tSpawning %d Function Actor\n", i)
-		fActor.Initialize(readyToFinish)
-		go fActor.Run()
+	for fActor := range Functions {
+		fActor.Initialize()
+	}
+	// avoid race conditions by having the first communication in Channels
+	// before starting
+	for fActor := range Functions {
+		fActor.InitialSendToChild()
+	}
+	for fActor := range Functions {
+		fmt.Printf("\tSpawning Function Actor for %v\n", fActor.Name)
+		if len(fActor.Parents) > 0 {
+			go fActor.Run(&Functions, err)
+			NumThreadsActive++
+		}
+		//defer close(fActor.Channel)
+		//defer close(fActor.FuncComp)
 	}
 
 	fmt.Println("Waiting for halting...")
-	// This is actually a race condition. It WOULD be sufficient
-	// to both make this check AND check if all channels are
-	// empty.
-	readyToFinish.Wait()
-	fmt.Println("Done!")
 
+	// errors
+	for er := range err {
+
+	}
+
+	// RACE CONDITION
+	// This is actually a race condition. It WOULD be sufficient
+	// to both make this check AND check if all Channels are
+	// empty.
+/*ShittyGoto:
+	for fActor := range Functions {
+		// close Channels, otherwise goroutines will hang
+		if len(fActor.Channel) > 0 {
+			goto ShittyGoto
+		}
+	}
+
+	readyToFinish.Wait()*/
+
+	fmt.Println("Done!", len(err))
+
+	// collect error messages
+	/*var s []error
+	if len(err) > 0 {
+		s = make([]error, len(err))
+		for i := 0; len(err) > 0; i++ {
+			s[i] = <-err
+		}
+	}*/
+
+	close(err)
+	return s
+}
+
+
+func RunThem(n int, f ...interface{}) {
+	runtime.GOMAXPROCS(n)
+	var funcs []*context.Function
+
+	switch f[0].(type) {
+	case []*context.Function:
+		for _, fun := range f[0].([]*context.Function) {
+			funcs = append(funcs, fun)
+		}
+
+	case *context.Function:
+		for _, fun := range f {
+			funcs = append(funcs, fun.(*context.Function))
+		}
+	}
+
+	errors := RunThings(funcs)
+	if len(errors) > 0 {
+		for _, e := range errors {
+			fmt.Println(e.Error())
+		}
+	} else {
+		fmt.Printf("\n===implementations===\n\n")
+		switch f[0].(type) {
+		case []*context.Function:
+			for _, fun := range f[0].([]*context.Function) {
+				fun.Finish()
+			}
+
+		case *context.Function:
+			for _, fun := range f {
+				fun.(*context.Function).Finish()
+			}
+		}
+
+		fmt.Printf("\n")
+	}
+}
+
+
+
+// Dummy main function.
+func main() {
 }
