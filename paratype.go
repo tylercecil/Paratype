@@ -145,11 +145,10 @@ func RunParatype(n int, f ...interface{}) {
 			fmt.Printf("%+v\n", e)
 		}
 	} else {
-		fmt.Printf("\n=== Implementations ===\n\n")
 
-		for _, f := range funcs {
+		/*for _, f := range funcs {
 			context.PrintAll(f)
-		}
+		}*/
 
 		noprint := false
 		for _, f := range funcs {
@@ -170,7 +169,6 @@ func RunParatype(n int, f ...interface{}) {
 			}
 		}
 
-		fmt.Printf("\n")
 	}
 }
 

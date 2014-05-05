@@ -45,7 +45,9 @@ func Test1(t *testing.T) {
 // func foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError
 // 		=x
 func Test2(t *testing.T) {
-	RunTest("typeclass Num\ntypeclass Zun\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n", false, t)
+	//RunTest("typeclass Num\ntypeclass Zun\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n", false, t)
+	RunTest("type int\ntype float\ntype boat\nfunc f(A) boat\n=g(m(A), h(A), int)\nfunc g(B, C, B) D\n=D\nfunc m(int) A\n=A\nfunc h(A) float\n=float\n", false, t)
+
 }
 
 // PASS

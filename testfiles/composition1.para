@@ -1,0 +1,11 @@
+type int
+type float
+type boat
+func f(A) boat
+=g(m(A), h(A), int)
+func g(B, C, B) D
+=D
+func m(int) A
+=A
+func h(A) float
+=float
