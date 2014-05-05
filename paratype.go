@@ -147,6 +147,10 @@ func RunParatype(n int, f ...interface{}) {
 	} else {
 		fmt.Printf("\n=== Implementations ===\n\n")
 
+		for _, f := range funcs {
+			context.PrintAll(f)
+		}
+
 		noprint := false
 		for _, f := range funcs {
 			// type errros that arose during collection of implementations

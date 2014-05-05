@@ -247,16 +247,19 @@ func (f *Function) CollectImplementations(g *Function) (implementations []map[*T
 
 	// search for explicit types of f's typevars in g
 	implementation := make(map[*TypeVariable]*Type)
+	noimpl := false
 	for _, typevar := range f.Atlas[pf] {
 		tt := FindFinalTypeVar(typevar, g)
 		if tt == nil {
+			noimpl = true
 			break
 		} else {
 			implementation[typevar] = g.TypeMap[tt]
 		}
 	}
 
-	if len(implementation) == len(f.Atlas[pf]) {
+
+	if noimpl == false {
 		implementations = append(implementations, implementation)
 	} else if len(g.Parents) == 0 {
 		// we are at a parent but it has no implementation for us?
