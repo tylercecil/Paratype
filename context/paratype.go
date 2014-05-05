@@ -10,9 +10,9 @@ import (
 // to be used as a goroutine
 func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
-	if f.WaitChildren != nil {
 
-		// function composition: 
+	if f.WaitChildren != nil {
+		// function composition:
 		// wait for each level of children to return
 		for {
 			f.WaitChildren.Wait()

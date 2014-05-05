@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"errors"
 	"strings"
+	"os"
 )
 
 // error messages that merging may throw
@@ -310,8 +311,14 @@ func PrintRecursiveArgument(
 	return fmt.Sprintf("%v(%v)", g.Name, strings.Join(r, ", "))
 }
 
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
 // print an implementation of f
-func (f *Function) PrintImplementation(typemap map[*TypeVariable]*Type) {
+func (f *Function) PrintImplementation(typemap map[*TypeVariable]*Type, outFile *os.File) {
 	s := make([]string, len(typemap)-1)
 	i := 0
 	for _, typ := range typemap {
@@ -329,15 +336,19 @@ func (f *Function) PrintImplementation(typemap map[*TypeVariable]*Type) {
 	}
 	var pf = FunctionsToPath(f)
 
-	fmt.Printf("func %v(%s) %v", f.Name, strings.Join(s, ", "), typemap[f.Atlas[pf][0]].Name)
+	_, err := fmt.Fprintf(outFile, "func %v(%s) %v", f.Name, strings.Join(s, ", "), typemap[f.Atlas[pf][0]].Name)
+	check(err)
 
 	if len(f.Errors) > 0 {
-		fmt.Printf(" throws %v", strings.Join(r, ", "))
+		_, err = fmt.Fprintf(outFile, " throws %v", strings.Join(r, ", "))
+		check(err)
 	}
-	fmt.Printf("\n= ")
+	_, err = fmt.Fprintf(outFile, "\n= ")
+	check(err)
 
 	if len(f.Children[0]) == 0 {
-		fmt.Printf("%v\n", typemap[f.Atlas[pf][0]].Name)
+		_, err = fmt.Fprintf(outFile, "%v\n", typemap[f.Atlas[pf][0]].Name)
+		check(err)
 	} else {
 		for tv, typ := range f.TypeMap {
 			if typ != nil {
@@ -346,7 +357,8 @@ func (f *Function) PrintImplementation(typemap map[*TypeVariable]*Type) {
 		}
 
 		for g := range f.Children[0] {
-			fmt.Printf("%v\n", PrintRecursiveArgument(f, g, 0, typemap))
+			_, err = fmt.Fprintf(outFile, "%v\n", PrintRecursiveArgument(f, g, 0, typemap))
+			check(err)
 		}
 	}
 }

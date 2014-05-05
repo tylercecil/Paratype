@@ -16,7 +16,7 @@ func RunTest(code string, file bool, t *testing.T) {
 		t.Error(err)
 		return
 	}
-	main.RunParatype(4, flist)
+	main.RunParatype(4, "testout",flist)
 }
 
 func TestFile(t *testing.T) {

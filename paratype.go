@@ -116,7 +116,7 @@ func RunActors(f ...interface{}) []error {
 // Takes the number of processors and a list of functions
 // Runs paratype and will print all implementations of functions to screen
 //
-func RunParatype(n int, f ...interface{}) {
+func RunParatype(n int, out string, f ...interface{}) {
 	runtime.GOMAXPROCS(n)
 	var funcs []*context.Function
 
@@ -162,10 +162,15 @@ func RunParatype(n int, f ...interface{}) {
 		}
 
 		if noprint == false {
+			fi, err := os.Create(out)
+			if err != nil {
+				panic(err)
+			}
+			defer fi.Close()
 			// we have working implementations! print 'em.
 			for _, f := range funcs {
 				for _, typemap := range f.Implementations {
-					f.PrintImplementation(typemap)
+					f.PrintImplementation(typemap, fi)
 				}
 			}
 		}
@@ -181,5 +186,5 @@ func main() {
 		fmt.Printf("%+v", err)
 		return
 	}
-	RunParatype(4, flist)
+	RunParatype(4, os.Args[2], flist)
 }
