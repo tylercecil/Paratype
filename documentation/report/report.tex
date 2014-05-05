@@ -39,6 +39,7 @@
 \usepackage{lstlang0} % go
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \usepackage{MnSymbol}
+\usepackage{hyperref}
 \lstset{
 	prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rhookswarrow}},
 	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rcurvearrowse\space}},
@@ -65,6 +66,14 @@
 \lstdefinelanguage{Paratype}{
 	morekeywords={func,inherits,implements,throws,type,typeclass,constrain,to},
 }
+\lstdefinelanguage{Gopp}{
+	%keywords={=>,=,*,+},
+	comment=[l]{\#\#},
+	morestring=[b]{'},
+%	moredelim=*[s]{(}{)},
+%	moredelim=*[s]{<}{>},
+}
+
 
 \begin{document}
 
@@ -428,7 +437,8 @@ Although Go provides nice concurrency features, we sometimes found ourselves fig
 % }
 % 		\end{lstlisting}
 	\subsection{Halting On Type Error Detection}
-		Even though an implementation for halting my work on valid input, it may fail for input which generate a type error. One of the advantages of performing the type checking process in parallel is that the type errors can be detected earlier. Once a type error is detected the threads must all exit gracefully. This is not a simple task due to the fact that goroutines can still perform writes on closed channels. Writes to closed channels will trigger a runtime error. A situation that is very common for input with type errors involves the main thread receiving an error and closing all of the channels. This means that the main threads needs to effectively communicate to all of the goroutines that they are done and should stop attempting to complete their contexts.
+		Even though an implementation for halting may work on valid input, it
+		may fail for input which generates a type error. One of the advantages of performing the type checking process in parallel is that the type errors can be detected earlier. Once a type error is detected the threads must all exit gracefully. This is not a simple task due to the fact that goroutines can still perform writes on closed channels. Writes to closed channels will trigger a runtime error. A situation that is very common for input with type errors involves the main thread receiving an error and closing all of the channels. This means that the main threads needs to effectively communicate to all of the goroutines that they are done and should stop attempting to complete their contexts.
 
 		The way this problem was approached involves adding two new variables to the actor. A WaitGroup signifying that execution should be paused and a boolean that signifies whether an actor should terminate itself. The WaitGroup is initially zero meaning that all goroutines which call wait can continue to execute without blocking on the call. This is important because all of the goroutines call wait before performing any writes to the channel. If an error is received then the main thread increments the WaitGroup. This pauses all of the threads before they can write to the channel. The main thread then iterates over all goroutines and sets the boolean that signifies that the thread should terminate. All of the goroutines then exit upon observing that the flag is set.
 	\subsection{Function Composition}
@@ -473,7 +483,12 @@ on a wait call that unblocks once the semaphore is equal to zero, then knowing
 that the respective level of composition is done resolving and that it may go
 up one level.
 
+\section{Verification}
+	When testing Paratype it is useful to know what the correct output should be. All of our testing was performed with curated examples that were picked to intentionally pose a problem and ensure that each of the subsystems were working correctly. When the completion is performed the output is written to a file. These files can then be checked for correctness. Go provides a useful testing package that allows for executing all tests or select tests. It launches the threads and gives details about execution and gives the state of the goroutines during an error. This is incredibly useful and was used often to test the hand made examples. It was not uncommon to also repeatedly run these tests to ensure they were deterministic in halting and not causing exceptional situations.
 \section{Analysis and Model}
+%  variables: number of functions, function calls, contexts, partial contexts,
+%  undecidability, number of physical cores available, number of types and
+%  type classes, etc
 
 Even though we expected a good amount of speedup from our model, initial
 results are not hopeful: For very small examples, speedup is limited to two or
@@ -553,11 +568,37 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 %
 % -> number of paths times number of nodes in each path
 %
+%  gopp parser hangs in some cases (not our focus, so we don't care)
+
+% just some notes to use for empirical analysis later
+
+%  Complexity of f.Update(g) algorithm if g is parent of f:
+%  \[ U(f, g) = \sum_{\textrm{v in args of g and w replaces v}} V(v, w))
+%  \leq O(|\textrm{num args of g}| \times |\textrm{num typeclasses}|) \]
+
+%  UpdateTypevar (v and w merge to w):
+%  \[ V(v, w) = O(|\textrm{num of typeclasses on w}|) \]
+
+%  Complexity of f.Update(g) if g is parent of f:
+%  \[ \leq O(|\textrm{num atlas entries of g}| \times |\textrm{num typeclasses}|) \]
+
+%  All of these multiplied by hashmap access time at worst $O(\textrm{size of
+%  map})$ each
+
+%  how often is f.Update(g) called?
+
+%  -> context path object travels down every path!
+
+%  -> number of paths times number of nodes in each path
+
 \section{Conclusion}
 
 \appendix
 \section{Finalized Grammar}
-	\begin{lstlisting}
+
+This is a gopp grammar. See \url{https://github.com/skelterjohn/gopp}.
+
+\begin{lstlisting}[language=Gopp]
 ## ignore comments that begin at beginning of line
 ignore: /^#.*\n/
 ## ignore whitespace at beginning of line
@@ -597,10 +638,12 @@ typevar = /([A-M][a-zA-Z]*)/
 
 \section{Team Members and Their Contributions}
 	\begin{itemize}
-		\item[Ben]
+		\item[Ben] Ben worked on halting and function composition as well as
+			parsing
 		\item[Chris] Chris worked on getting function composition working and
 			the merging algorithm. 
-		\item[Tyler]
+		\item[Tyler] Tyler worked on setting up communications between the
+			function actors as well as initial halting
 	\end{itemize}
 \section{Things Learnt From This Project}
 
@@ -611,5 +654,7 @@ Google Go, such as communication channels' closure acting as an implicit
 barrier.
 
 We have also learnt that relying on software libraries for certain things (in
-our case parsing) is not always as useful as it might seem.
+our case parsing) is not always as useful as it might seem. Getting the gopp
+grammar parser to work correctly took a lot more time than it should have and
+set us back by quite a bit.
 \end{document}
