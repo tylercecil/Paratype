@@ -36,21 +36,6 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 	return
 }
 
-// Change the state of the function actor. This is used
-// for the halting conditions.
-/*func (f *Function) makeActive(state bool) {
-	if state == f.State {
-		return
-	}
-
-	f.State = state
-	if state {
-		f.ActiveGroup.Add(1)
-	} else {
-		f.ActiveGroup.Done()
-	}
-}*/
-
 // A pseudo constructor for Functions.
 func (f *Function) Initialize() {
 	//f.ActiveGroup = activeGroup
