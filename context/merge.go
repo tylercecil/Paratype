@@ -17,7 +17,7 @@ var errorMsgs = [...]string{
 
 func PrintAll(f *Function) {
 	fmt.Printf("\nTypemap of %v\n", f.Name)
-	PrintTypeMap(f)
+	PrintTypeMap(f.TypeMap)
 	fmt.Printf("\nAtlas of %v\n", f.Name)
 	PrintAtlas(f)
 	fmt.Printf("\nTypevarmap of %v\n", f.Name)
@@ -25,8 +25,8 @@ func PrintAll(f *Function) {
 
 }
 
-func PrintTypeMap(g *Function) {
-	for tv, t := range g.TypeMap {
+func PrintTypeMap(typemap map[*TypeVariable]*Type) {
+	for tv, t := range typemap {
 		fmt.Printf("%+v : %+v\n", tv, t)
 	}
 }
@@ -316,7 +316,9 @@ func (f *Function) PrintImplementation(typemap map[*TypeVariable]*Type) {
 		fmt.Printf("%v\n", typemap[f.Atlas[pf][0]].Name)
 	} else {
 		for tv, typ := range f.TypeMap {
-			typemap[tv] = typ
+			if typ != nil {
+				typemap[tv] = typ
+			}
 		}
 
 		for g := range f.Children[0] {
