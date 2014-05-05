@@ -114,7 +114,7 @@ func RunThem(n int, f ...interface{}) {
 			fmt.Printf("%+v\n", e)
 		}
 	} else {
-		fmt.Printf("\n===implementations===\n\n")
+		fmt.Printf("\n=== Implementations ===\n\n")
 
 		noprint := false
 		for _, f := range funcs {
