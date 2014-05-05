@@ -129,7 +129,7 @@ inference, code analysis, parallel, actor model}
 
 ``Compile one time, run many times: that means compilers do not need to be
 fast, right?'' Luckily, no software engineer thinks this way. In fact,
-compilation speed is a concern of many budding languages. Aside from lexing, 
+compilation speed is a concern of many budding languages. Aside from lexing,
 typically the slowest part of compilation, modern
 languages spend an embarrassing amount of time resolving
 types. % CITE (tyler)
@@ -207,7 +207,7 @@ func foo(int, T, R) float throws errorType
 \end{lstlisting}
 
 An example of a partial context is shown in Listing~\ref{lst:cbyparent}. The
-function \lstinline!bar! is declared as accepting and returns a \lstinline!T!
+function \lstinline!bar! is declared as accepting and returning a \lstinline!T!
 type.  This introduces a partial context due to \lstinline!T! being a type
 variable. The parameter type for \lstinline!bar! is provided by its parent
 function \lstinline!foo!. This also completes the return type of
@@ -329,8 +329,8 @@ Merging type information from $C_f$ into $C_h$ is a tricky task. There are two
 cases:
 \begin{enumerate}
 	\item If $h$ is a direct parent of $f$, the function call from $h$ to $f$
-		can be matched to $f$'s declaration. 
-		
+		can be matched to $f$'s declaration.
+
 		$f$ will override the type
 		variables of that function call with the ones generated through its
 		declaration and remember which ones it replaced by storing them in a
@@ -347,7 +347,10 @@ cases:
 
 Ultimately, this allows type variables from the leaf nodes of the call graph to
 ``trickle up'' through the nodes until finally, the roots of the call graph and
-every node in between is related to a leaf. 
+every node in between is related to a leaf.
+
+
+
 
 \section{Methods}
 
@@ -355,9 +358,9 @@ every node in between is related to a leaf.
 
 Due to the actor model, the problem lends itself nicely to a distributed memory
 approach; however, it is usually commodity hardware that is used for
-compilation. Therefore, we propose to use Google Go due to its concept of
+compilation. Therefore, used Google Go due to its concept of
 \texttt{goroutines}. A \texttt{goroutine} is a lightweight thread that is
-managed by Go during runtime.
+managed by the Go runtime.
 
 \begin{lstlisting}[caption=Small \texttt{goroutine} example with
 \texttt{channels},language=Go,label=lst:goroutine]
@@ -385,18 +388,44 @@ memory. This can be seen in Listing~\ref{lst:goroutine}. Of course, unlike in
 the example, the channel may also be buffered and would thus only block sending
 when the buffer is full and receiving when the buffer is empty. This is one of
 the reasons that we chose Google Go: it allows us to use message passing
-without the overhead of actually sending the message.
+with a high degree of flexibility without the overhead of actually sending the message.
 
 % TODO: talk about interesting go features like WaitGroups etc
 % TODO: was Go a good idea?
 
 The \texttt{goroutines} fit the actor model of type resolution nicely since
-the threads are lightweight and communication is easy to arrange. We may even
-take advantage of the fact that not messages but references are passed through
-\texttt{channels}. This way, a specific context will update everywhere that it
+the threads are lightweight and communication is easy to arrange. We found ourselves taking advantage of the fact that messages sent and received through \texttt{channels} are actually references to shared memory. This way, a specific context will update everywhere that it
 is referenced and we must only notify other actors that something changed
 instead of sending the context again. This reduces communication overhead while
 still functioning as a message passing system.
+
+Go also provides concurrency features that are useful for managing state. One of these concurrency primitives is the \texttt{WaitGroup}. A WaitGroup is similar to a semaphore. All of the threads are given a pointer to the WaitGroup upon their creation. The WaitGroup then provides basic functionality such as \lstinline!WaitGroup.Add()! and \lstinline!WaitGroup.Done()!. The add method increments a counter in the WaitGroup. When the WaitGroup contains a non-zero number all of the threads that called \lstinline!WaitGroup.Wait()! are blocked. Invoking the done method simply decrements the counter. This has proved useful for managing the state of the threads.
+
+% TODO : Discuss Clojure as a viable alternative and analyze whether the decision to use Go was the correct one.
+
+Although Go provides nice concurrency features, we sometimes found ourselves fighting with the type system and verbosity of the language. Another consideration for the implementation was \texttt{Clojure}. Clojure is a lisp variant that runs on the Java Virtual Machine. There is a library for Clojure, \texttt{core.async}, which implements most of the concurrency features modeled after the Go concurrency system. This brings the same shared memory channels with the advantages of the concise and dynamic nature of Clojure. Clojure is also built for concurrency boasts immutable data types to provide safety in parallelized code. One of the issues with this is that Paratype is a very state driven application. This could lead to performance faults when using a language that is not built for modeling mutable state.
+
+\section{Problems Induced by Parallelization}
+	\subsection{Making Halting Deterministic}
+		An issue when performing the type completion and analysis in parallel is knowing when all of the operations are completed and halting can commence. Halting in the initial implementation of Paratype was simple but not effective. Each of the functions spawned was added to a \texttt{WaitGroup}. At the start of every actors go loop they would mark themselves active by incrementing the WaitGroup. Once they reached the end of their go loop they would decrement the WaitGroup marking themselves inactive. This happened repeatedly in a loop. The main function would then wait for all actors to become inactive. If they were all inactive it would check if all of the channels were empty. This worked in some situations but had a race condition that would cause problems. The reason for this race condition is the state could change in between checking the WaitGroup and checking the channels.
+		The updated iteration of halting requires more keeping track of state. Actors which do not have parents only need to send to their children and they are completed. The signaling of the completion is done through a flag in one of the communication messages.
+	\subsection{Halting On Type Error Detection}
+	\subsection{Function Composition}
+		One of the issues induced by parallelization is the handling of function composition. Consider the code snippet shown in Listing ~\ref{lst:composition}
+		\begin{lstlisting}[caption=Small Example of function composition, language=Paratype, label=lst:composition]
+type int
+type float
+type boat
+func f(A) boat
+	= g(m(A), h(A), int)
+func g(B, C, B) D
+	= D
+func m(int) A
+	= A
+func h(A) float
+	= float
+		\end{lstlisting}
+		In the initial implementation of Paratype a function with no parents did not need to have a thread spawned for itself. Instead it would seed the children with its initial context. This became problematic when the implementation of function composition began. With this implementation the children would all evaluate their own contexts and replace values in the parents typevar map. This would cause the evaluation to be unresolvable due to inability to correctly map type variables. This was solved using a technique we refer to as ``in-out evaluation''.
 
 \section{Analysis and Model}
 
@@ -409,10 +438,10 @@ still functioning as a message passing system.
 just some notes to use for empirical analysis later
 
  Complexity of f.Update(g) algorithm if g is parent of f:
- \[ U(f, g) = \sum_{\textrm{v in args of g and w replaces v}} V(v, w)) 
+ \[ U(f, g) = \sum_{\textrm{v in args of g and w replaces v}} V(v, w))
  \leq O(|\textrm{num args of g}| \times |\textrm{num typeclasses}|) \]
 
- UpdateTypevar (v and w merge to w): 
+ UpdateTypevar (v and w merge to w):
  \[ V(v, w) = O(|\textrm{num of typeclasses on w}|) \]
 
  Complexity of f.Update(g) if g is parent of f:
@@ -420,16 +449,18 @@ just some notes to use for empirical analysis later
 
  All of these multiplied by hashmap access time at worst $O(\textrm{size of
  map})$ each
- 
- how often is f.Update(g) called? 
 
- -> context path object travels down every path! 
+ how often is f.Update(g) called?
+
+ -> context path object travels down every path!
 
  -> number of paths times number of nodes in each path
 
 \section{Conclusion}
 
 \appendix
+\section{Finalized Grammar}
+
 \section{Team Members and Their Contributions}
 
 \section{Things Learnt From This Project}
