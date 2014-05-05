@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"os"
 	"flag"
+	"time"
 )
 
 var Functions map[*context.Function]bool
@@ -184,6 +185,7 @@ func main() {
 	printPtr := flag.Bool("print", false, "Should I print?")
 	inFilePtr := flag.String("infile", "", "File to operate on.")
 	outFilePtr := flag.String("outfile", "", "File to output to.")
+	timePtr := flag.Bool("time", false, "Should I time?")
 
 	flag.Parse()
 
@@ -196,11 +198,21 @@ func main() {
 		fmt.Println("ERROR: OH NO! Provide a file to write results to!")
 		return
 	}
-
+	begin := time.Now().UnixNano()
 	flist, err := paraparse.Setup(*inFilePtr, true)
+	end := time.Now().UnixNano()
+
+	if *timePtr == true {
+		fmt.Printf("SETUP: %d ", end - begin)
+	}
 	if err != nil {
 		fmt.Printf("%+v", err)
 		return
 	}
+	begin = time.Now().UnixNano()
 	RunParatype(*procsPtr, *outFilePtr, *printPtr, flist)
+	end = time.Now().UnixNano()
+	if *timePtr == true {
+		fmt.Printf("COMPLETION: %d\n", end - begin)
+	}
 }
