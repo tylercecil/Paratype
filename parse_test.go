@@ -10,14 +10,21 @@ import (
 
 
 // Used to run a test and check the error. The data is then printed.
-func RunTest(code string, t *testing.T) {
-	flist, err := paraparse.Setup(code)
+func RunTest(code string, file bool, t *testing.T) {
+	flist, err := paraparse.Setup(code, file)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	main.RunParatype(4, flist)
+}
 
-	main.RunParatype(1, flist)
+func TestFile(t *testing.T) {
+	RunTest("x.para", true, t)
+}
+
+func TestString(t *testing.T) {
+	RunTest("type int\ntype float\nfunc f() int\n=g(int,float)\nfunc g(A,B) A throws errorType\n=A\n", false, t)
 }
 
 // PASS
@@ -27,7 +34,7 @@ func RunTest(code string, t *testing.T) {
 // func foo(d, A) iNT
 // 		=x
 func Test1(t *testing.T) {
-	RunTest("typeclass Num inherits Zin\ntypeclass Zin\ntype z implements Zin\nfunc foo(d, A) iNT\n=x\n", t)
+	RunTest("typeclass Num inherits Zin\ntypeclass Zin\ntype z implements Zin\nfunc foo(d, A) iNT\n=x\n", false, t)
 }
 
 // PASS
@@ -38,7 +45,7 @@ func Test1(t *testing.T) {
 // func foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError
 // 		=x
 func Test2(t *testing.T) {
-	RunTest("typeclass Num\ntypeclass Zun\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n", t)
+	RunTest("typeclass Num\ntypeclass Zun\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n", false, t)
 }
 
 // PASS
@@ -53,7 +60,7 @@ func Test2(t *testing.T) {
 // func goo(x, y) float throws veryBigError, someError, moreError
 // 		=x
 func TestMultFuncs(t *testing.T) {
-	RunTest("typeclass Num\ntypeclass Zun\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNt throws bigError, gError\n=x\nfunc goo(x, y) float throws veryBigError, someError, moreError\n=x\n", t)
+	RunTest("typeclass Num\ntypeclass Zun\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNt throws bigError, gError\n=x\nfunc goo(x, y) float throws veryBigError, someError, moreError\n=x\n", false, t)
 }
 
 // PASS
@@ -62,7 +69,7 @@ func TestMultFuncs(t *testing.T) {
 // func foo constrain A <Num> (y) int
 // 		= y
 func TestSimpleConstraint(t *testing.T) {
-	RunTest("typeclass Num\ntype y implements Num\nfunc foo constrain A <Num> (y) int\n=y\n", t)
+	RunTest("typeclass Num\ntype y implements Num\nfunc foo constrain A <Num> (y) int\n=y\n", false, t)
 }
 
 // PASS
@@ -72,7 +79,7 @@ func TestSimpleConstraint(t *testing.T) {
 // func bar(int) B
 // 		=int
 func TestComposedFuncs(t *testing.T) {
-	RunTest("typeclass Num\ntype int\ntype d\nfunc foo(d, A) int\n=bar(A)\nfunc bar(int) B\n=int\n", t)
+	RunTest("typeclass Num\ntype int\ntype d\nfunc foo(d, A) int\n=bar(A)\nfunc bar(int) B\n=int\n", false, t)
 }
 
 // PASS
@@ -87,24 +94,20 @@ func TestComposedFuncs(t *testing.T) {
 // func baq() B
 //		=B
 func TestParents(t *testing.T) {
-	RunTest("type d\ntype int\nfunc foo(d, A) int\n=bar(baz(ban(A)))\nfunc bar(int) B\n=int\nfunc baz(int) B\n=int\nfunc ban(int) B\n=baq()\nfunc baq() B\n=B\n", t)
+	RunTest("type d\ntype int\nfunc foo(d, A) int\n=bar(baz(ban(A)))\nfunc bar(int) B\n=int\nfunc baz(int) B\n=int\nfunc ban(int) B\n=baq()\nfunc baq() B\n=B\n", false, t)
 }
 
 func TestReallySimple(t *testing.T) {
-	RunTest("func foo(A) A\n=A\n", t)
+	RunTest("func foo(A) A\n=A\n", false, t)
 }
 
 func TestFavorite(t *testing.T) {
-	RunTest("typeclass Zat inherits Num\ntypeclass Num\ntype float implements Num\ntype int implements Num\nfunc f() float\n=g(int)\nfunc q() int\n=g(float)\nfunc g constrain A<Zat> (A) B\n=h(A)\nfunc h(A) B\n=B\n", t)
+	RunTest("typeclass Zat inherits Num\ntypeclass Num\ntype float implements Num\ntype int implements Num\nfunc f() float\n=g(int)\nfunc q() int\n=g(float)\nfunc g constrain A<Zat> (A) B\n=h(A)\nfunc h(A) B\n=B\n", false, t)
 
 }
 
 func TestComposition(t *testing.T) {
-	RunTest("typeclass Num\ntype int implements Num\ntype float implements Num\nfunc f(B, B) int\n=bar(baz(B), ban(B))\nfunc bar(A, A) int\n=int\nfunc baz(float) int\n=int\nfunc ban(int) int\n=int\n", t)
-}
-
-func TestThing(t *testing.T) {
-	RunTest("type boat\ntype int\ntype float\nfunc f(A) boat\n=g(m(A), h(A))\nfunc g(float, int) boat\n=boat\nfunc m(B) C\n=C\nfunc h(boat) B\n=B\n", t)
+	RunTest("typeclass Num\ntype int implements Num\ntype float implements Num\nfunc f(B, B) int\n=bar(baz(B), ban(B))\nfunc bar(A, A) int\n=int\nfunc baz(float) int\n=int\nfunc ban(int) int\n=int\n", false, t)
 }
 
 // PASS
@@ -116,7 +119,7 @@ func TestThing(t *testing.T) {
 // func baz(int) A
 // 		=int
 func TestChildren(t *testing.T) {
-	RunTest("type int\ntype float\nfunc foo(A) int\n=bar(baz(A), float)\nfunc bar(int, float) int\n=int\nfunc baz(int) int\n=int\n", t)
+	RunTest("type int\ntype float\nfunc foo(A) int\n=bar(baz(A), float)\nfunc bar(int, float) int\n=int\nfunc baz(int) int\n=int\n", false, t)
 }
 
 // FAIL
@@ -128,7 +131,7 @@ func TestChildren(t *testing.T) {
 // func baz(int) int
 // 		=int
 func TestNonExistentChild(t *testing.T) {
-	RunTest("func foo(A) int\n=bar(bal(A), float)\nfunc bar(int, float) int\n=int\nfunc baz(int) int\n=int\n", t)
+	RunTest("func foo(A) int\n=bar(bal(A), float)\nfunc bar(int, float) int\n=int\nfunc baz(int) int\n=int\n", false, t)
 }
 
 // PASS
@@ -138,7 +141,7 @@ func TestNonExistentChild(t *testing.T) {
 // func bar(A) int
 // 		=int
 func TestOnlyChild(t *testing.T) {
-	RunTest("func foo(A) int\n=bar(A)\nfunc bar(A) int\n=int\n", t)
+	RunTest("func foo(A) int\n=bar(A)\nfunc bar(A) int\n=int\n", false, t)
 }
 
 // Should fail because Zin does not exist.
@@ -148,6 +151,6 @@ func TestOnlyChild(t *testing.T) {
 // func foo(d, A) iNT
 // 		=d
 func TestFail1(t *testing.T) {
-	RunTest("typeclass Num inherits Zin\ntypeclass Yin\ntype z implements Yin\nfunc foo(d, A) iNT\n=d\n", t)
+	RunTest("typeclass Num inherits Zin\ntypeclass Yin\ntype z implements Yin\nfunc foo(d, A) iNT\n=d\n", false, t)
 }
 

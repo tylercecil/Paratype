@@ -1,0 +1,6 @@
+type int
+type float
+func f() int
+=g(int,float)
+func g(A,B) A throws errorType
+=A

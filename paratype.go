@@ -5,7 +5,9 @@ import (
 	"sync"
 	"fmt"
 	"Paratype/context"
+	"Paratype/paraparse"
 	"runtime"
+	"os"
 )
 
 var Functions map[*context.Function]bool
@@ -14,7 +16,7 @@ var NumThreadsActive int
 
 // Given a list of functions, will spawn function actors and resolve types
 // Returns a list of type errors collected
-// 
+//
 func RunActors(f ...interface{}) []error {
 	Functions = make(map[*context.Function]bool)
 
@@ -22,7 +24,7 @@ func RunActors(f ...interface{}) []error {
 	// tests are usually multiple while the parser will generate a slice; i.e.
 	// RunActors(f, g, h)
 	// and
-	// RunActors([]*context.Function{f, g, h}) 
+	// RunActors([]*context.Function{f, g, h})
 	// are equivalent
 	switch f[0].(type) {
 	case []*context.Function:
@@ -113,15 +115,15 @@ func RunActors(f ...interface{}) []error {
 
 // Takes the number of processors and a list of functions
 // Runs paratype and will print all implementations of functions to screen
-// 
+//
 func RunParatype(n int, f ...interface{}) {
 	runtime.GOMAXPROCS(n)
 	var funcs []*context.Function
 
-	// f may either be an array of Function pointers or just many of them; i.e. 
+	// f may either be an array of Function pointers or just many of them; i.e.
 	// RunParatype(4, f, g, h)
 	// and
-	// RunParatype(4, []*context.Function{f, g, h}) 
+	// RunParatype(4, []*context.Function{f, g, h})
 	// are equivalent
 	switch f[0].(type) {
 	case []*context.Function:
@@ -170,4 +172,10 @@ func RunParatype(n int, f ...interface{}) {
 
 // Dummy main function.
 func main() {
+	flist, err := paraparse.Setup(os.Args[1], true)
+	if err != nil {
+		fmt.Printf("%+v", err)
+		return
+	}
+	RunParatype(4, flist)
 }
