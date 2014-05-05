@@ -214,10 +214,11 @@ function \lstinline!foo!. This also completes the return type of
 \lstinline!bar!.
 
 \begin{lstlisting}[caption=Explicit context provided by parent,language=Paratype,label=lst:cbyparent]
-func foo(int x, int y) int
-    = bar(y)
+type int
+func foo(int, int) int
+    = bar(int)
 
-func bar(T d) T
+func bar(T) T
     = T
 \end{lstlisting}
 
@@ -230,10 +231,12 @@ definition contains the result of calling \lstinline!bar! as the return value.
 return type of \lstinline!int!.
 
 \begin{lstlisting}[caption=Explicit context provided by child,language=Paratype,label=lst:cbychild]
-func foo(T a, S b) R
-    = bar(a, b)
+type float
+type int
+func foo(T, S) R
+    = bar(T, S)
 
-func bar(float a, float b) int
+func bar(float, float ) int
     = int
 \end{lstlisting}
 
@@ -250,10 +253,11 @@ resolves the return type for \lstinline!barbar!. The evaluation of these
 partial contexts is a non-trivial task.
 
 \begin{lstlisting}[caption=Explicit context provided by child and parent,language=Paratype,label=lst:cbyboth]
-func foo(T a, int b) int
-    = barbar(a, b)
+type int
+func foo(T, int) int
+    = barbar(T, int)
 
-func barbar(int a, T b) R
+func barbar(int, T) R
     = R
 \end{lstlisting}
 
@@ -269,14 +273,17 @@ resolving to type \lstinline!float!.  In this situation these are both valid
 and should not be considered a type error.
 
 \begin{lstlisting}[caption=Need to maintain partial contexts,language=Paratype,label=lst:partial]
-func foo(int x) T
-    = bar(x)
+type char
+type int
+type float
+func foo(int) T
+    = bar(int)
 
-func bar(T b) char
+func bar(T) char
     = char
 
-func baz(float b) T
-    = bar(b)
+func baz(float) T
+    = bar(float)
 \end{lstlisting}
 
 Although contexts can be provided by both the parent and the child, there are
@@ -289,15 +296,15 @@ there is not enough information to resolve a full context for either
 \lstinline!bar! or \lstinline!foo!.
 
 \begin{lstlisting}[caption=Unhalting context resolution,language=Paratype,label=lst:unhalting]
-func foo(T b) int
-    = bar(b)
+type int
+func foo(T) int
+    = bar(T)
 
-func bar(T a) int
+func bar(T) int
     = int
 \end{lstlisting}
 
-Introducing errors into the grammar adds more complexity since they need to
-propagate up the call stack. In the example shown in Listing~\ref{lst:errors},
+Introducing errors into the grammar adds more complexity. In the example shown in Listing~\ref{lst:errors},
 all parent functions of \lstinline!bar! need to have \lstinline!weirdError! in
 their fully resolved contexts.
 
@@ -474,9 +481,50 @@ just some notes to use for empirical analysis later
 
 \appendix
 \section{Finalized Grammar}
+	\begin{lstlisting}
+## ignore comments that begin at beginning of line
+ignore: /^#.*\n/
+## ignore whitespace at beginning of line
+ignore: /^(?:[ \t])+/
+
+Start => {type=Base} {field=TypeclassDecls} <<TypeclassDecl>>* {field=TypeDecls} <<TypeDecl>>* {field=FuncDecls} <<FuncDecl>>+
+
+CommaSep => ','
+FuncName => <ident>
+TypeclassName => {type=Typeclass} {field=Name} <uident>
+TypeVar => {type=TypeVar} {field=Name} <typevar>
+TypeName => {type=TypeName} {field=Name} <ident>
+ErrorType => {type=Error} {field=Name} <ident>
+TypePlace => <TypeVar>
+TypePlace => <TypeName>
+FuncArgss => <TypePlace> <CommaSep>
+FuncArgs => {field=Arguments} <<FuncArgss>>* [{field=LastArgument} <<TypePlace>>]
+FuncErrorss => <ErrorType> <CommaSep>
+FuncErrors => {field=Errors} <<FuncErrorss>>* [{field=LastError} <<ErrorType>>]
+CallArgss => <Expr> <CommaSep>
+CallArgs => {field=Arguments} <<CallArgss>>* [{field=LastArgument} <<Expr>>]
+Expr => {type=FuncCall} {field=Name} <FuncName> '(' <CallArgs> ')'
+Expr => <TypePlace>
+TypeDecl => 'type ' <TypeName> ['implements ' {field=Implements} <<TypeClasss>>* {field=LastImplement} <<TypeclassName>>] '\n'
+TypeClasss => <TypeclassName> <CommaSep>
+TypeclassDecl => 'typeclass ' {field=Name} <<TypeclassName>> ['inherits ' {field=Inherits} <<TypeClasss>>* {field=LastInherit} <<TypeclassName>>] '\n'
+FuncConstraint => {type=Constraint} {field=Name} <<TypeVar>> '<' {field=Tclasses} <<TypeClasss>>* {field=LastTClass} <<TypeclassName>> '>'
+FuncConstraintss => <FuncConstraint> <CommaSep>
+FuncConstraints => 'constrain ' {field=Constraints} <<FuncConstraintss>>* {field=LastConstraint} <<FuncConstraint>>
+FuncSig => 'func ' {field=Name} <FuncName> [<FuncConstraints>] '(' <FuncArgs> ')' {field=ReturnType} <<TypePlace>> ['throws ' <FuncErrors>]
+FuncDecl => {type=Func} <FuncSig> '\n=' {field=Expr} <<Expr>> '\n'
+
+ident = /([a-z][a-zA-Z]*)/
+uident = /([N-Z][a-zA-Z]*)/
+typevar = /([A-M][a-zA-Z]*)/
+	\end{lstlisting}
 
 \section{Team Members and Their Contributions}
-
+	\begin{itemize}
+		\item[Ben]
+		\item[Chris]
+		\item[Tyler]
+	\end{itemize}
 \section{Things Learnt From This Project}
 
 \end{document}
