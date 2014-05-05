@@ -8,6 +8,8 @@ import (
 	"Paratype/paraparse"
 	"runtime"
 	"os"
+	"flag"
+	"time"
 )
 
 var Functions map[*context.Function]bool
@@ -116,7 +118,7 @@ func RunActors(f ...interface{}) []error {
 // Takes the number of processors and a list of functions
 // Runs paratype and will print all implementations of functions to screen
 //
-func RunParatype(n int, out string, f ...interface{}) {
+func RunParatype(n int, out string, hprint bool, f ...interface{}) {
 	runtime.GOMAXPROCS(n)
 	var funcs []*context.Function
 
@@ -160,7 +162,7 @@ func RunParatype(n int, out string, f ...interface{}) {
 			}
 		}
 
-		if noprint == false {
+		if noprint == false && hprint == true {
 			fi, err := os.Create(out)
 			if err != nil {
 				panic(err)
@@ -179,10 +181,38 @@ func RunParatype(n int, out string, f ...interface{}) {
 
 // Dummy main function.
 func main() {
-	flist, err := paraparse.Setup(os.Args[1], true)
+	procsPtr := flag.Int("procs", 4, "Number of processors.")
+	printPtr := flag.Bool("print", false, "Should I print?")
+	inFilePtr := flag.String("infile", "", "File to operate on.")
+	outFilePtr := flag.String("outfile", "", "File to output to.")
+	timePtr := flag.Bool("time", false, "Should I time?")
+
+	flag.Parse()
+
+	if *inFilePtr == "" {
+		fmt.Println("ERROR: OH NO! Provide an input file!")
+		return
+	}
+
+	if *printPtr == true && *outFilePtr == "" {
+		fmt.Println("ERROR: OH NO! Provide a file to write results to!")
+		return
+	}
+	begin := time.Now().UnixNano()
+	flist, err := paraparse.Setup(*inFilePtr, true)
+	end := time.Now().UnixNano()
+
+	if *timePtr == true {
+		fmt.Printf("SETUP: %d ", end - begin)
+	}
 	if err != nil {
 		fmt.Printf("%+v", err)
 		return
 	}
-	RunParatype(4, os.Args[2], flist)
+	begin = time.Now().UnixNano()
+	RunParatype(*procsPtr, *outFilePtr, *printPtr, flist)
+	end = time.Now().UnixNano()
+	if *timePtr == true {
+		fmt.Printf("COMPLETION: %d\n", end - begin)
+	}
 }
