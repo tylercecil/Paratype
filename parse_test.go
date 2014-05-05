@@ -2,10 +2,10 @@ package main
 
 import (
 	"Paratype/paraparse"
-	//"Paratype/context"
 	"Paratype"
-	//"fmt"
 	"testing"
+	//"fmt"
+	//"Paratype/context"
 )
 
 
@@ -22,7 +22,12 @@ func RunTest(code string, t *testing.T) {
 		fmt.Printf("%+v\n", f)
 		context.PrintAll(f)
 	}*/
-	main.RunThem(1, flist)
+	main.RunThem(3, flist)
+	/*fmt.Printf("FLIST: %+v\n", flist)
+	for _, f := range flist {
+		fmt.Printf("%+v\n", f)
+		context.PrintAll(f)
+	}*/
 }
 
 // PASS
@@ -106,6 +111,10 @@ func TestFavorite(t *testing.T) {
 
 func TestComposition(t *testing.T) {
 	RunTest("typeclass Num\ntype int implements Num\ntype float implements Num\nfunc f(B, B) int\n=bar(baz(B), ban(B))\nfunc bar(A, A) int\n=int\nfunc baz(float) int\n=int\nfunc ban(int) int\n=int\n", t)
+}
+
+func TestThing(t *testing.T) {
+	RunTest("type boat\ntype int\ntype float\nfunc f(A) boat\n=g(m(A), h(A))\nfunc g(float, int) boat\n=boat\nfunc m(B) C\n=C\nfunc h(boat) B\n=B\n", t)
 }
 
 // PASS

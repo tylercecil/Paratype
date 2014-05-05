@@ -34,16 +34,16 @@ type Type struct {
 
 // Representation of a "Function Actor", the main component of Paratype.
 type Function struct {
-	Name        string
-	Id			int
-	Channel		chan *Communication
-	Implement	bool
-	Depth		int
-	NumParentsDone	int
-	WaitChildren	*sync.WaitGroup // function composition waitgroup
+	Name				string
+	Id					int
+	Channel				chan *Communication
+	Implement			bool
+	Depth				int
+	NumParentsDone		int
+	WaitChildren		*sync.WaitGroup // function composition waitgroup
 	ImplementationWait	*sync.WaitGroup
-	KillFlag		*sync.WaitGroup
-	Dead		bool
+	KillFlag			*sync.WaitGroup
+	Dead				bool
 	Context
 	sync.RWMutex
 }
@@ -51,11 +51,13 @@ type Function struct {
 //A Context object represents information about the implementation of
 //a function, and its relationship to other functions.
 type Context struct {
-	Atlas		map[string](map[int]*TypeVariable) // path -> funcarg -> typevar
-	TypeMap		map[*TypeVariable]*Type
-	TypeVarMap	map[*TypeVariable]*TypeVariable
-	Errors		map[*Type]bool
-	Children	map[int]map[*Function]bool
-	Parents		map[*Function]bool
+	Atlas			map[string](map[int]*TypeVariable) // path -> funcarg -> typevar
+	TypeMap			map[*TypeVariable]*Type
+	TypeVarMap		map[*TypeVariable]*TypeVariable
+	Errors			map[*Type]bool
+	Children		map[int]map[*Function]bool
+	Parents			map[*Function]bool
+	Implementations []map[*TypeVariable]*Type
+	TypeError		error
 }
 

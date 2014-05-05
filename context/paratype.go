@@ -95,7 +95,7 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
 	// implicit barrier through channel closing
 	if f.Implement {
-		f.Finish()
+		f.Implementations, f.TypeError = f.Finish()
 		f.ImplementationWait.Done()
 	}
 

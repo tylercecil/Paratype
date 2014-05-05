@@ -115,17 +115,21 @@ func RunThem(n int, f ...interface{}) {
 		}
 	} else {
 		fmt.Printf("\n===implementations===\n\n")
-		/*switch f[0].(type) {
-		case []*context.Function:
-			for _, fun := range f[0].([]*context.Function) {
-				//fun.Finish()
-			}
 
-		case *context.Function:
-			for _, fun := range f {
-				//fun.(*context.Function).Finish()
+		noprint := false
+		for _, f := range funcs {
+			if f.TypeError != nil {
+				fmt.Println(f.Name, f.TypeError.Error())
+				noprint = true
 			}
-		}*/
+		}
+		if noprint == false {
+			for _, f := range funcs {
+				for _, typemap := range f.Implementations {
+					f.PrintImplementation(typemap)
+				}
+			}
+		}
 
 		fmt.Printf("\n")
 	}
