@@ -82,7 +82,9 @@ func RunThings(f ...interface{}) []error {
 			for f := range Functions {
 				f.Implement = false
 				f.Dead = true
+				defer close(f.Channel)
 			}
+			close(err)
 			killFlag.Done()
 			break;
 		}

@@ -19,10 +19,6 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 			message.LastComm = true
 		}
 
-		if f.Dead == true {
-			break;
-		}
-
 		// // debugging
 		// pathfuncs := PathToFunctions(message.Path, *Functions)
 		// s := make([]string, len(pathfuncs))
@@ -34,6 +30,10 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
 		// MERGE
 		er := f.Update(message.Context)
+		f.KillFlag.Wait()
+		if f.Dead == true {
+			break;
+		}
 		if er != nil {
 			err <- er
 			return
