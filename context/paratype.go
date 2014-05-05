@@ -36,6 +36,10 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 		}
 	}
 
+	f.KillFlag.Wait()
+	if f.Dead == true {
+		return
+	}
 	if len(f.Parents) == 0 {
 		err <- nil
 	}
