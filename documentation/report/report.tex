@@ -39,6 +39,7 @@
 \usepackage{lstlang0} % go
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \usepackage{MnSymbol}
+\usepackage{hyperref}
 \lstset{
 	prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rhookswarrow}},
 	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rcurvearrowse\space}},
@@ -65,6 +66,14 @@
 \lstdefinelanguage{Paratype}{
 	morekeywords={func,inherits,implements,throws,type,typeclass,constrain,to},
 }
+\lstdefinelanguage{Gopp}{
+	%keywords={=>,=,*,+},
+	comment=[l]{\#\#},
+	morestring=[b]{'},
+%	moredelim=*[s]{(}{)},
+%	moredelim=*[s]{<}{>},
+}
+
 
 \begin{document}
 
@@ -428,12 +437,15 @@ Although Go provides nice concurrency features, we sometimes found ourselves fig
 % }
 % 		\end{lstlisting}
 	\subsection{Halting On Type Error Detection}
-		Even though an implementation for halting my work on valid input, it may fail for input which generate a type error. One of the advantages of performing the type checking process in parallel is that the type errors can be detected earlier. Once a type error is detected the threads must all exit gracefully. This is not a simple task due to the fact that goroutines can still perform writes on closed channels. Writes to closed channels will trigger a runtime error. A situation that is very common for input with type errors involves the main thread receiving an error and closing all of the channels. This means that the main threads needs to effectively communicate to all of the goroutines that they are done and should stop attempting to complete their contexts.
+		Even though an implementation for halting may work on valid input, it
+		may fail for input which generates a type error. One of the advantages of performing the type checking process in parallel is that the type errors can be detected earlier. Once a type error is detected the threads must all exit gracefully. This is not a simple task due to the fact that goroutines can still perform writes on closed channels. Writes to closed channels will trigger a runtime error. A situation that is very common for input with type errors involves the main thread receiving an error and closing all of the channels. This means that the main threads needs to effectively communicate to all of the goroutines that they are done and should stop attempting to complete their contexts.
 
 		The way this problem was approached involves adding two new variables to the actor. A WaitGroup signifying that execution should be paused and a boolean that signifies whether an actor should terminate itself. The WaitGroup is initially zero meaning that all goroutines which call wait can continue to execute without blocking on the call. This is important because all of the goroutines call wait before performing any writes to the channel. If an error is received then the main thread increments the WaitGroup. This pauses all of the threads before they can write to the channel. The main thread then iterates over all goroutines and sets the boolean that signifies that the thread should terminate. All of the goroutines then exit upon observing that the flag is set.
 	\subsection{Function Composition}
-		One of the issues induced by parallelization is the handling of function composition. Consider the code snippet shown in Listing ~\ref{lst:composition}
-		\begin{lstlisting}[caption=Small Example of function composition, language=Paratype, label=lst:composition]
+		One of the issues induced by parallelization is the handling of
+		function composition. Consider the code snippet shown in Listing
+		~\ref{lst:composition} 
+\begin{lstlisting}[caption=Small Example of function composition, language=Paratype, label=lst:composition]
 type int
 type float
 type boat
@@ -446,7 +458,30 @@ func m(int) A
 func h(A) float
 	= float
 		\end{lstlisting}
-		In the initial implementation of Paratype a function with no parents did not need to have a thread spawned for itself. Instead it would seed the children with its initial context. This became problematic when the implementation of function composition began. With this implementation the children would all evaluate their own contexts and replace values in the parents typevar map. This would cause the evaluation to be unresolvable due to inability to correctly map type variables. This was solved using a technique we refer to as ``in-out evaluation''.
+In the initial implementation of Paratype a function with no parents did not
+need to have a thread spawned for itself. Instead, it would send the children
+its initial context before being spawned. This became problematic when the
+implementation of function composition began. The
+children would all evaluate their own contexts and replace values in the
+parents' atlas while other children were trying to do the same: while there was
+a read-write mutex in place, children now did not know the relation of their
+type variables to those in the parents anymore and could thus not resolve their
+types. This would cause the evaluation to be unresolvable due to inability to
+correctly map type variables. 
+
+This was solved using a technique we refer to as
+``in-out evaluation:'' any function actor that contains function composition
+will send to the innermost children of the composition first and then wait for
+those children to finish resolving types. Once that happened, it then sends to 
+the next level of the composition (second-to-inner) and the process repeats
+until finally the outermost function is resolved. This happens any time a
+composed function receives a context.
+
+The way the children signal that they are done resolving types is through a
+wait group (like a semaphore) that they decrement. The parent will be blocking
+on a wait call that unblocks once the semaphore is equal to zero, then knowing
+that the respective level of composition is done resolving and that it may go
+up one level.
 
 \section{Verification}
 	When testing Paratype it is useful to know what the correct output should be. All of our testing was performed with curated examples that were picked to intentionally pose a problem and ensure that each of the subsystems were working correctly. When the completion is performed the output is written to a file. These files can then be checked for correctness. Go provides a useful testing package that allows for executing all tests or select tests. It launches the threads and gives details about execution and gives the state of the goroutines during an error. This is incredibly useful and was used often to test the hand made examples. It was not uncommon to also repeatedly run these tests to ensure they were deterministic in halting and not causing exceptional situations.
@@ -455,6 +490,84 @@ func h(A) float
 %  undecidability, number of physical cores available, number of types and
 %  type classes, etc
 
+Even though we expected a good amount of speedup from our model, initial
+results are not hopeful: For very small examples, speedup is limited to two or
+four processors and sublinear, as can be seen in Figures~\ref{fig:c1s}
+and~\ref{fig:c3s}. 
+
+In fact, for anything above two or four processors, our model would slow down.
+For 32 processors, it took almost 10 times as much time to resolve types than
+it did for one processor.
+
+Due to time constraints, not a lot of data was collected about performance. One
+can see in the figures that the example composite3 had better speedup for two
+and four processors than composite1; this is likely due to the fact that it had
+more functions. We would expect that once the systems become more complicated
+and connected, the speedup would increase for a higher number of processors; it
+is likely that the overhead of 32 \texttt{goroutines} and the Go scheduler are
+not beneficial for anything above four processors.
+
+Since speedup was not very good; of course efficiency was even worse. See
+Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[scale=0.6]{../../data/composite1-speedup.pdf}
+	\caption{Speedup vs number of processors, example composite1 (four
+	functions)}
+	\label{fig:c1s}
+\end{figure}
+\begin{figure}[ht]
+	\centering
+	\includegraphics[scale=0.6]{../../data/composite3-speedup.pdf}
+	\caption{Speedup vs number of processors, example composite3 (84 functions)}
+	\label{fig:c3s}
+\end{figure}
+\begin{figure}[ht]
+	\centering
+	\includegraphics[scale=0.6]{../../data/composite1-efficiency.pdf}
+	\caption{Efficiency vs number of processors, example composite1 (four
+	functions)}
+	\label{fig:c1e}
+\end{figure}
+\begin{figure}[ht]
+	\centering
+	\includegraphics[scale=0.6]{../../data/composite3-efficiency.pdf}
+	\caption{Efficiency vs number of processors, example composite3 (84
+	functions)}
+	\label{fig:c3e}
+\end{figure}
+
+
+
+
+% variables: number of functions, function calls, contexts, partial contexts,
+% undecidability, number of physical cores available, number of types and
+% type classes, etc
+%
+% gopp parser hangs in some cases (not our focus, so we don't care)
+%
+%just some notes to use for empirical analysis later
+%
+% Complexity of f.Update(g) algorithm if g is parent of f:
+% \[ U(f, g) = \sum_{\textrm{v in args of g and w replaces v}} V(v, w))
+% \leq O(|\textrm{num args of g}| \times |\textrm{num typeclasses}|) \]
+%
+% UpdateTypevar (v and w merge to w):
+% \[ V(v, w) = O(|\textrm{num of typeclasses on w}|) \]
+%
+% Complexity of f.Update(g) if g is parent of f:
+% \[ \leq O(|\textrm{num atlas entries of g}| \times |\textrm{num typeclasses}|) \]
+%
+% All of these multiplied by hashmap access time at worst $O(\textrm{size of
+% map})$ each
+%
+% how often is f.Update(g) called?
+%
+% -> context path object travels down every path!
+%
+% -> number of paths times number of nodes in each path
+%
 %  gopp parser hangs in some cases (not our focus, so we don't care)
 
 % just some notes to use for empirical analysis later
@@ -503,7 +616,10 @@ elaborate, novel, and exciting. It is our hope to continue with
 
 \appendix
 \section{Finalized Grammar}
-	\begin{lstlisting}
+
+This is a gopp grammar. See \url{https://github.com/skelterjohn/gopp}.
+
+\begin{lstlisting}[language=Gopp]
 ## ignore comments that begin at beginning of line
 ignore: /^#.*\n/
 ## ignore whitespace at beginning of line
@@ -543,10 +659,23 @@ typevar = /([A-M][a-zA-Z]*)/
 
 \section{Team Members and Their Contributions}
 	\begin{itemize}
-		\item[Ben]
-		\item[Chris]
-		\item[Tyler]
+		\item[Ben] Ben worked on halting and function composition as well as
+			parsing
+		\item[Chris] Chris worked on getting function composition working and
+			the merging algorithm. 
+		\item[Tyler] Tyler worked on setting up communications between the
+			function actors as well as initial halting
 	\end{itemize}
 \section{Things Learnt From This Project}
 
+We learnt some interesting things about a new programming language and quite a
+bit of parallel debugging from this project. We took advantage of some new
+design patterns in parallel programming that are inherently included with
+Google Go, such as communication channels' closure acting as an implicit
+barrier.
+
+We have also learnt that relying on software libraries for certain things (in
+our case parsing) is not always as useful as it might seem. Getting the gopp
+grammar parser to work correctly took a lot more time than it should have and
+set us back by quite a bit.
 \end{document}
