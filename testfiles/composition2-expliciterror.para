@@ -1,0 +1,14 @@
+typeclass Num
+type int implements Num
+type float
+type boat
+func f(A, B, C) float
+=g(m(A), h(B), j(C))
+func g(int, F, G) H
+=m(F)
+func m(int) float
+=float
+func h(boat) A
+=A
+func j(float) float
+=float

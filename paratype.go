@@ -144,7 +144,7 @@ func RunParatype(n int, out string, hprint bool, f ...interface{}) {
 	if len(errors) > 0 {
 		// print type errors if there are any
 		for _, e := range errors {
-			fmt.Printf("%+v\n", e)
+			fmt.Println(e)
 		}
 	} else {
 
@@ -157,7 +157,7 @@ func RunParatype(n int, out string, hprint bool, f ...interface{}) {
 			// type errros that arose during collection of implementations
 			// (means that there is a missing implementation)
 			if f.TypeError != nil {
-				fmt.Println(f.Name, f.TypeError.Error())
+				fmt.Println(f.TypeError.Error())
 				noprint = true
 			}
 		}

@@ -2,8 +2,8 @@ package context
 
 import (
 	"sync"
-//	"fmt"
-//	"strings"
+	//"fmt"
+	//"strings"
 )
 
 // Runtime for each function actor
@@ -15,6 +15,7 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 		// function composition:
 		// wait for each level of children to return
 		for {
+			//fmt.Printf("%v waiting %v\n", f.Name, f.Depth)
 			f.WaitChildren.Wait()
 
 			f.Depth--
@@ -77,18 +78,82 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 			err <- er
 			return
 		}
+			/*pathfuncs := PathToFunctions(message.Path, *Functions)
+			s := make([]string, len(pathfuncs))
+			for i, g := range pathfuncs {
+				s[i] = g.Name
+			}
+			fmt.Printf("%v received from path %s the of %v\n",
+				f.Name, strings.Join(s, "-"), message.Context.Name)*/
 
-		// add myself to path
-		for _, gfuncs := range f.Children {
-			for g := range gfuncs {
-				message.Path = AddToPath(message.Path, g)
-				msgCopy := new(Communication)
-				msgCopy = message
-				g.Channel <- msgCopy
+
+		depth := len(f.Children)
+
+		var WaitChildren *sync.WaitGroup
+		if depth >= 1 {
+			WaitChildren = new(sync.WaitGroup)
+		}
+
+		for g := range f.Children[depth - 1] {
+			comm := new(Communication)
+			*comm = *message
+			comm.Path = AddToPath(comm.Path, g)
+			comm.Depth = depth - 1
+			if depth >= 1 {
+				comm.Wait = WaitChildren
+				//fmt.Printf("adding %v %v\n", g, WaitChildren)
+				WaitChildren.Add(1)
+			}
+			g.Channel <-comm
+		}
+
+
+		if WaitChildren != nil {
+			for {
+				//fmt.Printf("%v waiting %v %v\n", f.Name, depth, WaitChildren)
+				WaitChildren.Wait()
+
+				depth--
+
+				if depth == 0 {
+					if message.Wait != nil {
+						/*fmt.Printf("%v decrementing %v %v\n", f.Name,
+						message.Wait, message.Path)*/
+						message.Wait.Done()
+					}
+					break
+				} else {
+					for g := range f.Children[depth-1] {
+						comm := new(Communication)
+						*comm = *message
+						comm.Path = AddToPath(comm.Path, g)
+						comm.Depth = depth - 1
+						if depth >= 1 {
+							comm.Wait = WaitChildren
+							WaitChildren.Add(1)
+						}
+						g.Channel <-comm
+					}
+				}
 			}
 		}
 
+
+		// add myself to path
+		/*for _, gfuncs := range f.Children {
+			for g := range gfuncs {
+				msgCopy := new(Communication)
+				msgCopy = message
+				msgCopy.Path = AddToPath(msgCopy.Path, g)
+				g.Channel <- msgCopy
+			}
+		}*/
+
 		if len(f.Children) == 0 && message.Wait != nil {
+			/*fmt.Printf("%v decrementing %v no child %v\n", f.Name,
+			message.Wait, message.Path)*/
+
+			//fmt.Printf("%+v %+v\n", PathToFunctionsmessage.Path, f.Name)
 			message.Wait.Done()
 		}
 
