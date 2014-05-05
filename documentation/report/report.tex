@@ -408,8 +408,22 @@ Although Go provides nice concurrency features, we sometimes found ourselves fig
 \section{Problems Induced by Parallelization}
 	\subsection{Making Halting Deterministic}
 		An issue when performing the type completion and analysis in parallel is knowing when all of the operations are completed and halting can commence. Halting in the initial implementation of Paratype was simple but not effective. Each of the functions spawned was added to a \texttt{WaitGroup}. At the start of every actors go loop they would mark themselves active by incrementing the WaitGroup. Once they reached the end of their go loop they would decrement the WaitGroup marking themselves inactive. This happened repeatedly in a loop. The main function would then wait for all actors to become inactive. If they were all inactive it would check if all of the channels were empty. This worked in some situations but had a race condition that would cause problems. The reason for this race condition is the state could change in between checking the WaitGroup and checking the channels.
-		The updated iteration of halting requires more keeping track of state. Actors which do not have parents only need to send to their children and they are completed. The signaling of the completion is done through a flag in one of the communication messages.
+
+		The updated iteration of halting requires keeping track of more state. Actors which do not have parents only need to send to their children and they are completed. The signaling of the completion is done through a flag in one of the communication messages. Once a child receives a message from its parent it processes the message. If the message contains a flag that indicates it is the last communication then the child sends a \lstinline!nil! value through the \lstinline!error! channel. This \lstinline!nil! value on the error channel is a message to the main thread that it can decrement the number of active processes. Once an actor is effectively inactive it is waiting for a message on the channel. This will never happen since its parent is also inactive. This provides an implicit barrier. Once the main thread sees that all functions have become inactive it sets a flag dictating that they collect their implementations and closes all of their channels.
+
+% 		\begin{lstlisting}[caption=Communication Struct, language=Paratype, label=lst:commstruct]
+% type Communication struct {
+% 	Path		string
+% 	Context		*Function
+% 	Depth		int
+% 	LastComm	bool
+% 	Wait		*sync.WaitGroup
+% }
+% 		\end{lstlisting}
 	\subsection{Halting On Type Error Detection}
+		Even though an implementation for halting my work on valid input, it may fail for input which generate a type error. One of the advantages of performing the type checking process in parallel is that the type errors can be detected earlier. Once a type error is detected the threads must all exit gracefully. This is not a simple task due to the fact that goroutines can still perform writes on closed channels. Writes to closed channels will trigger a runtime error. A situation that is very common for input with type errors involves the main thread receiving an error and closing all of the channels. This means that the main threads needs to effectively communicate to all of the goroutines that they are done and should stop attempting to complete their contexts.
+
+		The way this problem was approached involves adding two new variables to the actor. A WaitGroup signifying that execution should be paused and a boolean that signifies whether an actor should terminate itself. The WaitGroup is initially zero meaning that all goroutines which call wait can continue to execute without blocking on the call. This is important because all of the goroutines call wait before performing any writes to the channel. If an error is received then the main thread increments the WaitGroup. This pauses all of the threads before they can write to the channel. The main thread then iterates over all goroutines and sets the boolean that signifies that the thread should terminate. All of the goroutines then exit upon observing that the flag is set.
 	\subsection{Function Composition}
 		One of the issues induced by parallelization is the handling of function composition. Consider the code snippet shown in Listing ~\ref{lst:composition}
 		\begin{lstlisting}[caption=Small Example of function composition, language=Paratype, label=lst:composition]
