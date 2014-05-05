@@ -2,10 +2,10 @@ package main
 
 import (
 	"Paratype/paraparse"
-//	"Paratype/context"
 	"Paratype"
-//	"fmt"
 	"testing"
+	//"fmt"
+	//"Paratype/context"
 )
 
 
@@ -16,11 +16,11 @@ func RunTest(code string, file bool, t *testing.T) {
 		t.Error(err)
 		return
 	}
-	main.RunThem(4, flist)
+	main.RunParatype(4, flist)
 }
 
 func TestFile(t *testing.T) {
-	RunTest("x.gopp", true, t)
+	RunTest("x.para", true, t)
 }
 
 func TestString(t *testing.T) {
@@ -119,7 +119,7 @@ func TestComposition(t *testing.T) {
 // func baz(int) A
 // 		=int
 func TestChildren(t *testing.T) {
-	RunTest("func foo(A) int\n=bar(baz(A), float)\nfunc bar(int, float) int\n=int\nfunc baz(int) int\n=int\n", false, t)
+	RunTest("type int\ntype float\nfunc foo(A) int\n=bar(baz(A), float)\nfunc bar(int, float) int\n=int\nfunc baz(int) int\n=int\n", false, t)
 }
 
 // FAIL

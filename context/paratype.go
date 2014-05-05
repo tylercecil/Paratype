@@ -6,6 +6,8 @@ import (
 //	"strings"
 )
 
+// Runtime for each function actor
+// to be used as a goroutine
 func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
 	if f.WaitChildren != nil {
@@ -36,6 +38,10 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 		}
 	}
 
+	f.KillFlag.Wait()
+	if f.Dead == true {
+		return
+	}
 	if len(f.Parents) == 0 {
 		err <- nil
 	}
@@ -95,7 +101,7 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
 	// implicit barrier through channel closing
 	if f.Implement {
-		f.Finish()
+		f.Implementations, f.TypeError = f.Finish()
 		f.ImplementationWait.Done()
 	}
 
