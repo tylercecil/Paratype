@@ -18,6 +18,9 @@
 *.out
 *.toc
 *.lol
+*.snm
+*.nav
+*.el
 
 *.bbl
 *.bcf
