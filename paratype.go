@@ -32,12 +32,13 @@ func RunThings(f ...interface{}) []error {
 	}
 
 	implementationWait := new(sync.WaitGroup)
+	killFlag := new(sync.WaitGroup)
 	err := make(chan error, len(Functions))
 
 	fmt.Println("Welcome to Paratype!")
 
 	for fActor := range Functions {
-		fActor.Initialize(implementationWait)
+		fActor.Initialize(implementationWait, killFlag)
 	}
 	// avoid race conditions by having the first communication in Channels
 	// before starting
@@ -55,26 +56,35 @@ func RunThings(f ...interface{}) []error {
 	var s []error
 	// errors
 	for er := range err {
-		NumThreadsActive--
 		if er != nil {
 			fmt.Printf("%v\n", er.Error())
 			s = append(s, er)
+		} else {
+			NumThreadsActive--
 		}
 
-		if NumThreadsActive == 0 || er != nil {
+		if NumThreadsActive == 0 {
 			// close all channels
 			for f := range Functions {
-				f.Implement = (er == nil)
+				f.Implement = true
 				close(f.Channel)
 			}
 
-			if er == nil {
-				implementationWait.Wait()
-			}
+			implementationWait.Wait()
 
 			close(err)
 
-			return s
+			break;
+		} else if er != nil {
+			killFlag.Add(1)
+			for f := range Functions {
+				f.Implement = false
+				f.Dead = true
+				defer close(f.Channel)
+			}
+			close(err)
+			killFlag.Done()
+			break;
 		}
 	}
 
