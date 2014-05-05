@@ -47,11 +47,9 @@ func RunThings(f ...interface{}) []error {
 
 	for fActor := range Functions {
 		fmt.Printf("\tSpawning Function Actor for %v\n", fActor.Name)
-		if len(fActor.Parents) > 0 {
-			implementationWait.Add(1)
-			go fActor.Run(&Functions, err)
-			NumThreadsActive++
-		}
+		implementationWait.Add(1)
+		go fActor.Run(&Functions, err)
+		NumThreadsActive++
 	}
 
 	var s []error

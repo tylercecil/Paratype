@@ -10,6 +10,7 @@ type Communication struct {
 	Context		*Function
 	Depth		int
 	LastComm	bool // is this the last communication?
+	Wait		*sync.WaitGroup
 }
 
 type TypeClass struct {
@@ -37,8 +38,9 @@ type Function struct {
 	Id			int
 	Channel		chan *Communication
 	Implement	bool
+	Depth		int
 	NumParentsDone	int
-	WaitChildren	map[int]*sync.WaitGroup // function composition waitgroup
+	WaitChildren	*sync.WaitGroup // function composition waitgroup
 	ImplementationWait	*sync.WaitGroup
 	Context
 	sync.RWMutex

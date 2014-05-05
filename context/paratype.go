@@ -8,6 +8,34 @@ import (
 
 func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
+	if f.WaitChildren != nil {
+
+		f.WaitChildren.Wait()
+
+		f.Depth--
+
+		if f.Depth >= 1 {
+			for g := range f.Children[f.Depth-1] {
+				comm := new(Communication)
+				comm.Path = FunctionsToPath(f, g)
+				comm.Context = f
+				comm.Depth = f.Depth - 1
+				comm.LastComm = (len(f.Parents) == 0)
+				if f.Depth > 1 {
+					comm.Wait = f.WaitChildren
+					f.WaitChildren.Add(1)
+				}
+				g.Channel <-comm
+			}
+		}
+
+		// send to next layer of children
+	}
+
+	if len(f.Parents) == 0 {
+		err <- nil
+	}
+
 	for message := range f.Channel {
 		// halting
 		if message.LastComm {
@@ -37,13 +65,17 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 		}
 
 		// add myself to path
-		message.Path = AddToPath(message.Path, f)
 		for _, gfuncs := range f.Children {
-			msgCopy := new(Communication)
-			msgCopy = message
 			for g := range gfuncs {
+				message.Path = AddToPath(message.Path, g)
+				msgCopy := new(Communication)
+				msgCopy = message
 				g.Channel <- msgCopy
 			}
+		}
+
+		if len(f.Children) == 0 && message.Wait != nil {
+			message.Wait.Done()
 		}
 
 		// did I just send my last communication?
@@ -67,24 +99,26 @@ func (f *Function) Initialize(implWait *sync.WaitGroup) {
 	// only when the buffer is full.
 	f.Channel = make(chan *Communication, 128)
 	f.ImplementationWait = implWait
-	//implWait.Add(1)
 }
 
 // sends own to child
 func (f *Function) InitialSendToChild() {
-	comm := new(Communication)
-	comm.Path = FunctionsToPath(f)
-	comm.Context = f
-	// for function composition, send to inner most children only
-	deepest := len(f.Children)
-	comm.Depth = deepest - 1
+	f.Depth = len(f.Children)
 
-	if len(f.Parents) == 0 {
-		comm.LastComm = true
-	} else {
-		comm.LastComm = false
+	if f.Depth > 1 {
+		f.WaitChildren = new(sync.WaitGroup)
 	}
-	for g := range f.Children[deepest - 1] {
+
+	for g := range f.Children[f.Depth - 1] {
+		comm := new(Communication)
+		comm.Path = FunctionsToPath(f, g)
+		comm.Context = f
+		comm.Depth = f.Depth - 1
+		comm.LastComm = (len(f.Parents) == 0)
+		if f.Depth > 1 {
+			comm.Wait = f.WaitChildren
+			f.WaitChildren.Add(1)
+		}
 		g.Channel <-comm
 	}
 }

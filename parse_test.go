@@ -104,6 +104,10 @@ func TestFavorite(t *testing.T) {
 
 }
 
+func TestComposition(t *testing.T) {
+	RunTest("typeclass Num\ntype int implements Num\ntype float implements Num\nfunc f(int, int) int\n=bar(baz(), ban())\nfunc bar(int, int) int\n=int\nfunc baz() int\n=int\nfunc ban() int\n=int\n", t)
+}
+
 // PASS
 // Tests correct creation of the children map.
 // func foo(A) int

@@ -217,7 +217,6 @@ func ParseFuncDecls(data *Base, typeClassMap map[string]*context.TypeClass, type
 		ReferenceMap[elem.Name] = FuncSlice[i]
 		FuncSlice[i].Parents = make(map[*context.Function]bool)
 		FuncSlice[i].Id = i
-		FuncSlice[i].NumArgs = len(elem.Arguments) + 2
 
 		// AssignError will fill out the Errors field
 		for _, errorT := range elem.Errors {
