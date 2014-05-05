@@ -5,7 +5,9 @@ import (
 	"sync"
 	"fmt"
 	"Paratype/context"
+	"Paratype/paraparse"
 	"runtime"
+	"os"
 )
 
 var Functions map[*context.Function]bool
@@ -135,4 +137,10 @@ func RunThem(n int, f ...interface{}) {
 
 // Dummy main function.
 func main() {
+	flist, err := paraparse.Setup(os.Args[1], true)
+	if err != nil {
+		fmt.Printf("%+v", err)
+		return
+	}
+	RunThem(4, flist)
 }
