@@ -147,6 +147,7 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 	}
 
 	f.TypeVarMap[v] = w
+	g.TypeVarMap[v] = w
 	g.Atlas[path][funcarg] = w
 	return nil
 }

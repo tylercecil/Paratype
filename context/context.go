@@ -7,7 +7,8 @@ import "sync"
 type Communication struct {
 	Path		string
 	Context		*Function
-	Depth 		int
+	Depth		int
+	LastComm	bool // is this the last communication?
 }
 
 type TypeClass struct {
@@ -32,12 +33,11 @@ type Type struct {
 // Representation of a "Function Actor", the main component of Paratype.
 type Function struct {
 	Name        string
-	NumArgs		int
 	Id			int
 	Channel		chan *Communication
-	FuncComp	chan string
 	State		bool
-	ActiveGroup	*sync.WaitGroup
+	Children	map[int]*sync.WaitGroup // function composition waitgroup
+	//ActiveGroup	*sync.WaitGroup
 	Context
 	sync.RWMutex
 }

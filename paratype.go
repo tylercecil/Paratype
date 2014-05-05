@@ -10,6 +10,8 @@ import (
 
 var Functions map[*context.Function]bool
 
+var NumThreadsActive int
+
 // should return implementations -- PARALLEL COMMUNICATION NEEDED
 // given a list of functions, run everything!
 func RunThings(f ...interface{}) []error {
@@ -29,13 +31,13 @@ func RunThings(f ...interface{}) []error {
 		}
 	}
 
-	readyToFinish := new(sync.WaitGroup)
+	//readyToFinish := new(sync.WaitGroup)
 	err := make(chan error, len(Functions))
 
 	fmt.Println("Welcome to Paratype!")
 
 	for fActor := range Functions {
-		fActor.Initialize(readyToFinish)
+		fActor.Initialize()
 	}
 	// avoid race conditions by having the first communication in Channels
 	// before starting
@@ -44,18 +46,26 @@ func RunThings(f ...interface{}) []error {
 	}
 	for fActor := range Functions {
 		fmt.Printf("\tSpawning Function Actor for %v\n", fActor.Name)
-		go fActor.Run(&Functions, err)
-		defer close(fActor.Channel)
-		defer close(fActor.FuncComp)
+		if len(fActor.Parents) > 0 {
+			go fActor.Run(&Functions, err)
+			NumThreadsActive++
+		}
+		//defer close(fActor.Channel)
+		//defer close(fActor.FuncComp)
 	}
 
 	fmt.Println("Waiting for halting...")
+
+	// errors
+	for er := range err {
+
+	}
 
 	// RACE CONDITION
 	// This is actually a race condition. It WOULD be sufficient
 	// to both make this check AND check if all Channels are
 	// empty.
-ShittyGoto:
+/*ShittyGoto:
 	for fActor := range Functions {
 		// close Channels, otherwise goroutines will hang
 		if len(fActor.Channel) > 0 {
@@ -63,18 +73,18 @@ ShittyGoto:
 		}
 	}
 
-	readyToFinish.Wait()
+	readyToFinish.Wait()*/
 
 	fmt.Println("Done!", len(err))
 
 	// collect error messages
-	var s []error
+	/*var s []error
 	if len(err) > 0 {
 		s = make([]error, len(err))
 		for i := 0; len(err) > 0; i++ {
 			s[i] = <-err
 		}
-	}
+	}*/
 
 	close(err)
 	return s
