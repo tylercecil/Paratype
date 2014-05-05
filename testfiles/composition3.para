@@ -1,0 +1,172 @@
+typeclass Num
+type int implements Num
+type float implements Num
+type boat
+func f(A) boat
+=g(m(A), h(A))
+func g(B, C) D
+=D
+func m(int) int
+=int
+func h(A) float
+=float
+func z constrain A<Num>(A, B, C) float
+= w(o(A), p(B), q(C))
+func w(E, F, G) H
+= o(F)
+func o(int) float
+= float
+func p(boat) A
+= A
+func q(float) float
+= float
+func foo() int
+=goo(int)
+func qoo() float
+=goo(boat)
+func goo(A) B
+=hoo(A)
+func hoo(C) D
+=D
+func fqq(A, B) int
+=gqq(A, B)
+func hqq(A, B) float
+=gqq(A, B)
+func gqq(int, float) A
+=A
+func qfoo(boat, A) int
+=qbar(qbaz(qban(A)))
+func qbar(int) B
+=int
+func qbaz(int) B
+=int
+func qban(int) B
+=qbaq()
+func qbaq() B
+=B
+func hf(A) boat
+=hg(hm(A), hh(A))
+func hg(B, C) D
+=D
+func hm(int) int
+=int
+func hh(A) float
+=float
+func hz constrain A<Num>(A, B, C) float
+= hw(ho(A), hp(B), hq(C))
+func hw(E, F, G) H
+= ho(F)
+func ho(int) float
+= float
+func hp(boat) A
+= A
+func hq(float) float
+= float
+func hfoo() int
+=hgoo(int)
+func hqoo() float
+=hgoo(boat)
+func hgoo(A) B
+=hhoo(A)
+func hhoo(C) D
+=D
+func hfqq(A, B) int
+=hgqq(A, B)
+func hhqq(A, B) float
+=hgqq(A, B)
+func hgqq(int, float) A
+=A
+func hqfoo(boat, A) int
+=hqbar(hqbaz(hqban(A)))
+func hqbar(int) B
+=int
+func hqbaz(int) B
+=int
+func hqban(int) B
+=hqbaq()
+func hqbaq() B
+=B
+func ff(A) boat
+=fg(fm(A), fh(A))
+func fg(B, C) D
+=D
+func fm(int) int
+=int
+func fh(A) float
+=float
+func fz constrain A<Num>(A, B, C) float
+= fw(fo(A), fp(B), fq(C))
+func fw(E, F, G) H
+= fo(F)
+func fo(int) float
+= float
+func fp(boat) A
+= A
+func fq(float) float
+= float
+func ffoo() int
+=fgoo(int)
+func fqoo() float
+=fgoo(boat)
+func fgoo(A) B
+=fhoo(A)
+func fhoo(C) D
+=D
+func ffqq(A, B) int
+=fgqq(A, B)
+func fhqq(A, B) float
+=fgqq(A, B)
+func fgqq(int, float) A
+=A
+func fqfoo(boat, A) int
+=fqbar(fqbaz(fqban(A)))
+func fqbar(int) B
+=int
+func fqbaz(int) B
+=int
+func fqban(int) B
+=fqbaq()
+func fqbaq() B
+=B
+func fhf(A) boat
+=fhg(fhm(A), fhh(A))
+func fhg(B, C) D
+=D
+func fhm(int) int
+=int
+func fhh(A) float
+=float
+func fhz constrain A<Num>(A, B, C) float
+= fhw(fho(A), fhp(B), fhq(C))
+func fhw(E, F, G) H
+= fho(F)
+func fho(int) float
+= float
+func fhp(boat) A
+= A
+func fhq(float) float
+= float
+func fhfoo() int
+=fhgoo(int)
+func fhqoo() float
+=fhgoo(boat)
+func fhgoo(A) B
+=fhhoo(A)
+func fhhoo(C) D
+=D
+func fhfqq(A, B) int
+=fhgqq(A, B)
+func fhhqq(A, B) float
+=fhgqq(A, B)
+func fhgqq(int, float) A
+=A
+func fhqfoo(boat, A) int
+=fhqbar(fhqbaz(fhqban(A)))
+func fhqbar(int) B
+=int
+func fhqbaz(int) B
+=int
+func fhqban(int) B
+=fhqbaq()
+func fhqbaq() B
+=B
