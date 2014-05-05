@@ -1,0 +1,12 @@
+# our favorite example
+type int
+type float
+type boat
+func f() int
+=g(int)
+func q() float
+=g(boat)
+func g(A) B
+=h(A)
+func h(C) D
+=D

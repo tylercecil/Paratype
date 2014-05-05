@@ -161,6 +161,7 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 		}
 	}
 
+
 	if len(w.Constraints) == 0 {
 		// merging typeclasses brought us no typeclasses -- not even nil (any)
 		return errors.New(PrintError(1, g, f))

@@ -1,0 +1,9 @@
+typeclass Num
+type int implements Num
+type float implements Num
+func f(A, B) int
+=g(A, B)
+func h(A, B) float
+=g(A, B)
+func g(int, float) A
+=A

@@ -1,3 +1,7 @@
+# will produce slightly wrong output:
+# g(m(..), h(..), m(..))
+# due to wrong representation in program, because it recognizes that
+# the third argument and first argument of g are the same typevariable
 type int
 type float
 type boat

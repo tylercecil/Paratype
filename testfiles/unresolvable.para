@@ -1,0 +1,6 @@
+type int
+type float
+func f(A, B) C
+=g(A, B)
+func g(int, A) float
+=float

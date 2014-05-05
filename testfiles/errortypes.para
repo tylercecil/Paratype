@@ -1,0 +1,11 @@
+type int
+type float
+type boat
+func f(A, B) A
+=g(m(A), h(B))
+func g(int, float) B
+=B
+func m(int) int throws someError
+=int
+func h(float) C
+=C
