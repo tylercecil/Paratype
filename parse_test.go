@@ -105,7 +105,7 @@ func TestFavorite(t *testing.T) {
 }
 
 func TestComposition(t *testing.T) {
-	RunTest("typeclass Num\ntype int implements Num\ntype float implements Num\nfunc f(int, int) int\n=bar(baz(), ban())\nfunc bar(int, int) int\n=int\nfunc baz() int\n=int\nfunc ban() int\n=int\n", t)
+	RunTest("typeclass Num\ntype int implements Num\ntype float implements Num\nfunc f(B, B) int\n=bar(baz(B), ban(B))\nfunc bar(A, A) int\n=int\nfunc baz(float) int\n=int\nfunc ban(int) int\n=int\n", t)
 }
 
 // PASS

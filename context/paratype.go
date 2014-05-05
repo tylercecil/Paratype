@@ -7,28 +7,33 @@ import (
 )
 
 func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
+
 	if f.WaitChildren != nil {
 
-		f.WaitChildren.Wait()
+		// function composition: 
+		// wait for each level of children to return
+		for {
+			f.WaitChildren.Wait()
 
-		f.Depth--
+			f.Depth--
 
-		if f.Depth >= 1 {
-			for g := range f.Children[f.Depth-1] {
-				comm := new(Communication)
-				comm.Path = FunctionsToPath(f, g)
-				comm.Context = f
-				comm.Depth = f.Depth - 1
-				comm.LastComm = (len(f.Parents) == 0)
-				if f.Depth > 1 {
-					comm.Wait = f.WaitChildren
-					f.WaitChildren.Add(1)
+			if f.Depth == 0 {
+				break
+			} else {
+				for g := range f.Children[f.Depth-1] {
+					comm := new(Communication)
+					comm.Path = FunctionsToPath(f, g)
+					comm.Context = f
+					comm.Depth = f.Depth - 1
+					comm.LastComm = (len(f.Parents) == 0)
+					if f.Depth > 1 {
+						comm.Wait = f.WaitChildren
+						f.WaitChildren.Add(1)
+					}
+					g.Channel <-comm
 				}
-				g.Channel <-comm
 			}
 		}
-
-		// send to next layer of children
 	}
 
 	if len(f.Parents) == 0 {
