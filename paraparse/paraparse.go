@@ -8,8 +8,10 @@ import (
 
 var tvname int = 0
 
-func Setup(code string) ([]*context.Function, error) {
-	out, err := ParseCode(code)
+func Setup(code string, file bool) ([]*context.Function, error) {
+
+	out, err := Parse(code, file)
+
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +219,6 @@ func ParseFuncDecls(data *Base, typeClassMap map[string]*context.TypeClass, type
 		ReferenceMap[elem.Name] = FuncSlice[i]
 		FuncSlice[i].Parents = make(map[*context.Function]bool)
 		FuncSlice[i].Id = i
-		FuncSlice[i].NumArgs = len(elem.Arguments) + 2
 
 		// AssignError will fill out the Errors field
 		for _, errorT := range elem.Errors {

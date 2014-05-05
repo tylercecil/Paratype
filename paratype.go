@@ -5,20 +5,28 @@ import (
 	"sync"
 	"fmt"
 	"Paratype/context"
+	"Paratype/paraparse"
 	"runtime"
+	"os"
+	"flag"
 )
 
 var Functions map[*context.Function]bool
 
 var NumThreadsActive int
 
-// should return implementations -- PARALLEL COMMUNICATION NEEDED
-// given a list of functions, run everything!
-func RunThings(f ...interface{}) []error {
+// Given a list of functions, will spawn function actors and resolve types
+// Returns a list of type errors collected
+//
+func RunActors(f ...interface{}) []error {
 	Functions = make(map[*context.Function]bool)
 
 	// one can pass in multiple Function pointers or a slice of them
-	// tests are usually multiple while the parser will generate a slice
+	// tests are usually multiple while the parser will generate a slice; i.e.
+	// RunActors(f, g, h)
+	// and
+	// RunActors([]*context.Function{f, g, h})
+	// are equivalent
 	switch f[0].(type) {
 	case []*context.Function:
 		for _, fun := range f[0].([]*context.Function) {
@@ -31,70 +39,93 @@ func RunThings(f ...interface{}) []error {
 		}
 	}
 
-	//readyToFinish := new(sync.WaitGroup)
+	// wait group that waits for implementation collection to finish
+	implementationWait := new(sync.WaitGroup)
+
+	// wait group to assist with halting when a type error is detected
+	killFlag := new(sync.WaitGroup)
+
+	// channel to send errors back to here from function actors
 	err := make(chan error, len(Functions))
 
-	fmt.Println("Welcome to Paratype!")
-
 	for fActor := range Functions {
-		fActor.Initialize()
+		fActor.Initialize(implementationWait, killFlag)
 	}
+
 	// avoid race conditions by having the first communication in Channels
 	// before starting
 	for fActor := range Functions {
 		fActor.InitialSendToChild()
 	}
+
 	for fActor := range Functions {
-		fmt.Printf("\tSpawning Function Actor for %v\n", fActor.Name)
-		if len(fActor.Parents) > 0 {
-			go fActor.Run(&Functions, err)
-			NumThreadsActive++
-		}
-		//defer close(fActor.Channel)
-		//defer close(fActor.FuncComp)
+		//fmt.Printf("\tSpawning Function Actor for %v\n", fActor.Name)
+		implementationWait.Add(1)
+		go fActor.Run(&Functions, err)
+		NumThreadsActive++
 	}
 
-	fmt.Println("Waiting for halting...")
-
-	// errors
+	var s []error
+	// listen to error channel
 	for er := range err {
+		// every function will send something through the error channel back to
+		// RunActors: it will send nil if it finished without type errors and
+		// it will send the type error if one arose.
+		if er != nil {
+			fmt.Printf("%v\n", er.Error())
+			s = append(s, er)
+		} else {
+			// one goroutine finished
+			NumThreadsActive--
+		}
 
-	}
+		if NumThreadsActive == 0 {
+			// all goroutines finished without type errors
 
-	// RACE CONDITION
-	// This is actually a race condition. It WOULD be sufficient
-	// to both make this check AND check if all Channels are
-	// empty.
-/*ShittyGoto:
-	for fActor := range Functions {
-		// close Channels, otherwise goroutines will hang
-		if len(fActor.Channel) > 0 {
-			goto ShittyGoto
+			// close all channels
+			for f := range Functions {
+				f.Implement = true
+				close(f.Channel)
+			}
+
+			implementationWait.Wait()
+
+			close(err)
+
+			break;
+		} else if er != nil {
+			// type errors arose when goroutines ran
+
+			// set all goroutines to stop when next possible
+			killFlag.Add(1)
+			for f := range Functions {
+				// disable implementation collection
+				f.Implement = false
+				f.Dead = true
+				defer close(f.Channel)
+			}
+			close(err)
+			killFlag.Done()
+			break;
 		}
 	}
 
-	readyToFinish.Wait()*/
-
-	fmt.Println("Done!", len(err))
-
-	// collect error messages
-	/*var s []error
-	if len(err) > 0 {
-		s = make([]error, len(err))
-		for i := 0; len(err) > 0; i++ {
-			s[i] = <-err
-		}
-	}*/
-
-	close(err)
 	return s
 }
 
 
-func RunThem(n int, f ...interface{}) {
+// Takes the number of processors and a list of functions
+// Runs paratype and will print all implementations of functions to screen
+//
+func RunParatype(n int, out string, hprint bool, f ...interface{}) {
 	runtime.GOMAXPROCS(n)
 	var funcs []*context.Function
 
+	// f may either be an array of Function pointers or just many of them; i.e.
+	// RunParatype(4, f, g, h)
+	// and
+	// RunParatype(4, []*context.Function{f, g, h})
+	// are equivalent
 	switch f[0].(type) {
 	case []*context.Function:
 		for _, fun := range f[0].([]*context.Function) {
@@ -107,31 +138,69 @@ func RunThem(n int, f ...interface{}) {
 		}
 	}
 
-	errors := RunThings(funcs)
+	// run actors, collect type errors
+	errors := RunActors(funcs)
 	if len(errors) > 0 {
+		// print type errors if there are any
 		for _, e := range errors {
-			fmt.Println(e.Error())
+			fmt.Printf("%+v\n", e)
 		}
 	} else {
-		fmt.Printf("\n===implementations===\n\n")
-		switch f[0].(type) {
-		case []*context.Function:
-			for _, fun := range f[0].([]*context.Function) {
-				fun.Finish()
-			}
 
-		case *context.Function:
-			for _, fun := range f {
-				fun.(*context.Function).Finish()
+		/*for _, f := range funcs {
+			context.PrintAll(f)
+		}*/
+
+		noprint := false
+		for _, f := range funcs {
+			// type errros that arose during collection of implementations
+			// (means that there is a missing implementation)
+			if f.TypeError != nil {
+				fmt.Println(f.Name, f.TypeError.Error())
+				noprint = true
 			}
 		}
 
-		fmt.Printf("\n")
+		if noprint == false && hprint == true {
+			fi, err := os.Create(out)
+			if err != nil {
+				panic(err)
+			}
+			defer fi.Close()
+			// we have working implementations! print 'em.
+			for _, f := range funcs {
+				for _, typemap := range f.Implementations {
+					f.PrintImplementation(typemap, fi)
+				}
+			}
+		}
+
 	}
 }
 
-
-
 // Dummy main function.
 func main() {
+	procsPtr := flag.Int("procs", 4, "Number of processors.")
+	printPtr := flag.Bool("print", false, "Should I print?")
+	inFilePtr := flag.String("infile", "", "File to operate on.")
+	outFilePtr := flag.String("outfile", "", "File to output to.")
+
+	flag.Parse()
+
+	if *inFilePtr == "" {
+		fmt.Println("ERROR: OH NO! Provide an input file!")
+		return
+	}
+
+	if *printPtr == true && *outFilePtr == "" {
+		fmt.Println("ERROR: OH NO! Provide a file to write results to!")
+		return
+	}
+
+	flist, err := paraparse.Setup(*inFilePtr, true)
+	if err != nil {
+		fmt.Printf("%+v", err)
+		return
+	}
+	RunParatype(*procsPtr, *outFilePtr, *printPtr, flist)
 }

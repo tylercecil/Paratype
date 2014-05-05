@@ -2,7 +2,9 @@ package paraparse
 
 import (
     "fmt"
+    "os"
     "strings"
+    "io"
     "github.com/skelterjohn/gopp"
 )
 
@@ -104,8 +106,7 @@ ident = /([a-z][a-zA-Z]*)/
 uident = /([N-Z][a-zA-Z]*)/
 typevar = /([A-M][a-zA-Z]*)/
 `
-
-func ParseCode(code string) (*Base, error) {
+func Parse(code string, file bool) (*Base, error) {
     df, err := gopp.NewDecoderFactory(paragopp, "Start")
     if err != nil {
         fmt.Println(err)
@@ -118,9 +119,20 @@ func ParseCode(code string) (*Base, error) {
     df.RegisterType(Error{})
     df.RegisterType(Typeclass{})
     df.RegisterType(Constraint{})
-    //dec := df.NewDecoder(strings.NewReader("typeclass Num\ntype y implements Zun, Num\ntype z implements Num\nfunc foo constrain A <Num, Zun> (d, A, y) iNT throws bigError, gError\n=x\n"))
-    //"typeclass Num inherits Zin\ntypeclass Zin\ntype z implements Zin\nfunc foo(d, A) iNT\n=x\n"
-    dec := df.NewDecoder(strings.NewReader(code))
+
+    var fcontents io.Reader
+
+    if file == true {
+        fcontents, err = os.Open(code)
+        if err!= nil {
+            return nil, err
+        }
+        defer fcontents.(*os.File).Close()
+    } else {
+        fcontents = df.NewDecoder(strings.NewReader(code))
+    }
+
+    dec := df.NewDecoder(fcontents)
     out := &Base{}
     err = dec.Decode(out)
     if err != nil {

@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"errors"
 	"strings"
+	"os"
 )
 
+// error messages that merging may throw
 var errorMsgs = [...]string{
 	"Explicit type conflict",
 	"Type class conflict",
@@ -15,19 +17,24 @@ var errorMsgs = [...]string{
 	"Missing implementation",
 };
 
+// to assist with debugging: print type map, atlas, and type variable map of f
 func PrintAll(f *Function) {
 	fmt.Printf("\nTypemap of %v\n", f.Name)
-	PrintTypeMap(f)
+	PrintTypeMap(f.TypeMap)
 	fmt.Printf("\nAtlas of %v\n", f.Name)
 	PrintAtlas(f)
+	fmt.Printf("\nTypevarmap of %v\n", f.Name)
+	PrintTypeVarMap(f)
 }
 
-func PrintTypeMap(g *Function) {
-	for tv, t := range g.TypeMap {
+// to assist with debugging
+func PrintTypeMap(typemap map[*TypeVariable]*Type) {
+	for tv, t := range typemap {
 		fmt.Printf("%+v : %+v\n", tv, t)
 	}
 }
 
+// to assist with debugging
 func PrintAtlas(g *Function) {
 	for path, tuple := range g.Atlas {
 		fmt.Printf("%+v\n", path)
@@ -36,8 +43,16 @@ func PrintAtlas(g *Function) {
 		}
 	}
 }
-// helper function for printing type errors --- later, we need to account for
-// stopping all threads in case of a type error
+
+// to assist with debugging
+func PrintTypeVarMap(g *Function) {
+	for tv, tvf := range g.TypeVarMap {
+		fmt.Printf("%v to %v\n", tv.Name, tvf.Name)
+	}
+}
+
+// helper function for creating type error strings
+// to add later: print what exactly in the function threw the type error
 func PrintError(errcode int, f *Function, g *Function) string {
 	switch {
 	case errcode <= 2:
@@ -51,6 +66,7 @@ func PrintError(errcode int, f *Function, g *Function) string {
 }
 
 // convert an array of function pointers to a path to be used as key for atlas
+// very annoying way of representing paths, but the easiest one at the moment
 func FunctionsToPath(f ...interface{}) string {
 	var buf bytes.Buffer
 
@@ -63,13 +79,14 @@ func FunctionsToPath(f ...interface{}) string {
 	return s
 }
 
+// converts a path that is a string back to an array of function pointers
 func PathToFunctions(path string, allfuncs map[*Function]bool) []*Function {
 	ids := strings.Split(path, "-")
 	funcs := make([]*Function, len(ids))
 	for i, stringid := range ids {
 		id, err := strconv.Atoi(stringid)
 		if err != nil {
-			// 
+			// we assume it's correct for the moment
 		}
 		for fun := range allfuncs {
 			if fun.Id == id {
@@ -80,7 +97,7 @@ func PathToFunctions(path string, allfuncs map[*Function]bool) []*Function {
 	return funcs
 }
 
-// add function f to path
+// add function f to an existing path
 func AddToPath(path string, f *Function) string {
 	var buf bytes.Buffer
 	buf.WriteString(path)
@@ -89,31 +106,48 @@ func AddToPath(path string, f *Function) string {
 	return buf.String()
 }
 
-
 // updates typevar v in func g to be typevar w in func f
 // really, we are merging v and w to be w in g
+// replaces the type variable v in g.Atlas[path][funcarg] with the type
+// variable w that is currently in f somewhere
+// 1) will try to merge their explicit types (f.TypeMap[w] and g.TypeMap[v])
+// 2) will try to merge the type classes associated with v and w (the type
+//    classes that constraint v and w)
 func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 	w *TypeVariable) error {
 	v := g.Atlas[path][funcarg]
 
-	if f.TypeMap[w] != nil && g.TypeMap[v] != nil && f.TypeMap[w] != g.TypeMap[v] {
+	// 1) merging explicit types if possible
+	if (f.TypeMap[w] != nil && g.TypeMap[w] != nil &&
+			f.TypeMap[w] != g.TypeMap[w]) ||
+		(f.TypeMap[w] != nil && g.TypeMap[v] != nil && f.TypeMap[w] !=
+		g.TypeMap[v]) ||
+		(g.TypeMap[v] != nil && g.TypeMap[w] != nil && g.TypeMap[w] !=
+		g.TypeMap[v]) {
 		// explicit types do not match
 		return errors.New(PrintError(0, g, f))
 	}
 
 	// make typemap entry for w in g
 	// find explicit type if it exists (nil otherwise)
-	if g.TypeMap[v] != nil {
-		g.TypeMap[w] = g.TypeMap[v]
+	if g.TypeMap[w] != nil {
+		//fmt.Printf("%+v %+v %+v %+v\n", w.Name, g.Name, v.Name, g.TypeMap[w])
+		g.TypeMap[v] = g.TypeMap[w]
+
 	} else {
-		g.TypeMap[w] = f.TypeMap[w]
+		if g.TypeMap[v] != nil {
+			g.TypeMap[w] = g.TypeMap[v]
+		} else {
+			g.TypeMap[w] = f.TypeMap[w]
+		}
 	}
 
+	// did we resolve this type?
 	if g.TypeMap[w] != nil {
 		w.Resolved = true
 	}
 
-	// intersection of w.Constraints and v.Constraints
+	// intersection of w.Constraints and v.Constraints, nil acts as superset
 	if w.Constraints[nil] {
 		// w allows any typeclass
 		w.Constraints = v.Constraints
@@ -152,24 +186,33 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 	return nil
 }
 
-// takes information from function f and uses it on g
-// to be called when f receives a context C_g
+// UPDATE (MERGE)
+// Function actor f will call this to add information to g
+// Will:
+// 1) Try to match function calls to function declarations
+//    If f is a child of g, then g's call to f can be matched to f's
+//    declaration and f's type variables will supersede.
+//    Both f and g will have a record of which type variables were replaced
+//    with which type variables
+// 2) Will replace any previously replaced type variables in g's declaration
+//    and in other calls that g makes
 func (f *Function) Update(g *Function) error {
 	// lock both f and g
 
-	// DEADLOCK POSSIBLE FOR CYCLES
 	g.Lock() // write lock
 	defer g.Unlock()
 	f.RLock() // read lock
 	defer f.RUnlock()
 
-	fmt.Printf("read lock %s write lock %s\n", f.Name, g.Name)
-	defer fmt.Printf("releasing read %s write %s\n", f.Name, g.Name)
+	// DEBUGGING
+	// fmt.Printf("read lock %s write lock %s\n", f.Name, g.Name)
+	// defer fmt.Printf("releasing read %s write %s\n", f.Name, g.Name)
 
 	var pf = FunctionsToPath(f)
 	var pgf = FunctionsToPath(g, f)
 
-	// f is child of g
+	// 1) If f is a child of g, try to match g's call to f with the declaration
+	//    of f
 	if f.Parents[g] {
 		// match f() with g(f())
 		for funcarg, typevar := range f.Atlas[pf] {
@@ -180,8 +223,8 @@ func (f *Function) Update(g *Function) error {
 		}
 	}
 
-	// replace any type variables that f has replaced elsewhere before
-	// this way, type variables "trickle up" the call tree
+	// Replace any type variables that f has replaced elsewhere before.
+	// This way, type variables "trickle up" the call tree
 	for path, atlasentry := range g.Atlas {
 		for funcarg, typevar := range atlasentry {
 			if f.TypeVarMap[typevar] != nil {
@@ -200,21 +243,36 @@ func (f *Function) Update(g *Function) error {
 	return nil
 }
 
+func FindFinalTypeVar(tv *TypeVariable, g *Function) (*TypeVariable, int) {
+	if g.TypeMap[tv] != nil {
+		return tv, 0
+	} else if g.TypeVarMap[tv] != nil {
+		return FindFinalTypeVar(g.TypeVarMap[tv], g)
+	} else {
+		return tv, -1
+	}
+}
+
 // collects all explicit implementations of f by walking up its call tree
-// NEEDS REFACTORING AND PARALLEL
-func (f *Function) CollectImplementations(g *Function) (implementations []map[int]*Type, err error) {
+func (f *Function) CollectImplementations(g *Function) (implementations []map[*TypeVariable]*Type, err error) {
 	pf := FunctionsToPath(f)
 
 	// search for explicit types of f's typevars in g
-	implementation := make(map[int]*Type)
-	for funcarg, typevar := range f.Atlas[pf] {
-		if g.TypeMap[typevar] == nil {
+	implementation := make(map[*TypeVariable]*Type)
+	noimpl := false
+	for _, typevar := range f.Atlas[pf] {
+		tt, ok := FindFinalTypeVar(typevar, g)
+		if ok == -1 {
+			// look for reverse maps
+			noimpl = true
 			break
+		} else {
+			implementation[typevar] = g.TypeMap[tt]
 		}
-		implementation[funcarg] = g.TypeMap[typevar]
 	}
 
-	if len(implementation) == len(f.Atlas[pf]) {
+
+	if noimpl == false {
 		implementations = append(implementations, implementation)
 	} else if len(g.Parents) == 0 {
 		// we are at a parent but it has no implementation for us?
@@ -235,63 +293,90 @@ func (f *Function) CollectImplementations(g *Function) (implementations []map[in
 	return implementations, err
 }
 
-// quickly hacked together print function for one implementation of f
-func (f *Function) PrintImplementation(typemap map[int]*Type) {
+func PrintRecursiveArgument(
+	f *Function,
+	g *Function,
+	level int,
+	tmap map[*TypeVariable]*Type) string {
+
+	var pfg = FunctionsToPath(f, g)
+
+	var r []string = make([]string, len(f.Atlas[pfg])-1)
+	for i, typevar := range f.Atlas[pfg] {
+		if i >= 1 {
+			// find composed calls
+			usetype := true
+			for h := range f.Children[level+1] {
+				var ph = FunctionsToPath(f, h)
+				// return type matching? has to be in this place
+				if f.Atlas[ph][0] == typevar {
+					r[i-1] = PrintRecursiveArgument(f, h, level+1, tmap)
+					usetype = false
+					break
+				}
+			}
+			if usetype {
+				r[i-1] = tmap[typevar].Name
+			}
+		}
+	}
+	return fmt.Sprintf("%v(%v)", g.Name, strings.Join(r, ", "))
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+// print an implementation of f
+func (f *Function) PrintImplementation(typemap map[*TypeVariable]*Type, outFile *os.File) {
 	s := make([]string, len(typemap)-1)
-	for i, typ := range typemap {
+	i := 0
+	for _, typ := range typemap {
 		if i >= 1 {
 			s[i-1] = typ.Name
 		}
+		i++
 	}
 
 	r := make([]string, len(f.Errors))
-	i := 0
+	i = 0
 	for e := range f.Errors {
 		r[i] = e.Name
 		i++
 	}
+	var pf = FunctionsToPath(f)
 
-	fmt.Printf("func %v(%s) %v", f.Name, strings.Join(s, ", "), typemap[0].Name)
+	_, err := fmt.Fprintf(outFile, "func %v(%s) %v", f.Name, strings.Join(s, ", "), typemap[f.Atlas[pf][0]].Name)
+	check(err)
 
 	if len(f.Errors) > 0 {
-		fmt.Printf(" throws %v", strings.Join(r, ", "))
+		_, err = fmt.Fprintf(outFile, " throws %v", strings.Join(r, ", "))
+		check(err)
 	}
-	fmt.Printf("\n= ")
+	_, err = fmt.Fprintf(outFile, "\n= ")
+	check(err)
 
 	if len(f.Children[0]) == 0 {
-		fmt.Printf("%v\n", typemap[0].Name)
+		_, err = fmt.Fprintf(outFile, "%v\n", typemap[f.Atlas[pf][0]].Name)
+		check(err)
 	} else {
-		for g := range f.Children[0] {
-			var pf = FunctionsToPath(f)
-			ftmap := make(map[*TypeVariable]*Type)
-			for tv, typ := range f.TypeMap {
-				ftmap[tv] = typ
+		for tv, typ := range f.TypeMap {
+			if typ != nil {
+				typemap[tv] = typ
 			}
+		}
 
-			for i, typevar := range f.Atlas[pf] {
-				ftmap[typevar] = typemap[i]
-			}
-			var pfg = FunctionsToPath(f, g)
-			var r []string = make([]string, len(f.Atlas[pfg])-1)
-			for i, typevar := range f.Atlas[pfg] {
-				if i >= 1 {
-					r[i-1] = ftmap[typevar].Name
-				}
-			}
-			fmt.Printf("%v(%v)\n", g.Name, strings.Join(r, ", "))
+		for g := range f.Children[0] {
+			_, err = fmt.Fprintf(outFile, "%v\n", PrintRecursiveArgument(f, g, 0, typemap))
+			check(err)
 		}
 	}
 }
 
-// collect all explicit implementations of f and print to somewhere
-func (f *Function) Finish() {
+// collect all explicit implementations of f
+func (f *Function) Finish() ([]map[*TypeVariable]*Type, error) {
 	impl, err := f.CollectImplementations(f)
-	if err != nil {
-		fmt.Printf(err.Error())
-		return
-	}
-
-	for _, typemap := range impl {
-		f.PrintImplementation(typemap)
-	}
+	return impl, err
 }
