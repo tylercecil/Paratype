@@ -118,17 +118,28 @@ func (g *Function) updateTypevar(path string, funcarg int, f *Function,
 	v := g.Atlas[path][funcarg]
 
 	// 1) merging explicit types if possible
-	if f.TypeMap[w] != nil && g.TypeMap[v] != nil && f.TypeMap[w] != g.TypeMap[v] {
+	if (f.TypeMap[w] != nil && g.TypeMap[w] != nil &&
+			f.TypeMap[w] != g.TypeMap[w]) ||
+		(f.TypeMap[w] != nil && g.TypeMap[v] != nil && f.TypeMap[w] !=
+		g.TypeMap[v]) ||
+		(g.TypeMap[v] != nil && g.TypeMap[w] != nil && g.TypeMap[w] !=
+		g.TypeMap[v]) {
 		// explicit types do not match
 		return errors.New(PrintError(0, g, f))
 	}
 
 	// make typemap entry for w in g
 	// find explicit type if it exists (nil otherwise)
-	if g.TypeMap[v] != nil {
-		g.TypeMap[w] = g.TypeMap[v]
+	if g.TypeMap[w] != nil {
+		//fmt.Printf("%+v %+v %+v %+v\n", w.Name, g.Name, v.Name, g.TypeMap[w])
+		g.TypeMap[v] = g.TypeMap[w]
+
 	} else {
-		g.TypeMap[w] = f.TypeMap[w]
+		if g.TypeMap[v] != nil {
+			g.TypeMap[w] = g.TypeMap[v]
+		} else {
+			g.TypeMap[w] = f.TypeMap[w]
+		}
 	}
 
 	// did we resolve this type?
@@ -232,13 +243,13 @@ func (f *Function) Update(g *Function) error {
 	return nil
 }
 
-func FindFinalTypeVar(tv *TypeVariable, g *Function) *TypeVariable {
+func FindFinalTypeVar(tv *TypeVariable, g *Function) (*TypeVariable, int) {
 	if g.TypeMap[tv] != nil {
-		return tv
+		return tv, 0
 	} else if g.TypeVarMap[tv] != nil {
 		return FindFinalTypeVar(g.TypeVarMap[tv], g)
 	} else {
-		return nil
+		return tv, -1
 	}
 }
 
@@ -250,8 +261,9 @@ func (f *Function) CollectImplementations(g *Function) (implementations []map[*T
 	implementation := make(map[*TypeVariable]*Type)
 	noimpl := false
 	for _, typevar := range f.Atlas[pf] {
-		tt := FindFinalTypeVar(typevar, g)
-		if tt == nil {
+		tt, ok := FindFinalTypeVar(typevar, g)
+		if ok == -1 {
+			// look for reverse maps
 			noimpl = true
 			break
 		} else {
