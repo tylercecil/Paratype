@@ -40,6 +40,8 @@ type Function struct {
 	NumParentsDone	int
 	WaitChildren	map[int]*sync.WaitGroup // function composition waitgroup
 	ImplementationWait	*sync.WaitGroup
+	KillFlag		*sync.WaitGroup
+	Dead		bool
 	Context
 	sync.RWMutex
 }
