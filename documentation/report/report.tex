@@ -366,8 +366,6 @@ Ultimately, this allows type variables from the leaf nodes of the call graph to
 every node in between is related to a leaf.
 
 
-
-
 \section{Methods}
 
 % Google Go and why
@@ -409,23 +407,95 @@ with a high degree of flexibility without the overhead of actually sending the m
 % TODO: talk about interesting go features like WaitGroups etc
 % TODO: was Go a good idea?
 
-The \texttt{goroutines} fit the actor model of type resolution nicely since
-the threads are lightweight and communication is easy to arrange. We found ourselves taking advantage of the fact that messages sent and received through \texttt{channels} are actually references to shared memory. This way, a specific context will update everywhere that it
-is referenced and we must only notify other actors that something changed
-instead of sending the context again. This reduces communication overhead while
-still functioning as a message passing system.
+The \texttt{goroutines} fit the actor model of type resolution nicely since the
+threads are lightweight and communication is easy to arrange. We found
+ourselves taking advantage of the fact that messages sent and received through
+\texttt{channels} are actually references to shared memory. This way, a
+specific context will update everywhere that it is referenced and we must only
+notify other actors that something changed instead of sending the context
+again. This reduces communication overhead while still functioning as a message
+passing system.
 
-Go also provides concurrency features that are useful for managing state. One of these concurrency primitives is the \texttt{WaitGroup}. A WaitGroup is similar to a semaphore. All of the threads are given a pointer to the WaitGroup upon their creation. The WaitGroup then provides basic functionality such as \lstinline!WaitGroup.Add()! and \lstinline!WaitGroup.Done()!. The add method increments a counter in the WaitGroup. When the WaitGroup contains a non-zero number all of the threads that called \lstinline!WaitGroup.Wait()! are blocked. Invoking the done method simply decrements the counter. This has proved useful for managing the state of the threads.
+Go also provides concurrency features that are useful for managing state. One
+of these concurrency primitives is the \texttt{WaitGroup}. A \texttt{WaitGroup}
+essentially consists of a semaphore; there is a method to increment it and a
+method to decrement it. The peculiar addition is a wait method: the wait method
+will block until the semaphore in the \texttt{WaitGroup} is decremented to
+zero.
 
-% TODO : Discuss Clojure as a viable alternative and analyze whether the decision to use Go was the correct one.
+Paratype makes use of \texttt{WaitGroup}s in several places. For example, for
+function composition, a function's composed context is evaluated from the
+innermost composed function(s) to the outermost composed function sequentially:
+the function actor resolving its function composition must wait for the
+innermost functions to resolve context before moving on to the next ``level''
+of the composition. It does so by sending a pointer to a \texttt{WaitGroup}
+with its message to the children of the composition. These children will send
+to their children and this repeats until the message has trickled all the way
+down the tree to the leafs (functions with no children). Each of these leafs
+decrement the \texttt{WaitGroup}. When every leaf has done that, the
+composed function that sent the message will be released from its wait call on
+the \texttt{WaitGroup} since the wait method will unblock when the semaphore is
+zero. The composing function then knows that it may move on to the next level
+of function composition.
 
-Although Go provides nice concurrency features, we sometimes found ourselves fighting with the type system and verbosity of the language. Another consideration for the implementation was \texttt{Clojure}. Clojure is a lisp variant that runs on the Java Virtual Machine. There is a library for Clojure, \texttt{core.async}, which implements most of the concurrency features modeled after the Go concurrency system. This brings the same shared memory channels with the advantages of the concise and dynamic nature of Clojure. Clojure is also built for concurrency boasts immutable data types to provide safety in parallelized code. One of the issues with this is that Paratype is a very state driven application. This could lead to performance faults when using a language that is not built for modeling mutable state.
+% TODO : Discuss Clojure as a viable alternative and analyze whether the
+% decision to use Go was the correct one.
+
+Although Go provides nice concurrency features, we sometimes found ourselves
+fighting with the type system and verbosity of the language. Another
+consideration for the implementation could have been \texttt{Clojure}. Clojure
+is a lisp variant that runs on the Java Virtual Machine. There is a library for
+Clojure, \texttt{core.async}, which implements some concurrency features that
+are  modeled after Google Go's concurrency system. This brings the same shared
+memory channels with the advantages of the concise and dynamic nature of
+Clojure. Clojure is also built for concurrency and boasts immutable data types
+to provide safety in parallelized code. One of the issues with this is that
+Paratype is a very state-driven application. This could lead to performance
+faults when using a language that is not built for modeling mutable state.
 
 \section{Problems Induced by Parallelization}
 	\subsection{Making Halting Deterministic}
-		An issue when performing the type completion and analysis in parallel is knowing when all of the operations are completed and halting can commence. Halting in the initial implementation of Paratype was simple but not effective. Each of the functions spawned was added to a \texttt{WaitGroup}. At the start of every actors go loop they would mark themselves active by incrementing the WaitGroup. Once they reached the end of their go loop they would decrement the WaitGroup marking themselves inactive. This happened repeatedly in a loop. The main function would then wait for all actors to become inactive. If they were all inactive it would check if all of the channels were empty. This worked in some situations but had a race condition that would cause problems. The reason for this race condition is the state could change in between checking the WaitGroup and checking the channels.
+		An issue when performing the type completion and analysis in parallel
+		is knowing when all of the operations are completed and halting can
+		commence. 
+		
+		Halting in the initial implementation of Paratype was simple but wrong:
+		each of the function actors spawned had a reference to a
+		\texttt{WaitGroup} which they incremented when they did work and
+		decremented when they did not. The main function would then wait for
+		all actors to become inactive, at which point it would check that all
+		channels were empty.  Obviously, this is a race condition: between the
+		activity check and the checking of the channels, a function actor may
+		have read the last message from the channels and thus become active
+		while the channels are empty.
 
-		The updated iteration of halting requires keeping track of more state. Actors which do not have parents only need to send to their children and they are completed. The signaling of the completion is done through a flag in one of the communication messages. Once a child receives a message from its parent it processes the message. If the message contains a flag that indicates it is the last communication then the child sends a \lstinline!nil! value through the \lstinline!error! channel. This \lstinline!nil! value on the error channel is a message to the main thread that it can decrement the number of active processes. Once an actor is effectively inactive it is waiting for a message on the channel. This will never happen since its parent is also inactive. This provides an implicit barrier. Once the main thread sees that all functions have become inactive it sets a flag dictating that they collect their implementations and closes all of their channels.
+		In the current version of Paratype, there are two main steps separated
+		by an implicit barrier: the type relation comilation step and the
+		implementation collection step. Halting for the implementation
+		collection step is trivial, but halting in the type relation
+		compilation step is more complicated. 
+		
+		In that step, halting takes advantage of the fact
+		that communication only happens from callers to callees. Function
+		actors which are not called from anywhere know that after they gather
+		their context information and send it to all their children, they will
+		never receive any messages since only their callees may send them
+		messages. Thus, they can mark themselves as done. They communicate this
+		to their children in their last transmission.
+
+		Any function actor which has parents will wait for all their parents to
+		be done. Once they process all their messages, they then know that they
+		cannot receive any more messages and can mark themselves as done. They
+		will communicate this to their children as well.
+
+		Every function actor has a channel back to the main thread for sending
+		type errors once they arise. This channel is also used to signal the
+		main thread that a function actor is done: instead of an error, a
+		function actor that is done will send \lstinline!nil! (similar to a
+		\lstinline!NULL! pointer) back to the main thread. The main thread will
+		keep track of how many function actors are active and once every
+		function actor is inactive, we can enter the implementation collection
+		step.
 
 % 		\begin{lstlisting}[caption=Communication Struct, language=Paratype, label=lst:commstruct]
 % type Communication struct {
@@ -437,15 +507,43 @@ Although Go provides nice concurrency features, we sometimes found ourselves fig
 % }
 % 		\end{lstlisting}
 	\subsection{Halting On Type Error Detection}
-		Even though an implementation for halting may work on valid input, it
-		may fail for input which generates a type error. One of the advantages of performing the type checking process in parallel is that the type errors can be detected earlier. Once a type error is detected the threads must all exit gracefully. This is not a simple task due to the fact that goroutines can still perform writes on closed channels. Writes to closed channels will trigger a runtime error. A situation that is very common for input with type errors involves the main thread receiving an error and closing all of the channels. This means that the main threads needs to effectively communicate to all of the goroutines that they are done and should stop attempting to complete their contexts.
 
-		The way this problem was approached involves adding two new variables to the actor. A WaitGroup signifying that execution should be paused and a boolean that signifies whether an actor should terminate itself. The WaitGroup is initially zero meaning that all goroutines which call wait can continue to execute without blocking on the call. This is important because all of the goroutines call wait before performing any writes to the channel. If an error is received then the main thread increments the WaitGroup. This pauses all of the threads before they can write to the channel. The main thread then iterates over all goroutines and sets the boolean that signifies that the thread should terminate. All of the goroutines then exit upon observing that the flag is set.
+		Even though the previously described implementation for halting may
+		work on valid input, it fails for input that generates a type error.
+		One of the advantages of performing the type checking process in
+		parallel is that type errors can be detected earlier, but once a type
+		error is detected, all threads must all exit gracefully. 
+
+		When a function actor encounters a type error during its type relation
+		compilation step, it will signal this to the main thread using the
+		previously described error channel and stop computation. The problem
+		then is that the main thread needs a way to stop all other function
+		actors: Google Go does not provide any facilities for stopping a
+		running goroutine or for checking whether a communication channel is
+		closed. With that in mind, simply closing all channels of communication
+		is out of the question.
+
+		To approach the problem, every function actor was provided with a
+		reference to a global \texttt{WaitGroup} and a boolean representing
+		whether execution should stop. The main thread will set the boolean to
+		true when every function actor should stop executing. Simply checking
+		the boolean before trying to send to a channel is a race condition,
+		though, which is where the \texttt{WaitGroup} comes in: when the main
+		thread learns of a type error, it will increment the \texttt{WaitGroup}
+		and before a function actor tries to send a channel, it calls wait on
+		the \texttt{WaitGroup}. After incrementing the \texttt{WaitGroup}, the
+		main thread will set all the booleans to true and then release the
+		\texttt{WaitGroup}. After this, we know that no thread will try to send
+		to any channel and the main thread may close all function actor
+		channels as well as error channels.
+
 	\subsection{Function Composition}
 		One of the issues induced by parallelization is the handling of
-		function composition. Consider the code snippet shown in Listing
-		~\ref{lst:composition} 
-\begin{lstlisting}[caption=Small Example of function composition, language=Paratype, label=lst:composition]
+		function composition. Consider the code snippet shown in 
+		Listing~\ref{lst:composition}.
+
+		\begin{lstlisting}[caption=Small Example of function composition,
+		language=Paratype, label=lst:composition] 
 type int
 type float
 type boat
@@ -458,37 +556,49 @@ func m(int) A
 func h(A) float
 	= float
 		\end{lstlisting}
-In the initial implementation of Paratype a function with no parents did not
-need to have a thread spawned for itself. Instead, it would send the children
-its initial context before being spawned. This became problematic when the
-implementation of function composition began. The
-children would all evaluate their own contexts and replace values in the
-parents' atlas while other children were trying to do the same: while there was
-a read-write mutex in place, children now did not know the relation of their
-type variables to those in the parents anymore and could thus not resolve their
-types. This would cause the evaluation to be unresolvable due to inability to
-correctly map type variables. 
 
-This was solved using a technique we refer to as
-``in-out evaluation:'' any function actor that contains function composition
-will send to the innermost children of the composition first and then wait for
-those children to finish resolving types. Once that happened, it then sends to 
-the next level of the composition (second-to-inner) and the process repeats
-until finally the outermost function is resolved. This happens any time a
-composed function receives a context.
+		In the initial implementation of Paratype a function with no parents
+		did not need to have a thread spawned for itself. Instead, it would
+		send the children its initial context before being spawned. This became
+		problematic when the implementation of function composition began. The
+		children would all evaluate their own contexts and replace values in
+		the parents' atlas while other children were trying to do the same:
+		while there was a read-write mutex in place, children now did not know
+		the relation of their type variables to those in the parents anymore
+		and could thus not resolve their types. This would cause the evaluation
+		to be unresolvable due to inability to correctly map type variables. 
 
-The way the children signal that they are done resolving types is through a
-wait group (like a semaphore) that they decrement. The parent will be blocking
-on a wait call that unblocks once the semaphore is equal to zero, then knowing
-that the respective level of composition is done resolving and that it may go
-up one level.
+		This was solved using a technique we refer to as ``in-out evaluation:''
+		any function actor that contains function composition will send to the
+		innermost children of the composition first and then wait for those
+		children to finish resolving types. Once that happened, it then sends
+		to the next level of the composition (second-to-inner) and the process
+		repeats until finally the outermost function is resolved. This happens
+		any time a composed function receives a context.
+
+		The way the children signal that they are done resolving types is
+		through a wait group (like a semaphore) that they decrement. The parent
+		will be blocking on a wait call that unblocks once the semaphore is
+		equal to zero, then knowing that the respective level of composition is
+		done resolving and that it may go up one level.
 
 \section{Verification}
-	When testing Paratype it is useful to know what the correct output should be. All of our testing was performed with curated examples that were picked to intentionally pose a problem and ensure that each of the subsystems were working correctly. When the completion is performed the output is written to a file. These files can then be checked for correctness. Go provides a useful testing package that allows for executing all tests or select tests. It launches the threads and gives details about execution and gives the state of the goroutines during an error. This is incredibly useful and was used often to test the hand made examples. It was not uncommon to also repeatedly run these tests to ensure they were deterministic in halting and not causing exceptional situations.
+	When testing Paratype it is useful to know what the correct output should
+	be. All of our testing was performed with curated examples that were picked
+	to intentionally pose a problem and ensure that each of the subsystems were
+	working correctly. When the completion is performed the output is written
+	to a file. These files can then be checked for correctness. Go provides a
+	useful testing package that allows for executing all tests or select tests.
+	It launches the threads and gives details about execution and gives the
+	state of the goroutines during an error. This is incredibly useful and was
+	used often to test the hand made examples. It was not uncommon to also
+	repeatedly run these tests to ensure they were deterministic in halting and
+	not causing exceptional situations.  
+	
 \section{Analysis and Model}
 %  variables: number of functions, function calls, contexts, partial contexts,
-%  undecidability, number of physical cores available, number of types and
-%  type classes, etc
+%  undecidability, number of physical cores available, number of types and type
+%  classes, etc
 
 Even though we expected a good amount of speedup from our model, initial
 results are not hopeful: For very small examples, speedup is limited to two or
@@ -510,54 +620,55 @@ not beneficial for anything above four processors.
 Since speedup was not very good; of course efficiency was even worse. See
 Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
-\begin{figure}[ht]
+\begin{figure}[ht] 
 	\centering
 	\includegraphics[scale=0.6]{../../data/composite1-speedup.pdf}
 	\caption{Speedup vs number of processors, example composite1 (four
-	functions)}
-	\label{fig:c1s}
-\end{figure}
-\begin{figure}[ht]
+	functions)} 
+	\label{fig:c1s} 
+\end{figure} 
+
+\begin{figure}[ht] 
 	\centering
 	\includegraphics[scale=0.6]{../../data/composite3-speedup.pdf}
-	\caption{Speedup vs number of processors, example composite3 (84 functions)}
-	\label{fig:c3s}
-\end{figure}
-\begin{figure}[ht]
+	\caption{Speedup vs number of processors, example composite3 (84
+	functions)} 
+	\label{fig:c3s} 
+\end{figure} 
+
+\begin{figure}[ht] 
 	\centering
 	\includegraphics[scale=0.6]{../../data/composite1-efficiency.pdf}
 	\caption{Efficiency vs number of processors, example composite1 (four
-	functions)}
+	functions)} 
 	\label{fig:c1e}
-\end{figure}
-\begin{figure}[ht]
+\end{figure} 
+
+\begin{figure}[ht] 
 	\centering
 	\includegraphics[scale=0.6]{../../data/composite3-efficiency.pdf}
 	\caption{Efficiency vs number of processors, example composite3 (84
-	functions)}
-	\label{fig:c3e}
+	functions)} 
+	\label{fig:c3e} 
 \end{figure}
 
-
-
-
 % variables: number of functions, function calls, contexts, partial contexts,
-% undecidability, number of physical cores available, number of types and
-% type classes, etc
+% undecidability, number of physical cores available, number of types and type
+% classes, etc
 %
 % gopp parser hangs in some cases (not our focus, so we don't care)
 %
 %just some notes to use for empirical analysis later
 %
-% Complexity of f.Update(g) algorithm if g is parent of f:
-% \[ U(f, g) = \sum_{\textrm{v in args of g and w replaces v}} V(v, w))
-% \leq O(|\textrm{num args of g}| \times |\textrm{num typeclasses}|) \]
+% Complexity of f.Update(g) algorithm if g is parent of f: \[ U(f, g) =
+% \sum_{\textrm{v in args of g and w replaces v}} V(v, w)) \leq O(|\textrm{num
+% args of g}| \times |\textrm{num typeclasses}|) \]
 %
-% UpdateTypevar (v and w merge to w):
-% \[ V(v, w) = O(|\textrm{num of typeclasses on w}|) \]
+% UpdateTypevar (v and w merge to w): \[ V(v, w) = O(|\textrm{num of
+% typeclasses on w}|) \]
 %
-% Complexity of f.Update(g) if g is parent of f:
-% \[ \leq O(|\textrm{num atlas entries of g}| \times |\textrm{num typeclasses}|) \]
+% Complexity of f.Update(g) if g is parent of f: \[ \leq O(|\textrm{num atlas
+% entries of g}| \times |\textrm{num typeclasses}|) \]
 %
 % All of these multiplied by hashmap access time at worst $O(\textrm{size of
 % map})$ each
@@ -572,15 +683,15 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
 % just some notes to use for empirical analysis later
 
-%  Complexity of f.Update(g) algorithm if g is parent of f:
-%  \[ U(f, g) = \sum_{\textrm{v in args of g and w replaces v}} V(v, w))
-%  \leq O(|\textrm{num args of g}| \times |\textrm{num typeclasses}|) \]
+%  Complexity of f.Update(g) algorithm if g is parent of f: \[ U(f, g) =
+%  \sum_{\textrm{v in args of g and w replaces v}} V(v, w)) \leq O(|\textrm{num
+%  args of g}| \times |\textrm{num typeclasses}|) \]
 
-%  UpdateTypevar (v and w merge to w):
-%  \[ V(v, w) = O(|\textrm{num of typeclasses on w}|) \]
+%  UpdateTypevar (v and w merge to w): \[ V(v, w) = O(|\textrm{num of
+%  typeclasses on w}|) \]
 
-%  Complexity of f.Update(g) if g is parent of f:
-%  \[ \leq O(|\textrm{num atlas entries of g}| \times |\textrm{num typeclasses}|) \]
+%  Complexity of f.Update(g) if g is parent of f: \[ \leq O(|\textrm{num atlas
+%  entries of g}| \times |\textrm{num typeclasses}|) \]
 
 %  All of these multiplied by hashmap access time at worst $O(\textrm{size of
 %  map})$ each
@@ -593,26 +704,23 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
 \section{Conclusion}
 
-\emph{Paratype}, as is, serves as a proof of concept of a novel
-approach to type analysis. It achieved its goal of being able to
-resolve simple merges and function compositions, explored the design
-of an actor based type system, and help define many of the problems
-that would be faced in a full type analysis system. That being said,
-it still needs work to tackle all problems of a type analysis system
-(most notably the lack of cycle detection in call graphs.) In many
-cases algorithms have been detailed to tackle these edge cases  and
-missing features, though they have yet to be implemented. Finally,
-time needs to be taken to further optimize the existing code base;
-known inefficient uses of memory and processing are current in the
-\emph{Paratype} code base.
+\emph{Paratype}, as is, serves as a proof of concept of a novel approach to
+type analysis. It achieved its goal of being able to resolve simple merges and
+function compositions, explored the design of an actor based type system, and
+help define many of the problems that would be faced in a full type analysis
+system. That being said, it still needs work to tackle all problems of a type
+analysis system (most notably the lack of cycle detection in call graphs.) In
+many cases algorithms have been detailed to tackle these edge cases  and
+missing features, though they have yet to be implemented. Finally, time needs
+to be taken to further optimize the existing code base; known inefficient uses
+of memory and processing are current in the \emph{Paratype} code base.
 
-Without the means to generate complicated, feature rich source files,
-a quality analysis of the software performance can not be
-performed. As is, it appears parallel overhead takes over the
-advantages of the software, but these are only with simple
-examples. The algorithms that were designed in this project were
-elaborate, novel, and exciting. It is our hope to continue with
-\emph{Paratype} and see it to its end.
+Without the means to generate complicated, feature rich source files, a quality
+analysis of the software performance can not be performed. As is, it appears
+parallel overhead takes over the advantages of the software, but these are only
+with simple examples. The algorithms that were designed in this project were
+elaborate, novel, and exciting. It is our hope to continue with \emph{Paratype}
+and see it to its end.
 
 \appendix
 \section{Finalized Grammar}
