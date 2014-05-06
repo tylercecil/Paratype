@@ -97,6 +97,17 @@ func PathToFunctions(path string, allfuncs map[*Function]bool) []*Function {
 	return funcs
 }
 
+// debugging 
+func PrintablePath(path string, allfuncs map[*Function]bool) string {
+	pathfuncs := PathToFunctions(path, allfuncs)
+	s := make([]string, len(pathfuncs))
+	for i, g := range pathfuncs {
+		s[i] = g.Name
+	}
+	return strings.Join(s, "-")
+}
+
+
 // add function f to an existing path
 func AddToPath(path string, f *Function) string {
 	var buf bytes.Buffer

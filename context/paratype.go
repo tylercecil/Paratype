@@ -6,6 +6,25 @@ import (
 	//"strings"
 )
 
+// send message to function, return whether it was successful
+func (f *Function) sendMessage(g *Function, msg *Communication) bool {
+	f.KillFlag.Wait()
+	if f.Dead == true {
+		return false
+	}
+	g.Channel <- msg
+	return true
+}
+
+func (f *Function) sendError(errorChannel chan error, err error) bool {
+	f.KillFlag.Wait()
+	if f.Dead == true {
+		return false
+	}
+	errorChannel <- err
+	return true
+}
+
 // Runtime for each function actor
 // to be used as a goroutine
 func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
@@ -15,40 +34,36 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 		// function composition:
 		// wait for each level of children to return
 		for {
-			//fmt.Printf("%v waiting %v\n", f.Name, f.Depth)
 			f.WaitChildren.Wait()
 
 			f.Depth--
 
 			if f.Depth == 0 {
 				break
-			} else {
-				for g := range f.Children[f.Depth-1] {
-					comm := new(Communication)
-					comm.Path = FunctionsToPath(f, g)
-					comm.Context = f
-					comm.Depth = f.Depth - 1
-					comm.LastComm = (len(f.Parents) == 0)
-					if f.Depth > 1 {
-						comm.Wait = f.WaitChildren
-						f.WaitChildren.Add(1)
-					}
-					f.KillFlag.Wait()
-					if f.Dead == true {
-						return
-					}
-					g.Channel <-comm
+			}
+
+			for g := range f.Children[f.Depth-1] {
+				comm := new(Communication)
+				comm.Path = FunctionsToPath(f, g)
+				comm.Context = f
+				comm.Depth = f.Depth - 1
+				comm.LastComm = (len(f.Parents) == 0)
+
+				if f.Depth > 1 {
+					comm.Wait = f.WaitChildren
+					f.WaitChildren.Add(1)
+				}
+
+				if f.sendMessage(g, comm) == false {
+					return
 				}
 			}
 		}
 	}
 
-	f.KillFlag.Wait()
-	if f.Dead == true {
+	// taking advantage of short-circuiting!
+	if len(f.Parents) == 0 && f.sendError(err, nil) == false {
 		return
-	}
-	if len(f.Parents) == 0 {
-		err <- nil
 	}
 
 	for message := range f.Channel {
@@ -57,124 +72,61 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 			f.NumParentsDone++
 		}
 
-		if f.NumParentsDone < len(f.Parents) {
-			message.LastComm = false
-		} else {
-			message.LastComm = true
-		}
+		// this is _my_ last communication if my parents are done
+		// TODO: should I check whether my buffer is empty?
+		message.LastComm = (f.NumParentsDone == len(f.Parents))
 
 		// // debugging
-		// pathfuncs := PathToFunctions(message.Path, *Functions)
-		// s := make([]string, len(pathfuncs))
-		// for i, g := range pathfuncs {
-		// 	s[i] = g.Name
-		// }
 		// fmt.Printf("%v received from path %s the of %v\n",
-		// 	f.Name, strings.Join(s, "-"), message.Context.Name)
+		// f.Name, PrintablePath(message.Path, *Functions), 
+		// message.Context.Name)
 
 		// MERGE
 		er := f.Update(message.Context)
-		f.KillFlag.Wait()
-		if f.Dead == true {
-			break;
-		}
-		if er != nil {
-			err <- er
+
+		// taking advantage of short-circuiting!
+		if er != nil && f.sendError(err, er) == false {
 			return
 		}
-			/*pathfuncs := PathToFunctions(message.Path, *Functions)
-			s := make([]string, len(pathfuncs))
-			for i, g := range pathfuncs {
-				s[i] = g.Name
-			}
-			fmt.Printf("%v received from path %s the of %v\n",
-				f.Name, strings.Join(s, "-"), message.Context.Name)*/
 
+		// send myself to children
+		for level, gfuncs := range f.Children {
+			for g := range gfuncs {
+				msgCopy := new(Communication)
 
-		depth := len(f.Children)
+				// copy the message
+				*msgCopy = *message
 
-		var WaitChildren *sync.WaitGroup
-		if depth >= 1 {
-			WaitChildren = new(sync.WaitGroup)
-		}
+				// in anticipation for function composition with repeats of
+				// callees
+				msgCopy.Path = AddToPath(msgCopy.Path, g)
 
-		for g := range f.Children[depth - 1] {
-			comm := new(Communication)
-			*comm = *message
-			comm.Path = AddToPath(comm.Path, g)
-			comm.Depth = depth - 1
-			if depth >= 1 {
-				comm.Wait = WaitChildren
-				//fmt.Printf("adding %v %v\n", g, WaitChildren)
-				WaitChildren.Add(1)
-			}
-			f.KillFlag.Wait()
-			if f.Dead == true {
-				return
-			}
+				// Necessary for function composition: every leaf notifies the
+				// composing function for completion. The composing function 
+				// assumes that there is only one leaf for each callee, but 
+				// what if one of the callees is also composed? Then, there are
+				// more leafs and the waitgroup has to be incremented further.
+				if level >= 1 && message.Wait != nil {
+					message.Wait.Add(1)
+				}
 
-			g.Channel <-comm
-		}
-
-
-		if WaitChildren != nil {
-			for {
-				//fmt.Printf("%v waiting %v %v\n", f.Name, depth, WaitChildren)
-				WaitChildren.Wait()
-
-				depth--
-
-				if depth == 0 {
-					if message.Wait != nil {
-						/*fmt.Printf("%v decrementing %v %v\n", f.Name,
-						message.Wait, message.Path)*/
-						message.Wait.Done()
-					}
-					break
-				} else {
-					for g := range f.Children[depth-1] {
-						comm := new(Communication)
-						*comm = *message
-						comm.Path = AddToPath(comm.Path, g)
-						comm.Depth = depth - 1
-						if depth >= 1 {
-							comm.Wait = WaitChildren
-							WaitChildren.Add(1)
-						}
-						f.KillFlag.Wait()
-						if f.Dead == true {
-							return
-						}
-						g.Channel <-comm
-					}
+				if f.sendMessage(g, msgCopy) == false {
+					return
 				}
 			}
 		}
 
-
-		// add myself to path
-		/*for _, gfuncs := range f.Children {
-			for g := range gfuncs {
-				msgCopy := new(Communication)
-				msgCopy = message
-				msgCopy.Path = AddToPath(msgCopy.Path, g)
-				g.Channel <- msgCopy
-			}
-		}*/
-
+		// Function composition: decrement the waitgroup if I'm a leaf and I am
+		// inheriting from a composed call
 		if len(f.Children) == 0 && message.Wait != nil {
-			/*fmt.Printf("%v decrementing %v no child %v\n", f.Name,
-			message.Wait, message.Path)*/
-
-			//fmt.Printf("%+v %+v\n", PathToFunctionsmessage.Path, f.Name)
 			message.Wait.Done()
 		}
 
 		// did I just send my last communication?
-		if message.LastComm {
-			err <- nil
+		// taking advantage of short-circuiting
+		if message.LastComm && f.sendError(err, nil) == false{
+			return
 		}
-
 	}
 
 	// implicit barrier through channel closing
@@ -193,7 +145,6 @@ func (f *Function) Initialize(implWait *sync.WaitGroup, killFlag *sync.WaitGroup
 	f.Channel = make(chan *Communication, 128)
 	f.ImplementationWait = implWait
 	f.KillFlag = killFlag
-	//implWait.Add(1)
 }
 
 // sends own to child
