@@ -53,14 +53,7 @@ func RunActors(f ...interface{}) []error {
 		fActor.Initialize(implementationWait, killFlag)
 	}
 
-	// avoid race conditions by having the first communication in Channels
-	// before starting
 	for fActor := range Functions {
-		fActor.InitialSendToChild()
-	}
-
-	for fActor := range Functions {
-		//fmt.Printf("\tSpawning Function Actor for %v\n", fActor.Name)
 		implementationWait.Add(1)
 		go fActor.Run(&Functions, err)
 		NumThreadsActive++

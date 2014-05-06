@@ -29,6 +29,8 @@ func (f *Function) sendError(errorChannel chan error, err error) bool {
 // to be used as a goroutine
 func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
+	f.Depth = len(f.Children)
+	f.SendToChildren()
 
 	if f.WaitChildren != nil {
 		// function composition:
@@ -42,22 +44,7 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 				break
 			}
 
-			for g := range f.Children[f.Depth-1] {
-				comm := new(Communication)
-				comm.Path = FunctionsToPath(f, g)
-				comm.Context = f
-				comm.Depth = f.Depth - 1
-				comm.LastComm = (len(f.Parents) == 0)
-
-				if f.Depth > 1 {
-					comm.Wait = f.WaitChildren
-					f.WaitChildren.Add(1)
-				}
-
-				if f.sendMessage(g, comm) == false {
-					return
-				}
-			}
+			f.SendToChildren()
 		}
 	}
 
@@ -148,10 +135,8 @@ func (f *Function) Initialize(implWait *sync.WaitGroup, killFlag *sync.WaitGroup
 }
 
 // sends own to child
-func (f *Function) InitialSendToChild() {
-	f.Depth = len(f.Children)
-
-	if f.Depth > 1 {
+func (f *Function) SendToChildren() {
+	if f.Depth > 1 && f.WaitChildren == nil {
 		f.WaitChildren = new(sync.WaitGroup)
 	}
 
