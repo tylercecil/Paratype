@@ -577,24 +577,26 @@ func h(A) float
 	= float
 		\end{lstlisting}
 
-		In the initial implementation of Paratype a function with no parents
-		did not need to have a thread spawned for itself. Instead, it would
-		send the children its initial context before being spawned. This became
-		problematic when the implementation of function composition began. The
-		children would all evaluate their own contexts and replace values in
-		the parents' atlas while other children were trying to do the same:
-		while there was a read-write mutex in place, children now did not know
-		the relation of their type variables to those in the parents anymore
-		and could thus not resolve their types. This would cause the evaluation
-		to be unresolvable due to inability to correctly map type variables. 
+		In the initial implementation of Paratype, a function with no parents
+		(an aristocratic function) did not need to have a thread spawned for
+		itself, since the ``initial send'' step of the algorithm would send its
+		first (and thus, last) message before the goroutines were created.
+
+		However, function composition made this optimization obsolete: The
+		children would all evaluate their own contexts and replace type
+		variables in their parents while other children were trying to do the
+		same: even though there was a read-write mutex in place, children now
+		did not know the relation of their type variables to those in the
+		parents anymore if another child overwrote it and could thus not
+		resolve their types. This would cause the evaluation to be unresolvable
+		due to inability to correctly find relations between type variables.
 
 		This was solved using a technique we refer to as ``in-out evaluation:''
 		any function actor that contains function composition will send to the
 		innermost children of the composition first and then wait for those
-		children to finish resolving types. Once that happened, it then sends
+		children to finish resolving types. Once that happens, it then sends
 		to the next level of the composition (second-to-inner) and the process
-		repeats until finally the outermost function is resolved. This happens
-		any time a composed function receives a context.
+		repeats until finally the outermost function is resolved.
 
 		The way the children signal that they are done resolving types is
 		through a wait group (like a semaphore) that they decrement. The parent
