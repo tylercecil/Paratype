@@ -39,7 +39,7 @@
 \usepackage{lstlang0} % go
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \usepackage{MnSymbol}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \lstset{
 	prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rhookswarrow}},
 	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rcurvearrowse\space}},
@@ -329,43 +329,6 @@ func bar(T a) T throws weirdError
 \end{lstlisting}
 
 % ADD EXAMPLE OF NESTED FUNCTIONS
-
-\section{Parallelization}
-
-This is what each function $f$ does during its runtime:
-\begin{enumerate}[noitemsep]
-	\item Receive path-context object $(P, C_h)$ from parent $g$
-	\item Set to running state
-	\item Merge type information from $C_f$ into $C_h$
-	\item Add $f$ to path $P$ and send $(P, C_h)$ to $f$'s child
-	\item Waiting state
-\end{enumerate}
-
-Merging type information from $C_f$ into $C_h$ is a tricky task. There are two
-cases:
-\begin{enumerate}
-	\item If $h$ is a direct parent of $f$, the function call from $h$ to $f$
-		can be matched to $f$'s declaration.
-
-		$f$ will override the type
-		variables of that function call with the ones generated through its
-		declaration and remember which ones it replaced by storing them in a
-		map (called the type variable map).
-
-		It will then override the type variables of $h$ that were used in the
-		call to $f$ as well. $f$ knows which ones to replace: if a type
-		variable in the declaration of $h$ is a key in its type variable map,
-		it will replace it with the corresponding value.
-	\item If $h$ is not a direct parent of $f$, we will simply use the type
-		variable map created through direct parents of $f$ as detailed
-		previously to replace any type variables in $h$.
-\end{enumerate}
-
-Ultimately, this allows type variables from the leaf nodes of the call graph to
-``trickle up'' through the nodes until finally, the roots of the call graph and
-every node in between is related to a leaf.
-
-
 \section{Methods}
 
 % Google Go and why
@@ -453,7 +416,65 @@ to provide safety in parallelized code. One of the issues with this is that
 Paratype is a very state-driven application. This could lead to performance
 faults when using a language that is not built for modeling mutable state.
 
-\section{Problems Induced by Parallelization}
+
+\section{Parallelization}
+
+The algorithm that is the heart of Paratype works in essence as following:
+\begin{description}[noitemsep]
+	\item[Parsing] Parse input file according to Paratype grammar.
+	\item[Setup] For each function, collect context information by finding type
+		variables and function calls as well as the relation of type variables
+		from function declaration to function calls
+	\item[Initial send] For each function, send the context information to all
+		its children (callees).
+	\item[Type resolution] For each function, spawn a Goroutine (function
+		actor).  
+	\item[Halting type resolution] Wait for each function actor to finish 
+		resolving types.
+	\item[Implementation collection] Close all channels of communication, which
+		acts as an implicit barrier for all function actors to walk up their
+		call tree to collect sets of explicit types for themselves.
+	\item[Halting collection] Wait for all function actors to finish
+		implementation collection.
+	\item[Printing] Printing the implementations.
+\end{description}
+
+\subsection{Type Resolution Step}
+
+This is what each function $f$ does during its runtime:
+\begin{enumerate}[noitemsep]
+	\item Receive path-context object $(P, C_h)$ from parent $g$, where the
+		path is the path that the context has traveled so far and the context
+		$C_h$ is the context of some function $h$.
+	\item Merge type information from $C_f$ into $C_h$.
+	\item Add $f$ to path $P$ and send $(P, C_h)$ to all children of $f$.
+\end{enumerate}
+
+Merging type information from $C_f$ into $C_h$ is a tricky task. There are two
+cases:
+\begin{enumerate}
+	\item If $h$ is a direct parent of $f$, the function call from $h$ to $f$
+		can be matched to $f$'s declaration.
+
+		$f$ will override the type
+		variables of that function call with the ones generated through its
+		declaration and remember which ones it replaced by storing them in a
+		map (called the type variable map).
+
+		It will then override the type variables of $h$ that were used in the
+		call to $f$ as well. $f$ knows which ones to replace: if a type
+		variable in the declaration of $h$ is a key in its type variable map,
+		it will replace it with the corresponding value.
+	\item If $h$ is not a direct parent of $f$, we will simply use the type
+		variable map created through direct parents of $f$ as detailed
+		previously to replace any type variables in $h$.
+\end{enumerate}
+
+Ultimately, this allows type variables from the leaf nodes of the call graph to
+``trickle up'' through the nodes until finally, the roots of the call graph and
+every node in between is related to a leaf.
+
+\section{Parallel Design}
 	\subsection{Making Halting Deterministic}
 		An issue when performing the type completion and analysis in parallel
 		is knowing when all of the operations are completed and halting can
@@ -470,10 +491,9 @@ faults when using a language that is not built for modeling mutable state.
 		while the channels are empty.
 
 		In the current version of Paratype, there are two main steps separated
-		by an implicit barrier: the type relation comilation step and the
-		implementation collection step. Halting for the implementation
-		collection step is trivial, but halting in the type relation
-		compilation step is more complicated. 
+		by an implicit barrier: the type resolution step and the implementation
+		collection step. Halting for the implementation collection step is
+		trivial, but halting in the type resoltion step is more complicated. 
 		
 		In that step, halting takes advantage of the fact
 		that communication only happens from callers to callees. Function
