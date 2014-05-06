@@ -419,29 +419,36 @@ faults when using a language that is not built for modeling mutable state.
 
 \section{Parallelization}
 
-The algorithm that is the heart of Paratype works in essence as following:
+The algorithm that is the heart of Paratype works in essence as following.
+Steps preceded by ``--'' are performed in parallel.
 \begin{description}[noitemsep]
 	\item[Parsing] Parse input file according to Paratype grammar.
 	\item[Setup] For each function, collect context information by finding type
 		variables and function calls as well as the relation of type variables
 		from function declaration to function calls
-	\item[Initial send] For each function, send the context information to all
-		its children (callees).
-	\item[Type resolution] For each function, spawn a Goroutine (function
-		actor).  
-	\item[Halting type resolution] Wait for each function actor to finish 
-		resolving types.
-	\item[Implementation collection] Close all channels of communication, which
-		acts as an implicit barrier for all function actors to walk up their
-		call tree to collect sets of explicit types for themselves.
-	\item[Halting collection] Wait for all function actors to finish
+	\item[Goroutines] For each function, spawn a goroutine (function actor) and
+		do:
+	\item[-- Initial send] Each function actor will send context information
+		about its function to all its children (callees). See details in
+		Subsections~\ref{subsec:typeresolution} and~\ref{subsec:funccomp}.
+	\item[-- Type resolution] Each function actor listens for messages,
+		performs merging, and sends the message to its children. See details
+		in Subsection~\ref{subsec:typeresolution}.
+	\item[-- Halting type resolution] Wait for each function actor to finish 
+		resolving types. See details in Subsections~\ref{subsec:halting}
+		and~\ref{subsec:errorhalting}.
+	\item[-- Implementation collection] Close all channels of communication,
+		which acts as an implicit barrier for all function actors to walk up
+		their call tree to collect sets of explicit types for themselves.
+	\item[-- Halting collection] Wait for all function actors to finish
 		implementation collection.
 	\item[Printing] Printing the implementations.
 \end{description}
 
-\subsection{Type Resolution Step}
+\subsection{Type Resolution}
+\label{subsec:typeresolution}
 
-This is what each function $f$ does during its runtime:
+This is what each function actor $f$ does during its runtime:
 \begin{enumerate}[noitemsep]
 	\item Receive path-context object $(P, C_h)$ from parent $g$, where the
 		path is the path that the context has traveled so far and the context
@@ -474,8 +481,12 @@ Ultimately, this allows type variables from the leaf nodes of the call graph to
 ``trickle up'' through the nodes until finally, the roots of the call graph and
 every node in between is related to a leaf.
 
+\subsection{Implementation Collection}
+
 \section{Parallel Design}
 	\subsection{Making Halting Deterministic}
+		\label{subsec:halting}
+
 		An issue when performing the type completion and analysis in parallel
 		is knowing when all of the operations are completed and halting can
 		commence. 
@@ -527,6 +538,7 @@ every node in between is related to a leaf.
 % }
 % 		\end{lstlisting}
 	\subsection{Halting On Type Error Detection}
+		\label{subsec:errorhalting}
 
 		Even though the previously described implementation for halting may
 		work on valid input, it fails for input that generates a type error.
@@ -558,6 +570,8 @@ every node in between is related to a leaf.
 		channels as well as error channels.
 
 	\subsection{Function Composition}
+		\label{subsec:funccomp}
+
 		One of the issues induced by parallelization is the handling of
 		function composition. Consider the code snippet shown in 
 		Listing~\ref{lst:composition}.
