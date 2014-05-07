@@ -759,47 +759,6 @@ elaborate, novel, and exciting. It is our hope to continue with \emph{Paratype}
 and see it to its end.
 
 \appendix
-\section{Finalized Grammar}
-
-This is a gopp grammar. See \url{https://github.com/skelterjohn/gopp}.
-
-\begin{lstlisting}[language=Gopp]
-## ignore comments that begin at beginning of line
-ignore: /^#.*\n/
-## ignore whitespace at beginning of line
-ignore: /^(?:[ \t])+/
-
-Start => {type=Base} {field=TypeclassDecls} <<TypeclassDecl>>* {field=TypeDecls} <<TypeDecl>>* {field=FuncDecls} <<FuncDecl>>+
-
-CommaSep => ','
-FuncName => <ident>
-TypeclassName => {type=Typeclass} {field=Name} <uident>
-TypeVar => {type=TypeVar} {field=Name} <typevar>
-TypeName => {type=TypeName} {field=Name} <ident>
-ErrorType => {type=Error} {field=Name} <ident>
-TypePlace => <TypeVar>
-TypePlace => <TypeName>
-FuncArgss => <TypePlace> <CommaSep>
-FuncArgs => {field=Arguments} <<FuncArgss>>* [{field=LastArgument} <<TypePlace>>]
-FuncErrorss => <ErrorType> <CommaSep>
-FuncErrors => {field=Errors} <<FuncErrorss>>* [{field=LastError} <<ErrorType>>]
-CallArgss => <Expr> <CommaSep>
-CallArgs => {field=Arguments} <<CallArgss>>* [{field=LastArgument} <<Expr>>]
-Expr => {type=FuncCall} {field=Name} <FuncName> '(' <CallArgs> ')'
-Expr => <TypePlace>
-TypeDecl => 'type ' <TypeName> ['implements ' {field=Implements} <<TypeClasss>>* {field=LastImplement} <<TypeclassName>>] '\n'
-TypeClasss => <TypeclassName> <CommaSep>
-TypeclassDecl => 'typeclass ' {field=Name} <<TypeclassName>> ['inherits ' {field=Inherits} <<TypeClasss>>* {field=LastInherit} <<TypeclassName>>] '\n'
-FuncConstraint => {type=Constraint} {field=Name} <<TypeVar>> '<' {field=Tclasses} <<TypeClasss>>* {field=LastTClass} <<TypeclassName>> '>'
-FuncConstraintss => <FuncConstraint> <CommaSep>
-FuncConstraints => 'constrain ' {field=Constraints} <<FuncConstraintss>>* {field=LastConstraint} <<FuncConstraint>>
-FuncSig => 'func ' {field=Name} <FuncName> [<FuncConstraints>] '(' <FuncArgs> ')' {field=ReturnType} <<TypePlace>> ['throws ' <FuncErrors>]
-FuncDecl => {type=Func} <FuncSig> '\n=' {field=Expr} <<Expr>> '\n'
-
-ident = /([a-z][a-zA-Z]*)/
-uident = /([N-Z][a-zA-Z]*)/
-typevar = /([A-M][a-zA-Z]*)/
-	\end{lstlisting}
 
 \section{Team Members and Their Contributions}
 	\begin{itemize}
@@ -810,16 +769,17 @@ typevar = /([A-M][a-zA-Z]*)/
 		\item[Tyler] Tyler worked on setting up communications between the
 			function actors as well as initial halting
 	\end{itemize}
+
 \section{Things Learnt From This Project}
 
-We learnt some interesting things about a new programming language and quite a
-bit of parallel debugging from this project. We took advantage of some new
-design patterns in parallel programming that are inherently included with
-Google Go, such as communication channels' closure acting as an implicit
-barrier.
+	We learnt some interesting things about a new programming language and
+	quite a bit of parallel debugging from this project. We took advantage of
+	some new design patterns in parallel programming that are inherently
+	included with Google Go, such as communication channels' closure acting as
+	an implicit barrier.
 
-We have also learnt that relying on software libraries for certain things (in
-our case parsing) is not always as useful as it might seem. Getting the gopp
-grammar parser to work correctly took a lot more time than it should have and
-set us back by quite a bit.
+	We have also learnt that relying on software libraries for certain things
+	(in our case parsing) is not always as useful as it might seem. Getting the
+	gopp grammar parser to work correctly took a lot more time than it should
+	have and set us back by quite a bit.
 \end{document}
