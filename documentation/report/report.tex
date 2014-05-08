@@ -629,6 +629,7 @@ func h(A) float
 		equal to zero, then knowing that the respective level of composition is
 		done resolving and that it may go up one level.
 
+
 \section{Verification}
 	All of our testing was performed with curated examples that were picked to
 	intentionally pose a problem and ensure that each of the subsystems were
@@ -641,6 +642,37 @@ func h(A) float
 	repeatedly run these tests to ensure they were deterministic in halting and
 	not causing exceptional situations.  
 	
+\begin{figure}[ht] 
+	\centering
+	\includegraphics[scale=0.6]{../../data/composition1s.pdf}
+	\caption{Speedup vs number of processors, example composition1 (four
+	functions)} 
+	\label{fig:c1s} 
+\end{figure} 
+
+\begin{figure}[ht] 
+	\centering
+	\includegraphics[scale=0.6]{../../data/composition3s.pdf}
+	\caption{Speedup vs number of processors, example composition3 (84
+	functions)} 
+	\label{fig:c3s} 
+\end{figure} 
+
+\begin{figure}[ht] 
+	\centering
+	\includegraphics[scale=0.6]{../../data/composition1e.pdf}
+	\caption{Efficiency vs number of processors, example composition1 (four
+	functions)} 
+	\label{fig:c1e}
+\end{figure} 
+
+\begin{figure}[ht] 
+	\centering
+	\includegraphics[scale=0.6]{../../data/composition3e.pdf}
+	\caption{Efficiency vs number of processors, example composition3 (84
+	functions)} 
+	\label{fig:c3e} 
+\end{figure}
 \section{Analysis and Model}
 %  variables: number of functions, function calls, contexts, partial contexts,
 %  undecidability, number of physical cores available, number of types and type
@@ -673,37 +705,6 @@ scheduler are not beneficial for anything above four processors.
 Since speedup was not very good; of course efficiency was even worse. See
 Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
-\begin{figure}[ht] 
-	\centering
-	\includegraphics[scale=0.6]{../../data/composition1s.pdf}
-	\caption{Speedup vs number of processors, example composition1 (four
-	functions)} 
-	\label{fig:c1s} 
-\end{figure} 
-
-\begin{figure}[ht] 
-	\centering
-	\includegraphics[scale=0.6]{../../data/composition3s.pdf}
-	\caption{Speedup vs number of processors, example composition3 (84
-	functions)} 
-	\label{fig:c3s} 
-\end{figure} 
-
-\begin{figure}[ht] 
-	\centering
-	\includegraphics[scale=0.6]{../../data/composition1e.pdf}
-	\caption{Efficiency vs number of processors, example composition1 (four
-	functions)} 
-	\label{fig:c1e}
-\end{figure} 
-
-\begin{figure}[ht] 
-	\centering
-	\includegraphics[scale=0.6]{../../data/composition3e.pdf}
-	\caption{Efficiency vs number of processors, example composition3 (84
-	functions)} 
-	\label{fig:c3e} 
-\end{figure}
 
 % variables: number of functions, function calls, contexts, partial contexts,
 % undecidability, number of physical cores available, number of types and type
@@ -757,7 +758,7 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
 \section{Known Bugs}
 
-Currently, there are three known bugs worth mentioning that are resolvable but
+Currently, there are four known bugs worth mentioning that are resolvable but
 would be time-consuming to fix and would not require any parallel design:
 \begin{itemize}
 	\item Incorrect representation of function composition when printing:
@@ -774,11 +775,13 @@ would be time-consuming to fix and would not require any parallel design:
 	\item In many cases, the parser will not catch incorrectly formatted files
 		or missing declarations. We currently assume that every input file is
 		correctly formatted except for type errors.
+	\item Sometimes, implementations are printed more than one time.
 \end{itemize}
 
 None of these bugs would require parallel design and therefore, their
 resolution has not been a priority. In all cases, they require a
 simple fix of representation that would be time-consuming.
+
 
 \section{Conclusion}
 
