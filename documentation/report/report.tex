@@ -648,7 +648,10 @@ func h(A) float
 
 For analysis, some of the previously mentioned examples were timed for numbers
 of processors as powers of two up to 32 processors, whereas each timing was
-repeated 10 times.
+repeated 30 times. The tests were run on \texttt{edison.cs.nmt.edu}, a machine
+with 12 CPU threads and 6 CPU cores. Even though there was huge variation for a
+fixed problem size and a fixed number of processors, speedup was obtained by
+averaging the time taken for one processor.
 
 Even though we expected a good amount of speedup from our model, initial
 results are not hopeful: For very small examples, speedup is limited to two or
@@ -672,7 +675,7 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
 \begin{figure}[ht] 
 	\centering
-	\includegraphics[scale=0.6]{../../data/composite1-speedup.pdf}
+	\includegraphics[scale=0.6]{../../data/composition1s.pdf}
 	\caption{Speedup vs number of processors, example composition1 (four
 	functions)} 
 	\label{fig:c1s} 
@@ -680,7 +683,7 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
 \begin{figure}[ht] 
 	\centering
-	\includegraphics[scale=0.6]{../../data/composite3-speedup.pdf}
+	\includegraphics[scale=0.6]{../../data/composition3s.pdf}
 	\caption{Speedup vs number of processors, example composition3 (84
 	functions)} 
 	\label{fig:c3s} 
@@ -688,7 +691,7 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
 \begin{figure}[ht] 
 	\centering
-	\includegraphics[scale=0.6]{../../data/composite1-efficiency.pdf}
+	\includegraphics[scale=0.6]{../../data/composition1e.pdf}
 	\caption{Efficiency vs number of processors, example composition1 (four
 	functions)} 
 	\label{fig:c1e}
@@ -696,7 +699,7 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
 \begin{figure}[ht] 
 	\centering
-	\includegraphics[scale=0.6]{../../data/composite3-efficiency.pdf}
+	\includegraphics[scale=0.6]{../../data/composition3e.pdf}
 	\caption{Efficiency vs number of processors, example composition3 (84
 	functions)} 
 	\label{fig:c3e} 
