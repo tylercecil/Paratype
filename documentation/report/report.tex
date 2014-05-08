@@ -484,6 +484,9 @@ every node in between is related to a leaf.
 \subsection{Implementation Collection}
 
 \section{Parallel Design}
+	This section details some of the more difficult parallel design decisions
+	made in addition to the algorithmic design.
+
 	\subsection{Making Halting Deterministic}
 		\label{subsec:halting}
 
@@ -742,21 +745,22 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
 \emph{Paratype}, as is, serves as a proof of concept of a novel approach to
 type analysis. It achieved its goal of being able to resolve simple merges and
-function compositions, explored the design of an actor based type system, and
-help define many of the problems that would be faced in a full type analysis
+function compositions, explored the design of an actor-based type system, and
+helped define many of the problems that would be faced in a full type analysis
 system. That being said, it still needs work to tackle all problems of a type
-analysis system (most notably the lack of cycle detection in call graphs.) In
-many cases algorithms have been detailed to tackle these edge cases  and
-missing features, though they have yet to be implemented. Finally, time needs
-to be taken to further optimize the existing code base; known inefficient uses
-of memory and processing are current in the \emph{Paratype} code base.
+analysis system, most notably there is the lack of cycle detection in call
+graphs. In many cases, some preliminary algorithms have been detailed to tackle
+these edge cases and missing features, though they have yet to be implemented.
+Finally, time needs to be taken to further optimize the existing code base;
+known inefficient uses of memory and processing are current in the
+\emph{Paratype} code base.
 
-Without the means to generate complicated, feature rich source files, a quality
+Without the means to generate complicated, feature-rich source files, a quality
 analysis of the software performance can not be performed. As is, it appears
-parallel overhead takes over the advantages of the software, but these are only
-with simple examples. The algorithms that were designed in this project were
-elaborate, novel, and exciting. It is our hope to continue with \emph{Paratype}
-and see it to its end.
+parallel overhead takes over the advantages of the software, but this was
+tested only with simple examples. The algorithms that were designed in this
+project were elaborate, novel, and exciting. It is our hope to continue with
+\emph{Paratype} and see it to its end.
 
 \appendix
 
