@@ -648,10 +648,10 @@ func h(A) float
 
 For analysis, some of the previously mentioned examples were timed for numbers
 of processors as powers of two up to 32 processors, whereas each timing was
-repeated 30 times. The tests were run on \texttt{edison.cs.nmt.edu}, a machine
-with 12 CPU threads and 6 CPU cores. Even though there was huge variation for a
+repeated 30 times. The tests were run on \texttt{login.cs.nmt.edu}, a machine
+with two CPU cores. Even though there was huge variation for a
 fixed problem size and a fixed number of processors, speedup was obtained by
-averaging the time taken for one processor.
+using the average of the time taken for one processor as the sequential time.
 
 Even though we expected a good amount of speedup from our model, initial
 results are not hopeful: For very small examples, speedup is limited to two or
