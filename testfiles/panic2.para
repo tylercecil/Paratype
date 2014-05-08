@@ -1,0 +1,11 @@
+type wLIACA
+type zhAeDX
+type tNP
+func tIT(wLIACA,M,zhAeDX,tNP) wLIACA
+=kRM(wLIACA,M,zhAeDX)
+func ghc(wLIACA,wLIACA,zhAeDX,wLIACA,tNP) wLIACA
+=tIT(wLIACA,wLIACA,zhAeDX)
+func ktg(wLIACA,wLIACA,zhAeDX,tNP) wLIACA
+=tIT(wLIACA,wLIACA,zhAeDX,tNP)
+func kRM(M,M,zhAeDX) M
+=M

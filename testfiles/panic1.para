@@ -1,0 +1,17 @@
+type eeOCgc
+type kRfe
+type xzpa
+func pbE(xzpa,B,xzpa,kRfe,eeOCgc,xzpa) kRfe
+=obn(xzpa,B,xzpa,kRfe)
+func kzl(xzpa,eeOCgc,xzpa,kRfe,xzpa,xzpa) kRfe
+=pbE(xzpa,eeOCgc,xzpa,kRfe)
+func aEx(xzpa,B,xzpa,I,eeOCgc,xzpa,kRfe,xzpa) I
+=pbE(xzpa,B,xzpa,I,eeOCgc,xzpa)
+func nPn(xzpa,B,xzpa,eeOCgc,eeOCgc,xzpa,kRfe,xzpa,xzpa) eeOCgc
+=aEx(xzpa,B,xzpa,eeOCgc,eeOCgc,xzpa,kRfe,xzpa)
+func zak(xzpa,xzpa,xzpa,eeOCgc,eeOCgc,xzpa,kRfe,xzpa,xzpa,eeOCgc,eeOCgc) eeOCgc
+=nPn(xzpa,xzpa,xzpa,eeOCgc,eeOCgc,xzpa,kRfe,xzpa)
+func qdv(xzpa,eeOCgc,xzpa,eeOCgc,eeOCgc,xzpa,kRfe,xzpa,xzpa) eeOCgc
+=nPn(xzpa,eeOCgc,xzpa,eeOCgc,eeOCgc,xzpa,kRfe,xzpa,xzpa)
+func obn(xzpa,B,xzpa,M) M
+=M
