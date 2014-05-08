@@ -672,9 +672,9 @@ main factors: our input files and the Go Scheduler.
 In the case of our input files, most of our performance can be
 attributed to a distinct lack of size and diversity of our
 problems. To properly achieve a quality analysis we would need to be
-able to readily vary parameters such as number of function, number of
-compositions, number of errors, number of type variables, number of
-type classes, ect\ldots We unfortunately were unable to build problems
+able to readily vary parameters such as number of functions, number of 
+function compositions, number of errors, number of type variables, number of
+type classes, etc. Unfortunately, we were unable to build problems
 of large enough sizes to take advantage of all of our threads. This
 does not explain our apparent ``slow down''; to tackle that we need to
 understand the Go Scheduler.
@@ -682,20 +682,20 @@ understand the Go Scheduler.
 \subsection{The Go Scheduler}
 
 The Go Scheduler was designed by Dmitry Vyukov. In a normal shared
-memory system such as \emph{OpenMP} a scheduler would not be
-necessary. The operating system will simply allocate threads, and
-schedule them as they would any other process. Pthreads require a huge
-amount of overhead however (since they are almost full OS processes.)
-In Go it is not uncommon to have thousands of go routines running,
-and that overhead can build up. Because of this, and the fact that go
-has insight into the
-behavior of the code and can more properly schedule tasks, Go compiles
-in its own scheduler\cite{go-sched}.
+memory system such as \emph{OpenMP}, a scheduler would not be
+necessary. The operating system will simply allocate threads and
+schedule them as they would any other process. However, pthreads require a huge
+amount of overhead since they are almost full OS processes.
+
+In Go it is not uncommon to have thousands of go routines running and that
+overhead can build up. Because of this and the fact that go has insight into
+the behavior of the code and can more properly schedule tasks, Go compiles its
+own scheduler into the binary\cite{go-sched}.
 
 A suspect to our loss of speed would be work stealing. Go uses $M:N$
-scheduling, meaning $M$ threads will be mapped to $N$ Pthreads \cite{go-sched}. With a large
-number of threads, there will only be so many tasks allocated to each
-thread. Therefore, when a thread runs out of tasks, they will attempt
+scheduling, meaning $M$ threads will be mapped to $N$ Pthreads \cite{go-sched}.
+With a large number of threads, there will only be so many tasks allocated to
+each thread. Therefore, when a thread runs out of tasks, they will attempt
 to invoke work stealing. At large values of \texttt{GOMAXPROCS}, work
 stealing will happen constantly, dragging down our execution speeds.
 
