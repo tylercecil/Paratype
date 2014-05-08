@@ -23,9 +23,17 @@ To run our favorite example:
 Compilation
 -----------
 
+To set up Go, please visit http://golang.org/doc/install.
+
 To compile Paratype:
 
+	go get https://github.com/skelterjohn/gopp
 	go build paratype.go
+
+For your convenience (so there is no need to install Google Go and gopp), we
+have included a binary called "paratype" that was compiled from the latest
+version on a 64-bit machine and should run on the CS department
+login.cs.nmt.edu machine.
 
 To list command line options for Paratype:
 
