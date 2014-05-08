@@ -632,6 +632,7 @@ func h(A) float
 		equal to zero, then knowing that the respective level of composition is
 		done resolving and that it may go up one level.
 
+
 \section{Verification}
 	All of our testing was performed with curated examples that were picked to
 	intentionally pose a problem and ensure that each of the subsystems were
@@ -793,7 +794,7 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
 \section{Known Bugs}
 
-Currently, there are three known bugs worth mentioning that are resolvable but
+Currently, there are four known bugs worth mentioning that are resolvable but
 would be time-consuming to fix and would not require any parallel design:
 \begin{itemize}
 	\item Incorrect representation of function composition when printing:
@@ -810,11 +811,13 @@ would be time-consuming to fix and would not require any parallel design:
 	\item In many cases, the parser will not catch incorrectly formatted files
 		or missing declarations. We currently assume that every input file is
 		correctly formatted except for type errors.
+	\item Sometimes, implementations are printed more than one time.
 \end{itemize}
 
 None of these bugs would require parallel design and therefore, their
 resolution has not been a priority. In all cases, they require a
 simple fix of representation that would be time-consuming.
+
 
 \section{Conclusion}
 

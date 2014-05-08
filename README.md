@@ -20,27 +20,49 @@ To run our favorite example:
 
 	go test -v -run Flow merge_test.go
 
+Compilation
+-----------
+
+To set up Go, please visit http://golang.org/doc/install.
+
 To compile Paratype:
-    go build paratype.go
+
+	go get https://github.com/skelterjohn/gopp
+	go build paratype.go
+
+For your convenience (so there is no need to install Google Go and gopp), we
+have included a binary called "paratype" that was compiled from the latest
+version on a 64-bit machine and should run on the CS department
+login.cs.nmt.edu machine.
 
 To list command line options for Paratype:
-    ./paratype -h
+
+	./paratype -h
 
 The command line options are:
-    infile:
+
+	-infile=
         default: ""
-        This command line option is necessary and an error will be thrown if it
-is not present. 
-    outfile:
-        default: ""
-        This is necessary if the print flag is used. This is the file to print
-the generated implementations to.
-    print:
+        This command line option is necessary and an error will be thrown if it 
+		is not present. 
+
+	-outfile=
+		default: "" 
+		This is necessary if the print flag is used. This is the file to print 
+		the generated implementations to.
+
+	-print=
         default: false
         This determines whether to print the implementations to the given file
-or not.
-    procs:
+		or not.
+
+	-procs=
         default: 4
         This determines the number for GOMAXPROCS
-    time:
+
+	-time=
+		default: false
         This determines whether the time in nanoseconds should be gathered. 
+
+You may find files to test in the testfiles directory. Please see known bugs in
+the report.

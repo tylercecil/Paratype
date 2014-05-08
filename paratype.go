@@ -98,10 +98,13 @@ func RunActors(f ...interface{}) []error {
 				// disable implementation collection
 				f.Implement = false
 				f.Dead = true
+			}
+			killFlag.Done()
+
+			for f := range Functions {
 				defer close(f.Channel)
 			}
-			close(err)
-			killFlag.Done()
+			defer close(err)
 			break;
 		}
 	}
