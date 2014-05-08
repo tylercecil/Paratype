@@ -754,7 +754,7 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
 \section{Known Bugs}
 
-Currently, there are two known bugs worth mentioning that are resolvable but
+Currently, there are three known bugs worth mentioning that are resolvable but
 would be time-consuming to fix and would not require any parallel design:
 \begin{itemize}
 	\item Incorrect representation of function composition when printing:
@@ -768,10 +768,13 @@ would be time-consuming to fix and would not require any parallel design:
 		resolve when types are resolvable. The type variable relations are
 		there and have been found, they are just not connected back correctly
 		to the original function in some cases.
+	\item In many cases, the parser will not catch incorrectly formatted files
+		or missing declarations. We currently assume that every input file is
+		correctly formatted except for type errors.
 \end{itemize}
 
-Neither of these bugs would require parallel design and therefore, their
-resolution has not been a priority. In both cases, they require a
+None of these bugs would require parallel design and therefore, their
+resolution has not been a priority. In all cases, they require a
 simple fix of representation that would be time-consuming.
 
 \section{Conclusion}
