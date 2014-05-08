@@ -42,7 +42,7 @@ class FunctionObject:
         self.return_value = ""
 
     def __fill_args(self):
-        self.argcount = random.randint(0, 4)
+        self.argcount = random.randint(0, 3)
         self.arglist = []
         for i in range(self.argcount):
             if random.randint(1, 10) <= 7:
@@ -52,15 +52,15 @@ class FunctionObject:
 
     def __fill_return(self):
         if self.arglist:
-            type_vars = [test_type_var(var) for var in self.arglist]
-            if not any(type_vars):
-                return_pool = self.arglist + [gen_type_var()]
-            else:
-                return_pool = self.arglist
-            self.return_type = random.choice(return_pool)
+            #type_vars = [test_type_var(var) for var in self.arglist]
+            #if not any(type_vars):
+            #    return_pool = self.arglist + [gen_type_var()]
+            #else:
+            #    return_pool = self.arglist
+            self.return_type = random.choice(self.arglist)
             return
         self.return_type = random.choice(self.types)
-        self.return_val = self.return_type
+        self.return_value = self.return_type
 
 
     def check_return(self, function):
@@ -80,6 +80,10 @@ class FunctionObject:
         else:
             return False
 
+    def find_compatible_functions(self, functions):
+        funcs = [i for i in functions if self.check_return(i)]
+        funcs = [i for i in funcs if self.check_compatibility(i)]
+        return funcs
 
     def assign_by_self(self, functions):
         if test_type_name(self.return_type):
@@ -90,25 +94,32 @@ class FunctionObject:
                 if(valid_values):
                     self.return_value = random.choice(valid_values)
                     return
-        self.return_value = random.choice(self.types)
 
+    def fill_type_vars(self, ret_string):
+        for i in re.findall("{.}", ret_string):
+            if self.arglist:
+                ret_string = ret_string.replace(i, random.choice(self.arglist))
+            else:
+                print("ERRORS")
+        return ret_string
 
     def complete_return(self, functions):
         if self.return_value:
             return
-        funcs = [i for i in functions if self.check_return(i)]
-        funcs2 = [i for i in funcs if self.check_compatibility(i)]
-        if funcs2:
-            if random.randint(1, 10) >= 7:
-                ret = random.choice(funcs2).get_call_string()
-                for i in re.findall("{.}", ret):
-                    if self.arglist:
-                        ret = ret.replace(i, random.choice(self.arglist))
-                    else:
-                        self.assign_by_self(functions)
-                self.return_value = ret
-                return
-        self.assign_by_self(functions)
+        if test_type_var(self.return_type):
+            funcs = self.find_compatible_functions(functions)
+            ret = random.choice(funcs).get_call_string()
+            ret = self.fill_type_vars(ret)
+            self.return_value = ret
+        else:
+            if random.randint(1, 10) >= 8:
+                funcs = self.find_compatible_functions(functions)
+                if funcs:
+                    ret = random.choice(funcs).get_call_string()
+                    ret = self.fill_type_vars(ret)
+                    self.return_value = ret
+                    return
+            self.return_value = self.return_type
 
     def __repr__(self):
         return "func {0}({1}) {2}\n={3}\n".format(self.name, ','.join(self.arglist), self.return_type, self.return_value)
@@ -131,8 +142,11 @@ random.seed()
 types = [gen_type_name(random.randint(3, 6)) for _ in range(3)]
 functions = [gen_func_name(random.randint(3, 6)) for _ in range(10)]
 function_list = [FunctionObject(i, types) for i in functions]
-function_list
+
 for i in function_list:
     i.complete_return(function_list)
 
-function_list
+for i in types:
+    print("type {0}".format(i))
+for i in function_list:
+    print(i, end="")
