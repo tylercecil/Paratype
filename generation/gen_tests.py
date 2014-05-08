@@ -92,19 +92,12 @@ class FunctionObject:
                         break
                 parent.arglist = new_args_list[:]
         else:
-            typeva = random.randint(1, 10)
-            if typeva <= 5:
-                parent.return_type = gen_type_var()
-                idx = new_args_list.index(self.return_type)
-                new_args_list[idx] = parent.return_type
-                parent.arglist = new_args_list[:]
-            else:
-                parent.return_type = self.return_type
-                parent.arglist = new_args_list[:]
-                for i, v in enumerate(parent.arglist):
-                    if test_type_var(v):
-                        parent.arglist[i] = random.choice(self.types)
-                        break
+            parent.return_type = self.return_type
+            parent.arglist = new_args_list[:]
+            for i, v in enumerate(parent.arglist):
+                if test_type_var(v):
+                    parent.arglist[i] = random.choice(self.types)
+                    break
         parent.return_value = self.name + '(' + ",".join(parent.arglist) + ')'
         while len(parent.arglist) < parent.argcount:
             parent.arglist.append(random.choice(self.types))
