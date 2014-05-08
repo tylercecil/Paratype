@@ -660,12 +660,12 @@ For 32 processors, it took almost 10 times as much time to resolve types than
 it did for one processor.
 
 Due to time constraints, not a lot of data was collected about performance. One
-can see in the figures that the example composite3 had better speedup for two
-and four processors than composite1; this is likely due to the fact that it had
-more functions. We would expect that once the systems become more complicated
-and connected, the speedup would increase for a higher number of processors; it
-is likely that the overhead of 32 \texttt{goroutines} and the Go scheduler are
-not beneficial for anything above four processors.
+can see in the figures that the example composition3 had better speedup for two
+and four processors than composition1; this is likely due to the fact that it
+had more functions. We would expect that once the systems become more
+complicated and connected, the speedup would increase for a higher number of
+processors; it is likely that the overhead of 32 \texttt{goroutines} and the Go
+scheduler are not beneficial for anything above four processors.
 
 Since speedup was not very good; of course efficiency was even worse. See
 Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
@@ -673,7 +673,7 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 \begin{figure}[ht] 
 	\centering
 	\includegraphics[scale=0.6]{../../data/composite1-speedup.pdf}
-	\caption{Speedup vs number of processors, example composite1 (four
+	\caption{Speedup vs number of processors, example composition1 (four
 	functions)} 
 	\label{fig:c1s} 
 \end{figure} 
@@ -681,7 +681,7 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 \begin{figure}[ht] 
 	\centering
 	\includegraphics[scale=0.6]{../../data/composite3-speedup.pdf}
-	\caption{Speedup vs number of processors, example composite3 (84
+	\caption{Speedup vs number of processors, example composition3 (84
 	functions)} 
 	\label{fig:c3s} 
 \end{figure} 
@@ -689,7 +689,7 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 \begin{figure}[ht] 
 	\centering
 	\includegraphics[scale=0.6]{../../data/composite1-efficiency.pdf}
-	\caption{Efficiency vs number of processors, example composite1 (four
+	\caption{Efficiency vs number of processors, example composition1 (four
 	functions)} 
 	\label{fig:c1e}
 \end{figure} 
@@ -697,7 +697,7 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 \begin{figure}[ht] 
 	\centering
 	\includegraphics[scale=0.6]{../../data/composite3-efficiency.pdf}
-	\caption{Efficiency vs number of processors, example composite3 (84
+	\caption{Efficiency vs number of processors, example composition3 (84
 	functions)} 
 	\label{fig:c3e} 
 \end{figure}
@@ -752,6 +752,28 @@ Figures~\ref{fig:c1e} and~\ref{fig:c3e}.
 
 %  -> number of paths times number of nodes in each path
 
+\section{Known Bugs}
+
+Currently, there are two known bugs worth mentioning that are resolvable but
+would be time-consuming to fix and would not require any parallel design:
+\begin{itemize}
+	\item Incorrect representation of function composition when printing:
+		Because after parsing, only the ``level'' of composition of a function
+		and its type-variable relation is kept, but not its place in the
+		composition, some of the printed output is incorrect. 
+	\item Small bug in the implementation collection phase where a function
+		actor does not actually look through all the type variable maps it
+		finds to find relations to its own type variables. In most cases, this
+		is insignificant, but in some function composition cases it will not
+		resolve when types are resolvable. The type variable relations are
+		there and have been found, they are just not connected back correctly
+		to the original function in some cases.
+\end{itemize}
+
+Neither of these bugs would require parallel design and therefore, their
+resolution has not been a priority. In both cases, they require a
+simple fix of representation that would be time-consuming.
+
 \section{Conclusion}
 
 \emph{Paratype}, as is, serves as a proof of concept of a novel approach to
@@ -774,6 +796,14 @@ project were elaborate, novel, and exciting. It is our hope to continue with
 \emph{Paratype} and see it to its end.
 
 \appendix
+
+\section{Github}
+
+Our project can be found on Github at
+\begin{center}
+	\vspace{-5mm}
+	\url{https://github.com/izzycecil/Paratype}
+\end{center}
 
 \section{Team Members and Their Contributions}
 	\begin{description}
