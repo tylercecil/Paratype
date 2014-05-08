@@ -232,6 +232,9 @@ func (f *Function) Update(g *Function) error {
 	if f.Parents[g] {
 		// match f() with g(f())
 		for funcarg, typevar := range f.Atlas[pf] {
+			/*if g.Atlas[pgf][funcarg] == nil {
+				fmt.Printf("%+v %+v %+v %+v %+v %+v\n", funcarg, typevar, pgf, g.Name, f.Name, g.Atlas[pgf][funcarg])
+			}*/
 			err := g.updateTypevar(pgf, funcarg, f, typevar)
 			if err != nil {
 				return err

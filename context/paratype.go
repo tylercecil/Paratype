@@ -1,10 +1,6 @@
 package context
 
-import (
-	"sync"
-	//"fmt"
-	//"strings"
-)
+import "sync"
 
 // send message to function, return whether it was successful
 func (f *Function) sendMessage(g *Function, msg *Communication) bool {
@@ -16,6 +12,7 @@ func (f *Function) sendMessage(g *Function, msg *Communication) bool {
 	return true
 }
 
+// send error message back to main thread
 func (f *Function) sendError(errorChannel chan error, err error) bool {
 	f.KillFlag.Wait()
 	if f.Dead == true {
@@ -26,11 +23,16 @@ func (f *Function) sendError(errorChannel chan error, err error) bool {
 }
 
 // Runtime for each function actor
-// to be used as a goroutine
+// To be used as a goroutine
 func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 
+	// Function composition
+	// Send to children at f.Depth first, wait for them to finish resolving
+	// types and then decrease f.Depth, repeating until Depth is 1
 	f.Depth = len(f.Children)
-	f.SendToChildren()
+	if f.SendToChildren() == false {
+		return
+	}
 
 	if f.WaitChildren != nil {
 		// function composition:
@@ -44,39 +46,40 @@ func (f *Function) Run(Functions *map[*Function]bool, err chan error) {
 				break
 			}
 
-			f.SendToChildren()
+			if f.SendToChildren() == false {
+				return
+			}
 		}
 	}
 
+	// If I have no parents, send a message back to main thread saying that I'm
+	// done. Halt if I couldn't send that message.
 	// taking advantage of short-circuiting!
 	if len(f.Parents) == 0 && f.sendError(err, nil) == false {
 		return
 	}
 
+	// Receive messages
 	for message := range f.Channel {
-		// halting
+		// Halting: keeping track of how many parents are done sending
 		if message.LastComm {
 			f.NumParentsDone++
 		}
 
-		// this is _my_ last communication if my parents are done
-		// TODO: should I check whether my buffer is empty?
+		// This is _my_ last communication if all my parents are done
 		message.LastComm = (f.NumParentsDone == len(f.Parents))
 
-		// // debugging
-		// fmt.Printf("%v received from path %s the of %v\n",
-		// f.Name, PrintablePath(message.Path, *Functions), 
-		// message.Context.Name)
-
-		// MERGE
+		// MERGE: add information to the function that is contained in
+		// message.Context
 		er := f.Update(message.Context)
 
+		// send an error back if there was one and abort
 		// taking advantage of short-circuiting!
 		if er != nil && f.sendError(err, er) == false {
 			return
 		}
 
-		// send myself to children
+		// send the previously received context to all my children
 		for level, gfuncs := range f.Children {
 			for g := range gfuncs {
 				msgCopy := new(Communication)
@@ -134,8 +137,9 @@ func (f *Function) Initialize(implWait *sync.WaitGroup, killFlag *sync.WaitGroup
 	f.KillFlag = killFlag
 }
 
-// sends own to child
-func (f *Function) SendToChildren() {
+// sends own to children at current depth
+// returns false if unsuccessful and function actor should abort
+func (f *Function) SendToChildren() bool {
 	if f.Depth > 1 && f.WaitChildren == nil {
 		f.WaitChildren = new(sync.WaitGroup)
 	}
@@ -150,6 +154,9 @@ func (f *Function) SendToChildren() {
 			comm.Wait = f.WaitChildren
 			f.WaitChildren.Add(1)
 		}
-		g.Channel <-comm
+		if f.sendMessage(g, comm) == false {
+			return false
+		}
 	}
+	return true
 }

@@ -51,6 +51,8 @@ func RunActors(f ...interface{}) []error {
 
 	for fActor := range Functions {
 		fActor.Initialize(implementationWait, killFlag)
+
+		//context.PrintAll(fActor)
 	}
 
 	for fActor := range Functions {
