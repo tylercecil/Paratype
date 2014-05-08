@@ -43,7 +43,7 @@ class FunctionObject:
         functions.append(self)
 
     def __fill_args(self):
-        self.argcount = random.randint(1, 2)
+        self.argcount = random.randint(1, 4)
         self.arglist = []
         for i in range(self.argcount):
             if random.randint(1, 10) <= 7:
@@ -60,9 +60,21 @@ class FunctionObject:
             self.return_value = self.return_type
             self.generate_parent(functions)
 
+
+    def generate_child(self, functions):
+        child = FunctionObject(self.types, functions, false)
+        child.argcount = random.randint(1, self.argcount)
+        new_args_list = self.arglist[:]
+        if test_type_var(self.return_type):
+            child.return_type = gen_type_name()
+            child.return_value = child.return_type
+        else:
+            child.return_type = self.return_type
+
+
     def generate_parent(self, functions):
         parent = FunctionObject(self.types, functions, False)
-        parent.argcount = random.randint(self.argcount, self.argcount+3)
+        parent.argcount = random.randint(self.argcount, self.argcount+2)
         new_args_list = self.arglist[:]
         if test_type_var(self.return_type):
             try:
@@ -80,12 +92,19 @@ class FunctionObject:
                         break
                 parent.arglist = new_args_list[:]
         else:
-            parent.return_type = self.return_type
-            parent.arglist = new_args_list[:]
-            for i, v in enumerate(parent.arglist):
-                if test_type_var(v):
-                    parent.arglist[i] = random.choice(self.types)
-                    break
+            typeva = random.randint(1, 10)
+            if typeva <= 5:
+                parent.return_type = gen_type_var()
+                idx = new_args_list.index(self.return_type)
+                new_args_list[idx] = parent.return_type
+                parent.arglist = new_args_list[:]
+            else:
+                parent.return_type = self.return_type
+                parent.arglist = new_args_list[:]
+                for i, v in enumerate(parent.arglist):
+                    if test_type_var(v):
+                        parent.arglist[i] = random.choice(self.types)
+                        break
         parent.return_value = self.name + '(' + ",".join(parent.arglist) + ')'
         while len(parent.arglist) < parent.argcount:
             parent.arglist.append(random.choice(self.types))
@@ -113,5 +132,7 @@ random.seed()
 types = [gen_type_name(random.randint(3, 6)) for _ in range(3)]
 functions = []
 x = FunctionObject(types, functions)
+for i in types:
+    print("type {0}".format(i))
 for i in functions:
-    print(i)
+    print(i, end="")
