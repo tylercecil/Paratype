@@ -483,6 +483,14 @@ every node in between is related to a leaf.
 
 \subsection{Implementation Collection}
 
+In the implementation collection phase, each function walks up its call tree to
+find explicit sets of implementations for itself. If it reaches a function
+without parents that does not have an explicit implementation, it will throw a
+type error denoting this. Due to function composition, the implementation
+collection phase is actually a bit more complicated than this: Each function
+actor will also look at the type variable maps it encounters to find equivalent
+type variables to look for when trying to find implementations of itself.
+
 \section{Parallel Design}
 	This section details some of the more difficult parallel design decisions
 	made in addition to the algorithmic design.
@@ -622,15 +630,14 @@ func h(A) float
 		done resolving and that it may go up one level.
 
 \section{Verification}
-	When testing Paratype it is useful to know what the correct output should
-	be. All of our testing was performed with curated examples that were picked
-	to intentionally pose a problem and ensure that each of the subsystems were
+	All of our testing was performed with curated examples that were picked to
+	intentionally pose a problem and ensure that each of the subsystems were
 	working correctly. When the completion is performed the output is written
 	to a file. These files can then be checked for correctness. Go provides a
-	useful testing package that allows for executing all tests or select tests.
-	It launches the threads and gives details about execution and gives the
-	state of the goroutines during an error. This is incredibly useful and was
-	used often to test the hand made examples. It was not uncommon to also
+	useful testing package that allows for executing all tests or selected
+	tests.  It launches the threads and gives details about execution and gives
+	the state of the goroutines during an error. This is incredibly useful and
+	was used often to test the hand-made examples. It was not uncommon to also
 	repeatedly run these tests to ensure they were deterministic in halting and
 	not causing exceptional situations.  
 	
@@ -638,6 +645,10 @@ func h(A) float
 %  variables: number of functions, function calls, contexts, partial contexts,
 %  undecidability, number of physical cores available, number of types and type
 %  classes, etc
+
+For analysis, some of the previously mentioned examples were timed for numbers
+of processors as powers of two up to 32 processors, whereas each timing was
+repeated 10 times.
 
 Even though we expected a good amount of speedup from our model, initial
 results are not hopeful: For very small examples, speedup is limited to two or
@@ -765,14 +776,14 @@ project were elaborate, novel, and exciting. It is our hope to continue with
 \appendix
 
 \section{Team Members and Their Contributions}
-	\begin{itemize}
+	\begin{description}
 		\item[Ben] Ben worked on halting and function composition as well as
-			parsing
+			parsing.
 		\item[Chris] Chris worked on getting function composition working and
 			the merging algorithm. 
 		\item[Tyler] Tyler worked on setting up communications between the
-			function actors as well as initial halting
-	\end{itemize}
+			function actors as well as initial halting.
+	\end{description}
 
 \section{Things Learnt From This Project}
 
