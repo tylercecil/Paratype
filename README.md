@@ -1,7 +1,38 @@
 Paratype
 ========
 
-A parallel type analysis/inference system. New Mexico Tech CSE451 Project.
+A parallel type evaluation system. Paratype serves as a proof of concept for an actor model of type evaluation on a statically typed functional language. 
+
+Paratype is written in Google Go leveraging its shared memory message passing system.
+
+### Intro to Paratype by Example
+
+Consider the following functions, where R, S, T, and U are type variables. The goal of Paratype is to find explicit sets of types for each of the functions. In this example, foo and baz will each have one set of explicit types, whereas bar will have two sets of explicit types.
+
+	func foo(T a, int b) int
+		= bar(a, b)
+
+	func baz(S a, short b) float
+		= bar(a, b)
+
+	func bar(int a, S b) R
+		= R
+
+This example should resolve to the following set of explicitly typed functions:
+
+	func foo(int a, int b) int
+		= bar(a, b)
+
+	func baz(int a, short b) float
+		= bar(a, b)
+
+	func bar(int a, int b) int
+		= int
+	
+	func bar(int a, short b) float
+		= float
+
+Of course, this is an unrealistic example of the average program: one must consider recursion and function composition, at which point the type evaluation becomes more complicated.
 
 Testing
 -------
@@ -29,11 +60,6 @@ To compile Paratype:
 
 	go get https://github.com/skelterjohn/gopp
 	go build paratype.go
-
-For your convenience (so there is no need to install Google Go and gopp), we
-have included a binary called "paratype" that was compiled from the latest
-version on a 64-bit machine and should run on the CS department
-login.cs.nmt.edu machine.
 
 To list command line options for Paratype:
 
